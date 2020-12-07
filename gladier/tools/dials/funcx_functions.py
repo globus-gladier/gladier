@@ -3,8 +3,8 @@ def funcx_create_phil(data):
     import json
     import os
     from string import Template
-
-    run_num = data['input_files'].split("_")[1]
+    
+    run_num = data['input_files'].split("/")[-1].split("_")[1]
     run_dir = "/".join(data['input_files'].split("/")[:-1])
     phil_name = f"{run_dir}/process_{run_num}.phil"
     beamline_json = f"beamline_run{run_num}.json"
@@ -92,7 +92,7 @@ def funcx_stills_process(data):
     if 'temp_directory' in data:
         temp_directory = data["temp_directory"]
     else:
-        temp_directory = "/tmp"
+        temp_directory = run_dir
 
     tmp_run_dir = f"{temp_directory}/{exp_name}"
     tmp_proc_dir = f"{temp_directory}/{exp_name}/{exp_name}_processing"
@@ -127,7 +127,7 @@ def funcx_stills_process(data):
     else:
         cmd = f'source {dials_directory}/dials_env.sh; dials.stills_process {phil_file} {input_files} > log-{file_end}.txt'
 
-    with open('tmp.txt', 'w') as fp:
+    with open('cmd.txt', 'a') as fp:
         fp.write(cmd)
     try:
         res = subprocess.run(cmd, stdout=PIPE, stderr=PIPE,
@@ -136,8 +136,9 @@ def funcx_stills_process(data):
         pass
 
     # copy results back and unlink the tmp dir
-    copy_tree(tmp_proc_dir, proc_dir)
-    shutil.rmtree(tmp_run_dir)
+    if 'temp_directory' in data:
+        copy_tree(tmp_proc_dir, proc_dir)
+        shutil.rmtree(tmp_run_dir)
     return str(res.stdout)
 
 
