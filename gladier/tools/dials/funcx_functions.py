@@ -3,10 +3,15 @@ def funcx_create_phil(data):
     import json
     import os
     from string import Template
-    
+
     run_num = data['input_files'].split("/")[-1].split("_")[1]
     run_dir = "/".join(data['input_files'].split("/")[:-1])
-    phil_name = f"{run_dir}/process_{run_num}.phil"
+
+    if 'suffix' in data:
+        phil_name = f"{run_dir}/process_{run_num}_{data['suffix']}.phil"
+    else:
+        phil_name = f"{run_dir}/process_{run_num}.phil"
+
     beamline_json = f"beamline_run{run_num}.json"
     unit_cell = data.get('unit_cell', None)
     mask = data.get('mask', 'mask.pickle')
@@ -84,29 +89,45 @@ def funcx_stills_process(data):
     from distutils.dir_util import copy_tree
     from subprocess import PIPE
 
+    def append_suffix(string, suffix):
+        if suffix:
+            return f'{string}_{suffix}'
+        else:
+            return string
+
     # change to the process dir
     run_dir = "/".join(data['input_files'].split("/")[:-1])
     exp_name = data['input_files'].split("/")[-1].split("_")[0]
-    proc_dir = f'{run_dir}/{exp_name}_processing'
+
+    if 'suffix' in data:
+        suffix = data['suffix']
+    else:
+        suffix = None
 
     if 'temp_directory' in data:
         temp_directory = data["temp_directory"]
     else:
         temp_directory = run_dir
 
-    tmp_run_dir = f"{temp_directory}/{exp_name}"
-    tmp_proc_dir = f"{temp_directory}/{exp_name}/{exp_name}_processing"
+    process_dir = append_suffix(f'{run_dir}/{exp_name}_processing', suffix)
+    tmp_run_dir = append_suffix(f'{temp_directory}/{exp_name}', suffix)
+    tmp_process_dir = append_suffix(f'{temp_directory}/{exp_name}/{exp_name}_processing', suffix)
 
-    for folder in [proc_dir, tmp_run_dir, tmp_proc_dir]:
-        os.makedirs(folder, exist_ok=True)
+    for directory in [process_dir, tmp_run_dir, tmp_process_dir]:
+        os.makedirs(directory, exist_ok=True)
 
     try:
         run_num = data['input_files'].split("_")[1]
-        phil_file = f"{tmp_run_dir}/process_{run_num}.phil"
-        mask_name = data.get('mask', 'mask.pickle').split("/")[-1]
+        phil_file_tmp = append_suffix(f"{tmp_run_dir}/process_{run_num}", suffix) + ".phil"
+        phil_file_run = append_suffix(f'{run_dir}/process_{run_num}', suffix) + ".phil"
 
-        shutil.copy(f"{run_dir}/process_{run_num}.phil", phil_file)
-        shutil.copy(f"{run_dir}/{mask_name}", f"{tmp_run_dir}/{mask_name}")
+        mask_name = data.get('mask', 'mask.pickle').split("/")[-1]
+        mask_name_run = os.path.join(run_dir, mask_name)
+        mask_name_tmp = os.path.join(tmp_run_dir, mask_name)
+
+        shutil.copy(phil_file_run, phil_file_tmp)
+        shutil.copy(mask_name_run, mask_name_tmp)
+
     except Exception as e:
         return str(e)
 
@@ -116,18 +137,18 @@ def funcx_stills_process(data):
     res = subprocess.run(cmd, stdout=PIPE, stderr=PIPE,
                          shell=True, executable='/bin/bash')
 
-    os.chdir(tmp_proc_dir)
+    os.chdir(tmp_process_dir)
     file_end = data['input_range'].split("..")[-1]
     input_files = data['input_files'].replace(run_dir, tmp_run_dir)
     dials_directory = data['dials_directory']
 
     if "timeout" in data:
         timeout = data["timeout"]
-        cmd = f'source {dials_directory}/dials_env.sh; timeout {timeout} dials.stills_process {phil_file} {input_files} > log-{file_end}.txt'
+        cmd = f'source {dials_directory}/dials_env.sh; timeout {timeout} dials.stills_process {phil_file_run} {input_files} > log-{file_end}.txt'
     else:
-        cmd = f'source {dials_directory}/dials_env.sh; dials.stills_process {phil_file} {input_files} > log-{file_end}.txt'
+        cmd = f'source {dials_directory}/dials_env.sh; dials.stills_process {phil_file_run} {input_files} > log-{file_end}.txt'
 
-    with open('cmd.txt', 'a') as fp:
+    with open('cmd.txt', 'w') as fp:
         fp.write(cmd)
     try:
         res = subprocess.run(cmd, stdout=PIPE, stderr=PIPE,
@@ -137,8 +158,10 @@ def funcx_stills_process(data):
 
     # copy results back and unlink the tmp dir
     if 'temp_directory' in data:
-        copy_tree(tmp_proc_dir, proc_dir)
+        shutil.copytree(tmp_process_dir, process_dir, dirs_exist_ok=True)
         shutil.rmtree(tmp_run_dir)
+    if 'move_phil_to_proc' in data:
+        shutil.move(phil_file_run, process_dir)
     return str(res.stdout)
 
 
@@ -298,6 +321,23 @@ def funcx_pilot(data):
     return result
 
 
+def funcx_count_ints(data):
+    import glob
+    import pandas as pd
+
+    beamx = data['beamx']
+    beamy = data['beamy']
+    run_dir = "/".join(data['input_files'].split("/")[:-1])
+    experiment_name = data['input_files'].split("/")[-1].split("_")[0]
+    process_dir = f'{run_dir}/{experiment_name}_processing_' + data['random_str']
+
+    int_files = glob.glob(f"{process_dir}/int-*.pickle")
+    num_int_files = len(int_files)
+    df = pd.DataFrame({"X": [beamx], "Y": [beamy], "Ints": [num_int_files]})
+
+    return int_files, num_int_files, df
+
+
 def validate_json(data, schema):
     import json
     from jsonschema import validate
@@ -312,3 +352,6 @@ def validate_json(data, schema):
     # except ValidationError as e:
     #     msg = f'Unable to validate JSON. {e.message}'
     #     raise ValidationError(msg)
+
+
+
