@@ -60,27 +60,23 @@ allocated across the supercomputer using an opportunistic backfill queue to util
 spare capacity.
 
 
-Globus Flows
-------------
-**Flows** addresses 
-the problem of 
-securely and reliably automating sequences of data 
-management tasks that may span 
-locations, storage systems, administrative domains, 
-and timescales, and integrate both 
-mechanical and human inputs.
-Client libraries deployed on Globus endpoints and other sources enable the 
-detection 
-of events and invocation of a flow.
-The Flows service manages execution 
-of user-supplied 
-automation flows either manually or as a result 
-of data events, and the invocation of 
-actions from those automation flows, including actions 
-provided by Globus endpoints 
-and services. The service is extensible via the definition of new events and 
-actions to
-meet the needs of specific communities.
+Globus Queues and Triggers
+--------------------------
+**Queues** provides a reliable, cloud-based mechanism to manage and store events.
+The Queues service allows users to provision a dedicated queue for their instrument.
+Clients can then raise events to the queue using HTTP POST requests where they will be
+maintained until a subscriber consumes them. This enables experimental facilities and instruments
+to raise events as data are created without requiring heavy-weight installations on the edge device.
+
+The **Triggers** service provides a cloud-based consumer of Queues events. Users can configure a Trigger to monitor a queue and initiate Flows as events are received.
+To create a trigger one defines:
+- An event queue for the trigger to monitor
+- A condition for when the trigger will fire
+- An action to perform when the condition is met (e.g., a flow uuid)
+- A template to create an input JSON document for the action. This often includes default values.
+
+The combination of the **Queues** and **Triggers** services simplifies creating new Gladier deployments.
+
 
 Globus Transfer
 ---------------

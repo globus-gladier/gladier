@@ -6,7 +6,7 @@ Gladier: The Globus Architecture for Data-Intensive Experimental Research.
    :target: https://gladier.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Gladier is a Programmable Data Capture, Storage,and Analysis Architecture for Experimental Facilities.
+Gladier is a programmable data capture, storage, and analysis architecture for experimental facilities.
 The architecture leverages a data/computing substrate based on 
 data and compute agents deployed across computer and storage 
 systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services.
