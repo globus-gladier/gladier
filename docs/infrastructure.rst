@@ -70,6 +70,7 @@ to raise events as data are created without requiring heavy-weight installations
 
 The **Triggers** service provides a cloud-based consumer of Queues events. Users can configure a Trigger to monitor a queue and initiate Flows as events are received.
 To create a trigger one defines:
+
 - An event queue for the trigger to monitor
 - A condition for when the trigger will fire
 - An action to perform when the condition is met (e.g., a flow uuid)
