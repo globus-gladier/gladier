@@ -104,40 +104,47 @@ def funcx_stills_process(data):
     else:
         suffix = None
 
+    process_dir = append_suffix(f'{run_dir}/{exp_name}_processing', suffix)
+    
     if 'temp_directory' in data:
         temp_directory = data["temp_directory"]
+        tmp_run_dir = append_suffix(f'{temp_directory}/{exp_name}', suffix)
+        tmp_process_dir = append_suffix(f'{temp_directory}/{exp_name}/{exp_name}_processing', suffix)
     else:
         temp_directory = run_dir
+        tmp_run_dir = run_dir
+        tmp_process_dir = process_dir
 
-    process_dir = append_suffix(f'{run_dir}/{exp_name}_processing', suffix)
-    tmp_run_dir = append_suffix(f'{temp_directory}/{exp_name}', suffix)
-    tmp_process_dir = append_suffix(f'{temp_directory}/{exp_name}/{exp_name}_processing', suffix)
 
     for directory in [process_dir, tmp_run_dir, tmp_process_dir]:
         os.makedirs(directory, exist_ok=True)
 
     try:
         run_num = data['input_files'].split("_")[1]
-        phil_file_tmp = append_suffix(f"{tmp_run_dir}/process_{run_num}", suffix) + ".phil"
-        phil_file_run = append_suffix(f'{run_dir}/process_{run_num}', suffix) + ".phil"
-
         mask_name = data.get('mask', 'mask.pickle').split("/")[-1]
         mask_name_run = os.path.join(run_dir, mask_name)
-        mask_name_tmp = os.path.join(tmp_run_dir, mask_name)
-
-        shutil.copy(phil_file_run, phil_file_tmp)
-        shutil.copy(mask_name_run, mask_name_tmp)
+        phil_file_run = append_suffix(f'{run_dir}/process_{run_num}', suffix) + ".phil"
+        
+        if 'temp_directory' in data:
+            phil_file_tmp = append_suffix(f"{tmp_run_dir}/process_{run_num}", suffix) + ".phil"
+            mask_name_tmp = os.path.join(tmp_run_dir, mask_name)
+            shutil.copy(phil_file_run, phil_file_tmp)
+            shutil.copy(mask_name_run, mask_name_tmp)
 
     except Exception as e:
         return str(e)
 
     # Copy inputs into the tmp dir
-    os.chdir(tmp_run_dir)
-    cmd = f"cp {data['input_files']} {tmp_run_dir}/"
-    res = subprocess.run(cmd, stdout=PIPE, stderr=PIPE,
-                         shell=True, executable='/bin/bash')
+    if 'temp_directory' in data:
+        os.chdir(tmp_run_dir)
+        cmd = f"cp {data['input_files']} {tmp_run_dir}/"
+        res = subprocess.run(cmd, stdout=PIPE, stderr=PIPE,
+                             shell=True, executable='/bin/bash')
 
-    os.chdir(tmp_process_dir)
+        os.chdir(tmp_process_dir)
+    else:
+        os.chdir(process_dir)
+
     file_end = data['input_range'].split("..")[-1]
     input_files = data['input_files'].replace(run_dir, tmp_run_dir)
     dials_directory = data['dials_directory']
