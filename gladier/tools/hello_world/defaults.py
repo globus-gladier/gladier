@@ -15,13 +15,9 @@ class HelloWorld(GladierDefaults):
                 'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
                 'Parameters': {
                     'tasks': [{
-                        'endpoint.$': '$.input.funcx_endpoint_id',
+                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
                         'func.$': '$.input.hello_world_funcx_id',
-                        'payload': {
-                            'data': {
-                                'message.$': '$.input.message',
-                            }
-                        }
+                        'payload.$': '$.input.message'
                     }]
                 },
                 'ResultPath': '$.HelloFuncXResult',
@@ -31,10 +27,94 @@ class HelloWorld(GladierDefaults):
         }
     }
 
+    required_input = [
+        'message',
+        'funcx_endpoint_non_compute'
+    ]
+
     flow_input = {
         'message': 'hello world',
+        # Shamelessly reuse the FuncX Tutorial Endpoint if it doesn't exist
+        'funcx_endpoint_non_compute': '4b116d3c-1703-4f8f-9f6f-39921e5864df'
     }
 
-    funcx_funcions = [
+    funcx_functions = [
+        hello_world,
+    ]
+
+
+class HelloConversation(GladierDefaults):
+
+    flow_definition = {
+        'Comment': 'Hello Gladier Automate Flow',
+        'StartAt': 'Greeting',
+        'States': {
+            'Greeting': {
+                'Comment': 'Say something to start the conversation',
+                'Type': 'Action',
+                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'Parameters': {
+                    'tasks': [{
+                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
+                        'func.$': '$.input.hello_world_funcx_id',
+                        'payload.$': '$.input.greeting'
+                    }]
+                },
+                'ResultPath': '$.GreetingResult',
+                'WaitTime': 300,
+                'Next': 'Conversation',
+            },
+            'Conversation': {
+                'Comment': 'Say something interesting',
+                'Type': 'Action',
+                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'Parameters': {
+                    'tasks': [{
+                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
+                        'func.$': '$.input.hello_world_funcx_id',
+                        'payload.$': '$.input.conversation'
+                    }]
+                },
+                'ResultPath': '$.ConversationResult',
+                'WaitTime': 300,
+                'Next': 'Goodbye',
+            },
+            'Goodbye': {
+                'Comment': 'Find a way to gracefully eject yourself from this encounter.',
+                'Type': 'Action',
+                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'Parameters': {
+                    'tasks': [{
+                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
+                        'func.$': '$.input.hello_world_funcx_id',
+                        'payload.$': '$.input.goodbye'
+                    }]
+                },
+                'ResultPath': '$.GoodbyeResult',
+                'WaitTime': 300,
+                'End': True,
+            },
+        }
+    }
+
+    required_input = [
+        'greeting',
+        'conversation',
+        'goodbye',
+        'funcx_endpoint_non_compute'
+    ]
+
+    flow_input = {
+        'greeting': 'How are you today?',
+        'conversation': 'The weather sure is nice today',
+        'goodbye': 'Talk to you later!',
+        # Shamelessly reuse the FuncX Tutorial Endpoint if it doesn't exist
+        'funcx_endpoint_non_compute': '4b116d3c-1703-4f8f-9f6f-39921e5864df'
+    }
+
+    funcx_functions = [
         hello_world,
     ]

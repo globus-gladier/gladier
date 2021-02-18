@@ -1,3 +1,3 @@
-from .defaults import HelloWorld
+from .defaults import HelloWorld, HelloConversation
 
-__all__ = ['HelloWorld']
+__all__ = ['HelloWorld', 'HelloConversation']

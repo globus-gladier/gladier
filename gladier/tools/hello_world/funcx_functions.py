@@ -1,6 +1,6 @@
 
 
-def hello_world(data):
-    if data.get('message'):
-        return data['message']
-    raise ValueError('Hello Errors!')
+def hello_world(message):
+    import time
+    time.sleep(1)
+    return message

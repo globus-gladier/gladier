@@ -1,7 +1,12 @@
 import os
 import logging
+import hashlib
+import re
+import json
+from collections.abc import Iterable
 
 import fair_research_login
+import globus_sdk
 import globus_automate_client
 from funcx import FuncXClient
 from funcx.serialize import FuncXSerializer
@@ -10,11 +15,15 @@ import gladier
 import gladier.config
 import gladier.dynamic_imports
 import gladier.exc
+import gladier.automate
+import gladier.version
 log = logging.getLogger(__name__)
 
 
 class GladierClient(object):
-    """The CfdeClient enables easily using the CFDE tools to ingest data."""
+    """The Gladier Client ties together commonly used funcx functions
+    and basic flows with auto-registration tools to make complex tasks
+    easy to automate."""
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
@@ -22,20 +31,65 @@ class GladierClient(object):
 
     def __init__(self, authorizers=None):
         self.__config = None
-        self.authorizers = authorizers
+        self.authorizers = authorizers or dict()
+        try:
+            if not self.authorizers:
+                log.debug('No authorizers provided, loading from disk.')
+                self.authorizers = self.get_native_client().get_authorizers_by_scope()
+        except fair_research_login.exc.LoadError:
+            log.debug('Load form disk failed, login will be required.')
         self.__flows_client = None
+        self.__tools = None
+
+    @staticmethod
+    def get_gladier_defaults_cls(import_string):
+        default_cls = gladier.dynamic_imports.import_string(import_string)
+        default_inst = default_cls()
+        if isinstance(default_inst, gladier.defaults.GladierDefaults):
+            return default_inst
+        raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
+                                          f'or a dotted import string ')
 
     @property
     def version(self):
-        return VERSION
+        return gladier.version.__version__
 
     @property
     def config(self):
-        if getattr(self, '__config', None) is not None:
+        if self.__config is not None:
             return self.__config
-        log.debug(f'Creating new Gladier Config: {self.config_filename}')
         self.__config = gladier.config.GladierConfig(filename=self.config_filename)
         return self.__config
+
+    @property
+    def gconfig(self):
+        return self.config[self.section]
+
+    @property
+    def section(self):
+        """Get the default section name for the config. The section name is derived
+        from the name of the user's flow_definition class turned snake case."""
+        name = self.__class__.__name__
+        # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
+        snake_name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        snake_name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', snake_name).lower()
+
+        if snake_name not in self.config.sections():
+            log.debug(f'Adding new section {snake_name}')
+            self.config[snake_name] = {}
+        return snake_name
+
+    @property
+    def tools(self):
+        if getattr(self, '__tools', None):
+            return self.__tools
+
+        if not getattr(self, 'gladier_tools', None) or not isinstance(self.gladier_tools, Iterable):
+            raise gladier.exc.ConfigException(
+                '"gladier_tools" must be a defined list of Gladier Tools. '
+                'Ex: ["gladier.tools.hello_world.HelloWorld"]')
+        self.__tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
+        return self.__tools
 
     def get_native_client(self):
         if getattr(self, 'client_id', None) is None:
@@ -50,13 +104,58 @@ class GladierClient(object):
                                                 app_name=self.app_name,
                                                 token_storage=secrets_cfg)
 
+    @property
+    def scopes(self):
+        gladier_scopes = list(globus_automate_client.flows_client.ALL_FLOW_SCOPES)
+        # Set to funcx_scope = FuncXClient.FUNCX_SCOPE in funcx==0.0.6
+        gladier_scopes.append('https://auth.globus.org/scopes/'
+                              'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all')
+        flow_scope = self.config[self.section].get('flow_scope')
+        if flow_scope:
+            gladier_scopes.append(flow_scope)
+        return gladier_scopes
+
+    @property
+    def missing_authorizers(self):
+        return [scope for scope in self.scopes if scope not in self.authorizers.keys()]
+
+    @property
+    def flows_client(self):
+        if getattr(self, '__flows_client', None) is not None:
+            return self.__flows_client
+        automate_authorizer = self.authorizers[
+            globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE
+        ]
+        flow_authorizer = None
+        if self.gconfig.get('flow_scope'):
+            flow_authorizer = self.authorizers.get(self.gconfig['flow_scope'])
+
+        def get_flow_authorizer(*args, **kwargs):
+            return flow_authorizer
+
+        self.__flows_client = globus_automate_client.FlowsClient.new_client(
+            self.client_id, get_flow_authorizer, automate_authorizer,
+        )
+        return self.__flows_client
+
+    @property
+    def funcx_client(self):
+        if getattr(self, '__funcx_client', None) is not None:
+            return self.__funcx_client
+
+        self.__funcx_client = FuncXClient()
+        return self.__funcx_client
+
     def login(self, **login_kwargs):
-        """Login to the cfde-submit client. This will ensure the user has the correct
+        """Login to the Gladier client. This will ensure the user has the correct
         tokens configured but it DOES NOT guarantee they are in the correct group to
         run a flow. Can be run both locally and on a server.
         See help(fair_research_login.NativeClient.login) for a full list of kwargs.
         """
         nc = self.get_native_client()
+        if self.is_logged_in():
+            log.debug('Already logged in, skipping login.')
+            return
         log.info("Initiating Native App Login...")
         log.debug(f"Requesting Scopes: {self.scopes}")
         login_kwargs["requested_scopes"] = login_kwargs.get("requested_scopes", self.scopes)
@@ -65,117 +164,206 @@ class GladierClient(object):
 
     def logout(self):
         """Log out and revoke this client's tokens. This object will no longer
-        be usable; to submit additional data or check the status of previous submissions,
-        you must create a new CfdeClient.
+        be usable.
         """
         if not self.client_id:
             raise gladier.exc.AuthException('Gladier client must be instantiated with a '
-                                    '"client_id" to use "login()!')
+                                            '"client_id" to use "login()!')
         self.__native_client.logout()
 
     def is_logged_in(self):
-        try:
-            return bool(self.authorizers)
-        except gladier.exc.NotLoggedIn:
-            return False
-
-    @property
-    def scopes(self):
-        gladier_scopes = list(globus_automate_client.flows_client.ALL_FLOW_SCOPES)
-        # Set to funcx_scope = FuncXClient.FUNCX_SCOPE in funcx==0.0.6
-        gladier_scopes.append('https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all')
-        flow_scope = self.config['DEFAULT'].get('flow_scope')
-        if flow_scope:
-            gladier_scopes.append(flow_scope)
-        return gladier_scopes
-
-    @property
-    def flows_client(self):
-        if getattr(self, '__flows_client', None) is not None:
-            return self.__flows_client
-        automate_authorizer = self.authorizers[globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE]
-
-        def get_flow_authorizer(*args, **kwargs):
-            return automate_authorizer
-
-        self.__flows_client = globus_automate_client.FlowsClient.new_client(
-            self.client_id, get_flow_authorizer, automate_authorizer,
-        )
-        return self.__flows_client
-
-    def get_gladier_defaults(self, import_string):
-        default_cls = gladier.dynamic_imports.import_string(self.flow_definition)
-        default_inst = default_cls()
-        if isinstance(default_inst, gladier.defaults.GladierDefaults):
-            return default_inst
-        raise gladier.exc.ConfigException(f'"{import_string}" must be a dict or a dotted import string ')
+        return not bool(self.missing_authorizers)
 
     def get_flow_definition(self):
-        if getattr(self, 'flow_definition', None):
-            raise gladier.exc.ConfigException(f'"flow_definition" was not set on {foo.__class__.__name__}')
+        if not getattr(self, 'flow_definition', None):
+            raise gladier.exc.ConfigException(f'"flow_definition" was not set on '
+                                              f'{self.__class__.__name__}')
 
         if isinstance(self.flow_definition, dict):
             return self.flow_definition
-        elif isinstance(flow_def, str):
-            return self.get_gladier_defaults(self.flow_definition).flow_definition
-        raise gladier.exc.ConfigException(f'"flow_definition" must be a dict or an import string '
-                                  f'to a sub-class of type '
-                                  f'"gladier.defaults.GladierDefaults"')
+        elif isinstance(self.flow_definition, str):
+            return self.get_gladier_defaults_cls(self.flow_definition).flow_definition
+        raise gladier.exc.ConfigException('"flow_definition" must be a dict or an import string '
+                                          'to a sub-class of type '
+                                          '"gladier.defaults.GladierDefaults"')
 
-    def register_funcx_functions(self, functions):
-        """Register the functions with funcx and store their ids"""
+    def get_flow_checksum(self):
+        return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
+
+    @staticmethod
+    def get_funcx_function_name(funcx_function):
+        return f'{funcx_function.__name__}_funcx_id'
+
+    @staticmethod
+    def get_funcx_function_checksum(funcx_function):
         fxs = FuncXSerializer()
-        registered_functions = {}
-        for func in functions:
-            fname, fserialized = f'{func.__name__}_funcx_id', fxs.serialize(func)
-            fchecksum = hashlib.sha256(fserialized.encode()).hexdigest()
-            if self.config.get(f'{fname}_checksum') != fchecksum or not self.config.get(fname):
-                log.info(f'Re-registering function {fname}')
-                self.config['DEFAULT'][fname] = self.fxc.register_function(func, func.__doc__)
-                self.config['DEFAULT'][f'{fname}_checksum'] = fchecksum
-                self.config.save()
-            registered_functions[fname] = self.config['DEFAULT'][fname]
-        return registered_functions
+        serialized_func = fxs.serialize(funcx_function).encode()
+        return hashlib.sha256(serialized_func).hexdigest()
 
-    def check_flow(self, flow_id, register=True):
+    @classmethod
+    def get_funcx_function_checksum_name(cls, funcx_function):
+        return f'{cls.get_funcx_function_name(funcx_function)}_checksum'
+
+    def get_funcx_function_ids(self, register=True):
+        """Get all funcx function ids for this run, registering them if there are no ids
+        stored in the local Gladier config file OR the stored function id checksums do
+        not match the actual functions provided on each of the Gladier tools. If register
+        is False, no changes to the config will be made and exceptions will be raised instead.
+
+        Returns a dict of function ids where keys are names and values are funcX function ids."""
+        funcx_ids = dict()
+        for tool in self.tools:
+            log.debug(f'Checking functions for {tool}')
+            funcx_funcs = getattr(tool, 'funcx_functions', [])
+            if not funcx_funcs:
+                log.warning(f'Tool {tool} did not define any funcX functions!')
+            if not funcx_funcs and not isinstance(funcx_funcs, Iterable):
+                raise gladier.exc.DeveloperException(
+                    f'Attribute "funcx_functions" on {tool} needs to be an iterable! Found '
+                    f'{type(funcx_funcs)}')
+
+            for func in funcx_funcs:
+                fid_name = self.get_funcx_function_name(func)
+                checksum = self.get_funcx_function_checksum(func)
+                checksum_name = self.get_funcx_function_checksum_name(func)
+                try:
+                    if not self.gconfig.get(fid_name):
+                        raise gladier.exc.RegistrationException(
+                            f'Tool {tool} missing funcx registration for {fid_name}')
+                    if not self.gconfig.get(checksum_name):
+                        raise gladier.exc.RegistrationException(
+                            f'Tool {tool} with function {fid_name} '
+                            f'has a function id but no checksum!')
+                    if not self.gconfig[checksum_name] == checksum:
+                        raise gladier.exc.FunctionObsolete(
+                            f'Tool {tool} with function {fid_name} '
+                            f'has changed and needs to be re-registered.')
+                    funcx_ids[fid_name] = self.gconfig[fid_name]
+                except (gladier.exc.RegistrationException, gladier.exc.FunctionObsolete):
+                    if register is True:
+                        log.info(f'Registering function {fid_name}')
+                        self.register_funcx_function(func)
+                        funcx_ids[fid_name] = self.gconfig[fid_name]
+                    else:
+                        raise
+        return funcx_ids
+
+    def register_funcx_function(self, function):
+        """Register the functions with funcx and store their ids"""
+        fxid_name = self.get_funcx_function_name(function)
+        fxck_name = self.get_funcx_function_checksum_name(function)
+        self.gconfig[fxid_name] = self.funcx_client.register_function(function, function.__doc__)
+        self.gconfig[self.get_funcx_function_checksum(function)] = fxck_name
+        self.config.save()
+
+    def get_flow_id(self, auto_register=True):
         """Register the automate flow and store its id and scope"""
-        fc = self.flows_client()
+        flow_id, flow_scope = self.gconfig.get('flow_id'), self.gconfig.get('flow_scope')
+        if not flow_id or not flow_scope:
+            if auto_register is False:
+                raise gladier.exc.NoFlowRegistered(
+                    f'No flow registered for {self.config_filename} under section {self.gsection}')
+            return self.register_flow()
+
+        if self.gconfig.get('flow_checksum') != self.get_flow_checksum():
+            if auto_register is False:
+                raise gladier.exc.FlowObsolete(
+                    f'"flow_definition" on {self} has changed and needs to be re-registered.')
+            self.register_flow()
+            flow_id = self.gconfig['flow_id']
+        return flow_id
+
+    def register_flow(self):
+        flow_id = self.gconfig.get('flow_id')
         flow_definition = self.get_flow_definition()
-        flow_checksum = hashlib.sha256(json.dumps(flow_definition).encode()).hexdigest()
-
-        if flow_id and self.config.get('automate_scope'):
-            if self.config.get('automate_flow_checksum') == flow_checksum:
-                log.debug('Flow Checksum matches, using existing flow.')
-                return
-
         if flow_id:
             try:
                 log.info(f'Flow checksum failed, updating flow {flow_id}...')
-                fc.update_flow(flow_id, flow_definition)
+                self.flows_client.update_flow(flow_id, flow_definition)
+                self.gconfig['flow_checksum'] = self.get_flow_checksum()
+                self.config.save()
             except globus_sdk.exc.GlobusAPIError as gapie:
                 if gapie.code == 'Not Found':
                     flow_id = None
+                else:
+                    raise
         if flow_id is None:
             log.info('No flow detected, deploying new flow...')
-            flow = fc.deploy_flow(flow_definition, title="XPCS Flow")
-            self.config['DEFAULT']['automate_flowid'] = flow['id']
-            self.config['DEFAULT']['automate_scope'] = flow['globus_auth_scope']
-        self.config['DEFAULT']['automate_flow_checksum'] = flow_checksum
-        self.config.save()
+            title = f'{self.__class__.__name__} Flow'
+            flow = self.flows_client.deploy_flow(flow_definition, title=title)
+            self.gconfig['flow_id'] = flow['id']
+            self.gconfig['flow_scope'] = flow['globus_auth_scope']
+            self.gconfig['flow_checksum'] = self.get_flow_checksum()
+            self.config.save()
+        return flow_id
 
-    def get_input(self, register=True):
-        if getattr(self, 'tools', None) is None:
-            raise gladier.exc.ConfigException('"tools" must be a list of Gladier Tools')
-        flow_input = {}
-        for import_string in self.tools:
-            defaults = self.get_gladier_defaults(import_string)
-            flow_input.update(self.register_funcx_functions(defaults.funcx_functions))
-            flow_input.update(defaults.flow_input)
-        return flow_input
+    def get_input(self):
+        flow_input = self.get_funcx_function_ids()
+        for tool in self.tools:
+            # conflicts = set(flow_input.keys()).intersection(set(tool.flow_input))
+            # if conflicts:
+            #     for prev_tools in tools:
+            #         for r in prev_tools.flow_input:
+            #             if set(flow_input.keys()).intersection(set(tool.flow_input)):
+            #                 raise gladier.exc.ConfigException(
+            #                   f'Conflict: Tools {tool} and {prev_tool} 'both define {r}')
+            flow_input.update(tool.flow_input)
+            config_values = {k: self.gconfig[k] for k in tool.flow_input.keys()
+                             if k in self.gconfig}
+            if config_values:
+                log.info(f'{tool}: Loaded from local config {config_values}')
+            self.check_input(tool, flow_input)
+        return {'input': flow_input}
 
-    def start_flow(self, flow_input=None):
-        combine_flow_input = self.get_input()
-        combine_flow_input.update(flow_input or dict())
-        return self.flows_client.run_flow(self.config['DEFAULT']['automate_flowid'],
-                                          self.config['DEFAULT']['automate_scope'],
+    def check_input(self, tool, flow_input):
+        for req_input in tool.required_input:
+            if req_input not in flow_input:
+                raise gladier.exc.ConfigException(
+                    f'{tool} requires flow input value: "{req_input}"')
+
+    def start_flow(self, flow_input=None, use_defaults=True):
+        combine_flow_input = self.get_input() if use_defaults else dict()
+        if flow_input is not None:
+            if not flow_input.get('input') or len(flow_input.keys()) != 1:
+                raise gladier.exc.ConfigException(
+                    f'Malformed input to flow, all input must be nested under "input", got '
+                    f'{flow_input.keys()}')
+            combine_flow_input['input'].update(flow_input['input'])
+        if not self.is_logged_in():
+            raise gladier.exc.AuthException(f'Not Logged in, missing scopes '
+                                            f'{self.missing_authorizers}')
+        flow = self.flows_client.run_flow(self.get_flow_id(), self.gconfig['flow_scope'],
                                           combine_flow_input).data
+        log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
+                 f'"{flow["action_id"]}"')
+        if flow['status'] == 'FAILED':
+            raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
+        return flow
+
+    def get_status(self, action_id):
+        try:
+            status = self.flows_client.flow_action_status(self.get_flow_id(),
+                                                          self.gconfig['flow_scope'],
+                                                          action_id).data
+        except KeyError:
+            raise gladier.exc.ConfigException('No Flow defined, register a flow')
+
+        try:
+            return gladier.automate.get_details(status)
+        except KeyError:
+            return status
+
+    @staticmethod
+    def _default_progress_callback(response):
+        if response['status'] == 'ACTIVE':
+            print(f'[{response["status"]}]: {response["details"]["description"]}')
+
+    def progress(self, action_id, callback=None):
+        callback = callback or self._default_progress_callback
+        status = self.get_status(action_id)
+        while status['status'] not in ['SUCCEEDED', 'FAILED']:
+            status = self.get_status(action_id)
+            callback(status)
+
+    def get_details(self, action_id, state_name):
+        return gladier.automate.get_details(self.get_status(action_id), state_name)
