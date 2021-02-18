@@ -29,17 +29,24 @@ class GladierClient(object):
     app_name = 'gladier_client'
     client_id = None
 
-    def __init__(self, authorizers=None):
+    def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         self.__config = None
+        self.__flows_client = None
+        self.__tools = None
         self.authorizers = authorizers or dict()
+        self.auto_login = auto_login
+        self.auto_registration = auto_registration
+        if authorizers and auto_login:
+            log.warning('Authorizers provided when "auto_login=True", you probably want to set '
+                        'auto_login=False if you are providing your own authorizers...')
         try:
             if not self.authorizers:
                 log.debug('No authorizers provided, loading from disk.')
                 self.authorizers = self.get_native_client().get_authorizers_by_scope()
         except fair_research_login.exc.LoadError:
             log.debug('Load form disk failed, login will be required.')
-        self.__flows_client = None
-        self.__tools = None
+        if self.auto_login and not self.is_logged_in():
+            self.login()
 
     @staticmethod
     def get_gladier_defaults_cls(import_string):
@@ -169,7 +176,8 @@ class GladierClient(object):
         if not self.client_id:
             raise gladier.exc.AuthException('Gladier client must be instantiated with a '
                                             '"client_id" to use "login()!')
-        self.__native_client.logout()
+        log.info(f'Revoking the following scopes: {self.scopes}')
+        self.get_native_client().logout()
 
     def is_logged_in(self):
         return not bool(self.missing_authorizers)
@@ -204,7 +212,7 @@ class GladierClient(object):
     def get_funcx_function_checksum_name(cls, funcx_function):
         return f'{cls.get_funcx_function_name(funcx_function)}_checksum'
 
-    def get_funcx_function_ids(self, register=True):
+    def get_funcx_function_ids(self):
         """Get all funcx function ids for this run, registering them if there are no ids
         stored in the local Gladier config file OR the stored function id checksums do
         not match the actual functions provided on each of the Gladier tools. If register
@@ -240,7 +248,7 @@ class GladierClient(object):
                             f'has changed and needs to be re-registered.')
                     funcx_ids[fid_name] = self.gconfig[fid_name]
                 except (gladier.exc.RegistrationException, gladier.exc.FunctionObsolete):
-                    if register is True:
+                    if self.auto_registration is True:
                         log.info(f'Registering function {fid_name}')
                         self.register_funcx_function(func)
                         funcx_ids[fid_name] = self.gconfig[fid_name]
@@ -253,20 +261,19 @@ class GladierClient(object):
         fxid_name = self.get_funcx_function_name(function)
         fxck_name = self.get_funcx_function_checksum_name(function)
         self.gconfig[fxid_name] = self.funcx_client.register_function(function, function.__doc__)
-        self.gconfig[self.get_funcx_function_checksum(function)] = fxck_name
+        self.gconfig[fxck_name] = self.get_funcx_function_checksum(function)
         self.config.save()
 
-    def get_flow_id(self, auto_register=True):
+    def get_flow_id(self):
         """Register the automate flow and store its id and scope"""
         flow_id, flow_scope = self.gconfig.get('flow_id'), self.gconfig.get('flow_scope')
         if not flow_id or not flow_scope:
-            if auto_register is False:
+            if self.auto_registration is False:
                 raise gladier.exc.NoFlowRegistered(
                     f'No flow registered for {self.config_filename} under section {self.gsection}')
-            return self.register_flow()
-
-        if self.gconfig.get('flow_checksum') != self.get_flow_checksum():
-            if auto_register is False:
+            flow_id = self.register_flow()
+        elif self.gconfig.get('flow_checksum') != self.get_flow_checksum():
+            if self.auto_registration is False:
                 raise gladier.exc.FlowObsolete(
                     f'"flow_definition" on {self} has changed and needs to be re-registered.')
             self.register_flow()
@@ -295,6 +302,7 @@ class GladierClient(object):
             self.gconfig['flow_scope'] = flow['globus_auth_scope']
             self.gconfig['flow_checksum'] = self.get_flow_checksum()
             self.config.save()
+            flow_id = self.gconfig['flow_id']
         return flow_id
 
     def get_input(self):
@@ -312,12 +320,11 @@ class GladierClient(object):
                              if k in self.gconfig}
             if config_values:
                 log.info(f'{tool}: Loaded from local config {config_values}')
-            self.check_input(tool, flow_input)
         return {'input': flow_input}
 
     def check_input(self, tool, flow_input):
         for req_input in tool.required_input:
-            if req_input not in flow_input:
+            if req_input not in flow_input['input']:
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
@@ -329,10 +336,23 @@ class GladierClient(object):
                     f'Malformed input to flow, all input must be nested under "input", got '
                     f'{flow_input.keys()}')
             combine_flow_input['input'].update(flow_input['input'])
+        for tool in self.tools:
+            self.check_input(tool, combine_flow_input)
         if not self.is_logged_in():
             raise gladier.exc.AuthException(f'Not Logged in, missing scopes '
                                             f'{self.missing_authorizers}')
-        flow = self.flows_client.run_flow(self.get_flow_id(), self.gconfig['flow_scope'],
+        # When registering a flow for the first time, a special flow scope needs to be authorized
+        # before the flow can begin. On first time runs, this requires an additional login.
+        flow_id = self.get_flow_id()
+        if not self.is_logged_in():
+            log.info(f'Missing authorizers: {self.missing_authorizers}, need additional login '
+                     f'to start flow.')
+            if self.auto_login is True:
+                self.login()
+            else:
+                raise gladier.exc.AuthException(
+                    f'Need {self.missing_authorizers} to start flow!', self.missing_authorizers)
+        flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
                                           combine_flow_input).data
         log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')

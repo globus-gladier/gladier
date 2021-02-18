@@ -6,9 +6,9 @@ log = logging.getLogger(__name__)
 
 class GladierConfig(configparser.ConfigParser):
 
-    def __init__(self, filename, section=None):
+    def __init__(self, filename, section='default'):
         super().__init__()
-        self.section = section or self.DEFAULT_SECTION
+        self.section = section
         self.filename = filename
         self.read(self.filename)
 

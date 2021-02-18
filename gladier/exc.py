@@ -7,7 +7,9 @@ class GladierException(Exception):
 
 class AuthException(GladierException):
     """There was a problem with Globus Auth"""
-    pass
+    def __init__(self, message, missing_scopes=tuple()):
+        self.missing_scopes = missing_scopes
+        super().__init__(message)
 
 
 class ConfigException(GladierException):
@@ -22,14 +24,16 @@ class DevelopmentException(GladierException):
 
 class RegistrationException(ConfigException):
     """Something needs to be registered"""
-    pass
+    def __init__(self, message, items=tuple()):
+        self.items = items
+        super().__init__(message)
 
 
 class NoFlowRegistered(RegistrationException):
     pass
 
 
-class ObsoleteException(GladierException):
+class ObsoleteException(RegistrationException):
     """A funcx function or flow has local changes not reflected
     in the currently registered id"""
     pass

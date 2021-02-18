@@ -1,6 +1,14 @@
 
 
 def hello_world(message):
-    import time
-    time.sleep(1)
     return message
+
+
+def hello_pause(data):
+    import time
+    time.sleep(data['delay'])
+    return data['message']
+
+
+def hello_exception(message):
+    raise Exception(message)

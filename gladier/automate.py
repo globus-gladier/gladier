@@ -24,7 +24,7 @@ def is_funcx_response(state_output):
 
 def get_details(response, state_name=None):
     if state_name and is_automate_response(response['details']['output'].get(state_name)):
-        return response['details']['output']['state_name']
+        return response['details']['output'][state_name]
 
     if is_funcx_response(response['details']['output'].get(state_name)):
         resp = response['details']['output'][state_name]
