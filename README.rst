@@ -1,5 +1,5 @@
 Gladier: The Globus Architecture for Data-Intensive Experimental Research.
-=======
+==========================================================================
 |docs|
 
 .. |docs| image:: https://readthedocs.org/projects/gladier/badge/?version=latest
