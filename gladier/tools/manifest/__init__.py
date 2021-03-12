@@ -1,3 +1,3 @@
-from .defaults import ManifestTutorial
+from .defaults import ManifestTransfer, ManifestToFuncXTasks
 
-__all__ = ['ManifestTutorial']
+__all__ = ['ManifestTransfer', 'ManifestToFuncXTasks']

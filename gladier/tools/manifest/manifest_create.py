@@ -1,5 +1,5 @@
 import requests
-from fair_research_login import NativeClient
+from fair_research_login import NativeClient  # pip install fair-research-login
 
 url = 'https://develop.concierge.nick.globuscs.info/api/manifest/remote_file_manifest/'
 scope = 'https://auth.globus.org/scopes/524361f2-e4a9-4bd0-a3a6-03e365cac8a9/concierge'
