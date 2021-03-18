@@ -129,7 +129,7 @@ class HelloConversation(GladierBaseTool):
     ]
 
 
-class HelloException(GladierDefaults):
+class HelloException(GladierBaseTool):
 
     flow_definition = {
         'Comment': "Hello Gladier Automate Flow Exception. This flow isn't much for conversation",
