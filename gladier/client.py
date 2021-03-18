@@ -20,7 +20,7 @@ import gladier.version
 log = logging.getLogger(__name__)
 
 
-class GladierClient(object):
+class GladierBaseClient(object):
     """The Gladier Client ties together commonly used funcx functions
     and basic flows with auto-registration tools to make complex tasks
     easy to automate."""
@@ -67,14 +67,14 @@ class GladierClient(object):
     @staticmethod
     def get_gladier_defaults_cls(import_string):
         """
-        Load a Gladier default class (gladier.defaults.GladierDefaults) by import string. For
+        Load a Gladier default class (gladier.defaults.GladierDefaultTool) by import string. For
         Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
 
         :returns gladier.defaults.GladierDefaults
         """
-        default_cls = gladier.dynamic_imports.import_string(import_string)
+        default_cls = gladier.utils.dynamic_imports.import_string(import_string)
         default_inst = default_cls()
-        if isinstance(default_inst, gladier.defaults.GladierDefaults):
+        if isinstance(default_inst, gladier.base.GladierBaseTool):
             return default_inst
         raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
                                           f'or a dotted import string ')
@@ -145,22 +145,6 @@ class GladierClient(object):
         self.__containers = [c for c in self.containers]
         return self.__containers
 
-    def get_native_client(self):
-        """
-        :returns an instance of fair_research_login.NativeClient
-        """
-        if getattr(self, 'client_id', None) is None:
-            raise gladier.exc.AuthException(
-                'Gladier client must be instantiated with a '
-                '"client_id" to use "login()!'
-            )
-        secrets_cfg = fair_research_login.ConfigParserTokenStorage(
-            filename=self.secret_config_filename
-        )
-        return fair_research_login.NativeClient(client_id=self.client_id,
-                                                app_name=self.app_name,
-                                                token_storage=secrets_cfg)
-
     @property
     def scopes(self):
         """
@@ -218,6 +202,22 @@ class GladierClient(object):
 
         self.__funcx_client = FuncXClient()
         return self.__funcx_client
+
+    def get_native_client(self):
+        """
+        :returns an instance of fair_research_login.NativeClient
+        """
+        if getattr(self, 'client_id', None) is None:
+            raise gladier.exc.AuthException(
+                'Gladier client must be instantiated with a '
+                '"client_id" to use "login()!'
+            )
+        secrets_cfg = fair_research_login.ConfigParserTokenStorage(
+            filename=self.secret_config_filename
+        )
+        return fair_research_login.NativeClient(client_id=self.client_id,
+                                                app_name=self.app_name,
+                                                token_storage=secrets_cfg)
 
     def login(self, **login_kwargs):
         """Login to the Gladier client. This will ensure the user has the correct
@@ -425,7 +425,7 @@ class GladierClient(object):
         local filesystem, the file will always need to be provided by the user when calling
         run_flow().
 
-        Defaults rely on GladierDefaults.flow_input defined separately for each tool.
+        Defaults rely on GladierBaseTool.flow_input defined separately for each tool.
 
         :raises
         :returns input for a flow wrapped in an 'input' dict. For example:
@@ -531,7 +531,7 @@ class GladierClient(object):
             raise gladier.exc.ConfigException('No Flow defined, register a flow')
 
         try:
-            return gladier.automate.get_details(status)
+            return gladier.utils.automate.get_details(status)
         except KeyError:
             return status
 

@@ -1,16 +1,23 @@
-from os.path import dirname, basename, isfile, join
-from inspect import getmembers, isfunction
+from inspect import getmembers, isclass
 import importlib
-import glob
 import logging
 
 # https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library  # noqa
 logging.getLogger("gladier").addHandler(logging.NullHandler())
 
-funcs=[]
-base_mod = importlib.import_module('gladier.base')
-mod_functions = getmembers(base_mod, isfunction)
-for f in mod_functions:
-    funcs.append(+f[0])
 
-__all__ = funcs
+from gladier.base import * 
+
+## Dynamic import GladierBase*
+base_mod = importlib.import_module('gladier.base')
+base_classes = getmembers(base_mod, isclass)
+
+__all__=[]
+
+for k in base_classes:
+    __all__.append(k[0])
+
+
+print("Starting Gladier Library with following GladierBaseClasses")
+print(__all__)
+
