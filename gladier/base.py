@@ -13,9 +13,7 @@ class GladierBaseTool(object):
     flows, funcx-functions, and default inputs for starting a flow."""
 
     flow_definition = None
-
     required_input = []
-    
     funcx_endpoints = dict()
     funcx_functions = []
 
