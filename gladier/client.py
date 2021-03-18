@@ -13,9 +13,9 @@ from funcx.serialize import FuncXSerializer
 
 import gladier
 import gladier.config
-import gladier.dynamic_imports
 import gladier.exc
-import gladier.automate
+import gladier.utils.dynamic_imports
+import gladier.utils.automate
 import gladier.version
 log = logging.getLogger(__name__)
 
