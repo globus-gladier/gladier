@@ -4,7 +4,6 @@ import logging
 logging.getLogger("gladier").addHandler(logging.NullHandler())
 
 from .client import GladierClient
-from .defaults import GladierDefaults as GladierFunction
-from .defaults import GladierDefaults
+from .base import GladierBaseTool
 
-__all__ = [GladierClient,GladierDefaults, GladierFunction]
+__all__ = [GladierClient, GladierBaseTool]
