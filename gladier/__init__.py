@@ -8,7 +8,7 @@ import logging
 logging.getLogger("gladier").addHandler(logging.NullHandler())
 
 funcs=[]
-base_mod = importlib.import_module('.base')
+base_mod = importlib.import_module('gladier.base')
 mod_functions = getmembers(base_mod, isfunction)
 for f in mod_functions:
     funcs.append(+f[0])
