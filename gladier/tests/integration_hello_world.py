@@ -5,12 +5,12 @@ Run with pytest -xvv integration_hello_world.py
 """
 
 import gladier.tests  # noqa -- Ensures logging is enabled
-from gladier.client import GladierClient
+from gladier import GladierBaseClient
 
 
 def test_hello_gladier():
 
-    class HelloGladier(GladierClient):
+    class HelloGladier(GladierBaseClient):
         client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
         gladier_tools = [
             'gladier.tools.hello_world.HelloWorld',
@@ -26,7 +26,7 @@ def test_hello_gladier():
 
 
 def test_hello_conversation():
-    class HelloConversation(GladierClient):
+    class HelloConversation(GladierBaseClient):
         client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
         gladier_tools = [
             'gladier.tools.hello_world.HelloConversation',
@@ -42,7 +42,7 @@ def test_hello_conversation():
 
 
 def test_hello_exception():
-    class HelloException(GladierClient):
+    class HelloException(GladierBaseClient):
         client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
         gladier_tools = [
             'gladier.tools.hello_world.HelloException',
