@@ -47,3 +47,38 @@ def deserialize_exception(encoded_exc):
         FuncXSerializer().deserialize(encoded_exc).reraise()
     except Exception:
         return traceback.format_exc()
+
+def find_min_args(flow_def):
+    import re
+
+    regex = r"\'\$\.(\w+)\.(\w+)\'"
+    rep = re.compile(regex)
+
+    flow_str = str(flow_def)
+        
+    matches = rep.finditer(flow_str)
+
+    args = {}
+    for k, match in enumerate(matches):
+        args.setdefault(match.group(1),{})
+        args[match.group(1)][match.group(2)] = ''
+    return args
+
+
+def sort_keys(data):
+    keys=[]
+    for k in data.keys():
+        for l in data[k].keys():
+            keys.append(k+'.'+l)
+    return sorted(keys)
+
+def check_payload(min_data, payload):
+    data_keys = sort_keys(payload)
+    min_data_keys = sort_keys(min_data)
+
+    missing_keys=[]
+    for k in min_data_keys:
+        if k not in data_keys:
+            print('$.'+k, ' is missing on payload!')
+            missing_keys.append(k)
+    return sorted(missing_keys)

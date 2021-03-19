@@ -461,6 +461,16 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
+    def flow_min_input(self):
+        flow_definition = self.get_flow_definition()
+        return gladier.utils.automate.find_min_args(flow_definition)
+
+    def check_payload(self, flow_input):
+        #self_funcx = {'input' : self.get_funcx_function_ids()}
+        #flow_input.update(self_funcx)
+        min_data = self.flow_min_input()
+        return gladier.utils.automate.check_payload(min_data, flow_input)
+
     def run_flow(self, flow_input=None, use_defaults=True):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
