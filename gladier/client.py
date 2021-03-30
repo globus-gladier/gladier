@@ -511,7 +511,7 @@ class GladierClient(object):
 
         try:
             return gladier.automate.get_details(status)
-        except KeyError:
+        except (KeyError, AttributeError):
             return status
 
     @staticmethod
