@@ -10,6 +10,12 @@ class GladierBaseTool(object):
     funcx_endpoints = dict()
     funcx_functions = []
 
+    def check_endpoints(self):
+        pass
+
+    def check_globus(self):
+        pass
+
 
 class GladierBaseContainer(object):
 
@@ -18,3 +24,5 @@ class GladierBaseContainer(object):
     container_location = None
     container_flags = None
 
+    def check_existance(self):
+        pass

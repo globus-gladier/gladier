@@ -12,6 +12,11 @@ class GladierConfig(configparser.ConfigParser):
         self.filename = filename
         self.read(self.filename)
 
+    def read(self):
+        with open(self.filename, 'w') as configfile:
+            return self.read(configfile)
+
+
     def save(self):
         with open(self.filename, 'w') as configfile:
             self.write(configfile)

@@ -27,7 +27,7 @@ class GladierBaseClient(object):
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
-    client_id = None
+    client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         """
@@ -46,6 +46,7 @@ class GladierBaseClient(object):
         self.__config = None
         self.__flows_client = None
         self.__tools = None
+        self.__endpoints = None
         self.__containers = None
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
@@ -64,20 +65,6 @@ class GladierBaseClient(object):
         if self.auto_login and not self.is_logged_in():
             self.login()
 
-    @staticmethod
-    def get_gladier_defaults_cls(import_string):
-        """
-        Load a Gladier default class (gladier.defaults.GladierDefaultTool) by import string. For
-        Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
-
-        :returns gladier.defaults.GladierDefaults
-        """
-        default_cls = gladier.utils.dynamic_imports.import_string(import_string)
-        default_inst = default_cls()
-        if isinstance(default_inst, gladier.base.GladierBaseTool):
-            return default_inst
-        raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
-                                          f'or a dotted import string ')
 
     @property
     def version(self):
@@ -203,6 +190,7 @@ class GladierBaseClient(object):
         self.__funcx_client = FuncXClient()
         return self.__funcx_client
 
+
     def get_native_client(self):
         """
         :returns an instance of fair_research_login.NativeClient
@@ -275,6 +263,24 @@ class GladierBaseClient(object):
         :returns sha256 hex string of flow definition
         """
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
+    
+    @staticmethod
+    def get_gladier_defaults_cls(gladier_tool):
+        """
+        Load a Gladier default class (gladier.defaults.GladierDefaultTool) by import string. For
+        Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
+
+        :returns gladier.defaults.GladierDefaults
+        """
+        if isinstance(gladier_tool, str):
+            default_inst = gladier.utils.dynamic_imports.import_string(gladier_tool)
+        else:
+            default_inst = gladier_tool
+
+        if isinstance(default_inst, gladier.GladierBaseTool):
+            return default_inst
+        raise gladier.exc.ConfigException(f'"{gladier_tool}" must be GladierBaseTool '
+                                          f'or a dotted import string ')
 
     @staticmethod
     def get_funcx_function_name(funcx_function):
@@ -295,6 +301,10 @@ class GladierBaseClient(object):
         fxs = FuncXSerializer()
         serialized_func = fxs.serialize(funcx_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
+    
+    @staticmethod
+    def get_container_name(container):
+        return f'{container.__name__}_id'
 
     @classmethod
     def get_funcx_function_checksum_name(cls, funcx_function):
@@ -352,9 +362,6 @@ class GladierBaseClient(object):
                         raise
         return funcx_ids
 
-    @staticmethod
-    def get_container_name(container):
-        return f'{container.__name__}_id'
 
     def register_funcx_function(self, function, container=''):
         """Register the functions with funcx. Ids are saved in the local gladier.cfg"""
