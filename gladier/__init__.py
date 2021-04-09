@@ -8,14 +8,9 @@ logging.getLogger("gladier").addHandler(logging.NullHandler())
 
 from gladier.base import * 
 
-## Dynamic import GladierBase*
-base_mod = importlib.import_module('gladier.base')
-base_classes = getmembers(base_mod, isclass)
 
-__all__=[]
+__all__=['GladierBaseClient','GladierBaseTool','GladierBaseContainer']
 
-for k in base_classes:
-    __all__.append(k[0])
 
 
 print("Starting Gladier Library with following GladierBaseClasses")
