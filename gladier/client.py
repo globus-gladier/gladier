@@ -13,21 +13,21 @@ from funcx.serialize import FuncXSerializer
 
 import gladier
 import gladier.config
-import gladier.dynamic_imports
+import gladier.utils.dynamic_imports
+import gladier.utils.automate
 import gladier.exc
-import gladier.automate
 import gladier.version
 log = logging.getLogger(__name__)
 
 
-class GladierClient(object):
+class GladierBaseClient(object):
     """The Gladier Client ties together commonly used funcx functions
     and basic flows with auto-registration tools to make complex tasks
     easy to automate."""
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
-    client_id = None
+    client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         """
@@ -46,6 +46,7 @@ class GladierClient(object):
         self.__config = None
         self.__flows_client = None
         self.__tools = None
+        self.__endpoints = None
         self.__containers = None
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
@@ -531,7 +532,7 @@ class GladierClient(object):
             raise gladier.exc.ConfigException('No Flow defined, register a flow')
 
         try:
-            return gladier.automate.get_details(status)
+            return gladier.utils.automate.get_details(status)
         except (KeyError, AttributeError):
             return status
 
