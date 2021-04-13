@@ -13,21 +13,21 @@ from funcx.serialize import FuncXSerializer
 
 import gladier
 import gladier.config
-import gladier.dynamic_imports
+import gladier.utils.dynamic_imports
+import gladier.utils.automate
 import gladier.exc
-import gladier.automate
 import gladier.version
 log = logging.getLogger(__name__)
 
 
-class GladierClient(object):
+class GladierBaseClient(object):
     """The Gladier Client ties together commonly used funcx functions
     and basic flows with auto-registration tools to make complex tasks
     easy to automate."""
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
-    client_id = None
+    client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         """
@@ -59,7 +59,7 @@ class GladierClient(object):
                 log.debug('No authorizers provided, loading from disk.')
                 self.authorizers = self.get_native_client().get_authorizers_by_scope()
         except fair_research_login.exc.LoadError:
-            log.debug('Load form disk failed, login will be required.')
+            log.debug('Load from disk failed, login will be required.')
         if self.auto_login and not self.is_logged_in():
             self.login()
 
@@ -129,6 +129,7 @@ class GladierClient(object):
                 'Ex: ["gladier.tools.hello_world.HelloWorld"]')
         self.__tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
         return self.__tools
+
 
     def get_native_client(self):
         """
@@ -485,7 +486,7 @@ class GladierClient(object):
             else:
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to start flow!', self.missing_authorizers)
-        flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
+        flow = self.flows_client.start_flow(flow_id, self.gconfig['flow_scope'],
                                           combine_flow_input).data
         log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
@@ -510,7 +511,7 @@ class GladierClient(object):
             raise gladier.exc.ConfigException('No Flow defined, register a flow')
 
         try:
-            return gladier.automate.get_details(status)
+            return gladier.utils.automate.get_details(status)
         except (KeyError, AttributeError):
             return status
 

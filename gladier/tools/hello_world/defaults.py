@@ -1,8 +1,8 @@
-from gladier.defaults import GladierDefaults
+from gladier import GladierBaseTool
 from .funcx_functions import hello_world, hello_pause, hello_exception
 
 
-class HelloWorld(GladierDefaults):
+class HelloWorld(GladierBaseTool):
 
     flow_definition = {
         'Comment': 'Hello Gladier Automate Flow',
@@ -43,7 +43,7 @@ class HelloWorld(GladierDefaults):
     ]
 
 
-class HelloConversation(GladierDefaults):
+class HelloConversation(GladierBaseTool):
 
     flow_definition = {
         'Comment': 'Hello Gladier Automate Flow',
@@ -129,7 +129,7 @@ class HelloConversation(GladierDefaults):
     ]
 
 
-class HelloException(GladierDefaults):
+class HelloException(GladierBaseTool):
 
     flow_definition = {
         'Comment': "Hello Gladier Automate Flow Exception. This flow isn't much for conversation",
