@@ -403,7 +403,7 @@ class GladierBaseClient(object):
         Get funcx function ids, funcx endpoints, and each tool's default input. Default
         input may not be enough to start the flow. For example if a tool does processing on a
         local filesystem, the file will always need to be provided by the user when calling
-        run_flow().
+        start_flow().
 
         Defaults rely on GladierDefaults.flow_input defined separately for each tool.
 
@@ -433,7 +433,7 @@ class GladierBaseClient(object):
         exception if the check does not 'pass'
 
         :param tool: The gladier.defaults.GladierDefaults tool set in self.tools
-        :param flow_input: Flow input intended to be passed to run_flow()
+        :param flow_input: Flow input intended to be passed to start_flow()
         :raises gladier.exc.ConfigException
         """
         for req_input in tool.required_input:
@@ -441,7 +441,7 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
-    def run_flow(self, flow_input=None, use_defaults=True):
+    def start_flow(self, flow_input=None, use_defaults=True):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
@@ -486,7 +486,7 @@ class GladierBaseClient(object):
             else:
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to start flow!', self.missing_authorizers)
-        flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
+        flow = self.flows_client.start_flow(flow_id, self.gconfig['flow_scope'],
                                           combine_flow_input).data
         log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
