@@ -1,8 +1,8 @@
-from gladier.defaults import GladierDefaults
+from gladier import GladierBaseTool
 from .funcx_functions import manifest_to_funcx_tasks, manifest_dummy_compute_callback
 
 
-class ManifestTransfer(GladierDefaults):
+class ManifestTransfer(GladierBaseTool):
 
     flow_definition = {
         'Comment': 'Hello Gladier Automate Flow',
@@ -40,7 +40,7 @@ class ManifestTransfer(GladierDefaults):
     funcx_functions = []
 
 
-class ManifestToFuncXTasks(GladierDefaults):
+class ManifestToFuncXTasks(GladierBaseTool):
     flow_definition = {
         'Comment': 'Turn a set of files or directories into funcx tasks',
         'StartAt': 'CreateFuncXTasks',
