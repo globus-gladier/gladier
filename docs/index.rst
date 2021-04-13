@@ -21,7 +21,6 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    tools/index
 
 
-
 Indices and tables
 ==================
 
