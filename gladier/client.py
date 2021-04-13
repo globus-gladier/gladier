@@ -46,8 +46,6 @@ class GladierBaseClient(object):
         self.__config = None
         self.__flows_client = None
         self.__tools = None
-        self.__endpoints = None
-        self.__containers = None
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
         self.auto_registration = auto_registration
@@ -132,19 +130,6 @@ class GladierBaseClient(object):
         self.__tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
         return self.__tools
 
-    @property
-    def containers(self):
-
-        if getattr(self, '__containers', None):
-            return self.__containers
-
-        if not getattr(self, 'containers', None) or not isinstance(self.containers, Iterable):
-            raise gladier.exc.ConfigException(
-                '"containers" must be a defined list of containers paths. '
-                'Ex: ["~/.funcx/container/container.simg"]')
-        # self.__containers = [self.get_gladier_defaults_cls(c) for c in self.containers]
-        self.__containers = [c for c in self.containers]
-        return self.__containers
 
     def get_native_client(self):
         """
@@ -353,16 +338,10 @@ class GladierBaseClient(object):
                         raise
         return funcx_ids
 
-    @staticmethod
-    def get_container_name(container):
-        return f'{container.__name__}_id'
-
-    def register_funcx_function(self, function, container=''):
+    def register_funcx_function(self, function):
         """Register the functions with funcx. Ids are saved in the local gladier.cfg"""
         fxid_name = self.get_funcx_function_name(function)
         fxck_name = self.get_funcx_function_checksum_name(function)
-        if container:
-            contid_name = self.get_container_name(container)
         self.gconfig[fxid_name] = self.funcx_client.register_function(function, function.__doc__)
         self.gconfig[fxck_name] = self.get_funcx_function_checksum(function)
         self.config.save()
