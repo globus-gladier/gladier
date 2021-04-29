@@ -9,15 +9,9 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
-import requests
 sys.path.insert(0, os.path.abspath('../'))
-import funcx
 
 # -- Project information -----------------------------------------------------
 
@@ -30,11 +24,10 @@ author = 'The Gladier Team'
 # built documents.
 #
 # The short X.Y version.
-version = "0.1"
-#version = funcx.__version__.rsplit('.', 1)[0]
+import gladier.version
+version = gladier.version.__version__.rsplit('.', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = "0.1.0"
-#release = funcx.__version__
+release = gladier.version.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -43,11 +36,9 @@ release = "0.1.0"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    # 'sphinx.ext.linkcode',
     'sphinx.ext.napoleon'
 ]
 
@@ -56,7 +47,6 @@ autosummary_generate = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-nbsphinx_execute = 'never'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
@@ -64,7 +54,6 @@ intersphinx_mapping = {
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
 # The master toctree document.
