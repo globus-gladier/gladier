@@ -17,8 +17,10 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    :maxdepth: 2
    :caption: Contents:
 
-   infrastructure
+   installation
+   clients_and_tools
    tools/index
+   glossary
 
 
 Indices and tables
