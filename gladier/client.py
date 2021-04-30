@@ -23,26 +23,26 @@ log = logging.getLogger(__name__)
 class GladierBaseClient(object):
     """The Gladier Client ties together commonly used funcx functions
     and basic flows with auto-registration tools to make complex tasks
-    easy to automate."""
+    easy to automate.
+
+    Default options are intended for CLI usage and maximum user convenience.
+
+    :param authorizers: Provide live globus_sdk authorizers with a dict keyed by
+                        scope.
+    :type globus_sdk.AccessTokenAuthorizer: A globus authorizer
+    :param auto_login: Automatically trigger login() calls when needed. Should not be used
+                       with authorizers.
+    :param auto_registration: Automatically register functions or flows if they are not
+                              previously registered or obsolete.
+    :raises gladier.exc.AuthException: if authorizers given are insufficient
+
+    """
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
     client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
-        """
-        Create a Gladier Client. Default options are intended for CLI usage and maximum
-        user convenience.
-
-        :param authorizers: Provide live globus_sdk authorizers with a dict keyed by
-        scope.
-        :param auto_login: Automatically trigger login() calls when needed. Should not be used
-        with authorizers.
-        :param auto_registration: Automatically register functions or flows if they are not
-        previously registered or obsolete.
-        :raises gladier.exc.AuthException: if authorizers given are insufficient
-        """
-
         self.__config = None
         self.__flows_client = None
         self.__tools = None
@@ -69,7 +69,8 @@ class GladierBaseClient(object):
         Load a Gladier default class (gladier.defaults.GladierDefaults) by import string. For
         Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
 
-        :returns gladier.defaults.GladierDefaults
+        :param import_string: A dotted string to the class to import
+        :return: gladier.defaults.GladierDefaults
         """
         default_cls = gladier.dynamic_imports.import_string(import_string)
         default_inst = default_cls()
@@ -85,7 +86,9 @@ class GladierBaseClient(object):
     @property
     def config(self):
         """
-        :returns the current local Gladier config
+        Get the Gladier Config, set by ``self.config_filename``
+
+        :return: The current local Gladier config, configparser.ConfigParser
         """
         if self.__config is not None:
             return self.__config
@@ -95,7 +98,9 @@ class GladierBaseClient(object):
     @property
     def gconfig(self):
         """
-        :returns the current config section (self.section) for the local Gladier config.
+        Each Gladier Client has its own section in the local Gladier Config.
+
+        :return: the current config section (self.section) for this Gladier client
         """
         return self.config[self.section]
 
@@ -118,7 +123,7 @@ class GladierBaseClient(object):
         """
         Load the current list of tools configured on this class
 
-        :returns a list of subclassed instances of gladier.defaults.GladierDefaults
+        :return: a list of subclassed instances of gladier.defaults.GladierDefaults
         """
         if getattr(self, '__tools', None):
             return self.__tools
@@ -130,10 +135,13 @@ class GladierBaseClient(object):
         self.__tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
         return self.__tools
 
-
     def get_native_client(self):
         """
-        :returns an instance of fair_research_login.NativeClient
+        fair_research_login.NativeClient is used when ``authorizers`` are not provided to __init__.
+        This enables local login to the Globus Automate Client, FuncX, and any other Globus
+        Resource Server.
+
+        :return: an instance of fair_research_login.NativeClient
         """
         if getattr(self, 'client_id', None) is None:
             raise gladier.exc.AuthException(
@@ -153,7 +161,8 @@ class GladierBaseClient(object):
         The current list of scopes required by this class. This changes if there
         is a flow configured in the local Gladier config file, otherwise it will
         only consist of basic scopes for running the funcx client/flows client/etc
-        :returns list of globus scopes required by this client
+
+        :return: list of globus scopes required by this client
         """
 
         gladier_scopes = list(globus_automate_client.flows_client.ALL_FLOW_SCOPES)
@@ -168,14 +177,14 @@ class GladierBaseClient(object):
     @property
     def missing_authorizers(self):
         """
-        :returns a list of Globus scopes for which there are no authorizers
+        :return:  a list of Globus scopes for which there are no authorizers
         """
         return [scope for scope in self.scopes if scope not in self.authorizers.keys()]
 
     @property
     def flows_client(self):
         """
-        :returns an authorized Gloubs Automate Client
+        :return: an authorized Gloubs Automate Client
         """
         if getattr(self, '__flows_client', None) is not None:
             return self.__flows_client
@@ -197,7 +206,7 @@ class GladierBaseClient(object):
     @property
     def funcx_client(self):
         """
-        :returns an authorized funcx client
+        :return: an authorized funcx client
         """
         if getattr(self, '__funcx_client', None) is not None:
             return self.__funcx_client
@@ -223,7 +232,7 @@ class GladierBaseClient(object):
 
     def logout(self):
         """Log out and revoke this client's tokens. This object will no longer
-        be usable.
+        be usable until a new login is called.
         """
         if not self.client_id:
             raise gladier.exc.AuthException('Gladier client must be instantiated with a '
@@ -233,7 +242,9 @@ class GladierBaseClient(object):
 
     def is_logged_in(self):
         """
-        :returns True, if there are no self.missing_authorizers. False otherwise.
+        Check if the client is logged in.
+
+        :return: True, if there are no self.missing_authorizers. False otherwise.
         """
         return not bool(self.missing_authorizers)
 
@@ -241,7 +252,8 @@ class GladierBaseClient(object):
         """
         Get the flow definition attached to this class. If the flow definition is an import string,
         it will automatically load the import string and return the full flow.
-        :returns A dict of the Automate Flow definition
+
+        :return: A dict of the Automate Flow definition
         """
         if not getattr(self, 'flow_definition', None):
             raise gladier.exc.ConfigException(f'"flow_definition" was not set on '
@@ -258,7 +270,8 @@ class GladierBaseClient(object):
     def get_flow_checksum(self):
         """
         Get the SHA256 checksum of the current flow definition.
-        :returns sha256 hex string of flow definition
+
+        :return: sha256 hex string of flow definition
         """
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
 
@@ -268,7 +281,8 @@ class GladierBaseClient(object):
         Generate a function name given a funcx function. These function namse are used to refer
         to funcx functions within the config. There is no guarantee of uniqueness for function
         names.
-        :returns human readable string identifier for a function (intended for a gladier.cfg file)
+
+        :return: human readable string identifier for a function (intended for a gladier.cfg file)
         """
         return f'{funcx_function.__name__}_funcx_id'
 
@@ -276,7 +290,7 @@ class GladierBaseClient(object):
     def get_funcx_function_checksum(funcx_function):
         """
         Get the SHA256 checksum of a funcx function
-        :returns sha256 hex string of a given funcx function
+        :return: sha256 hex string of a given funcx function
         """
         fxs = FuncXSerializer()
         serialized_func = fxs.serialize(funcx_function).encode()
@@ -288,7 +302,8 @@ class GladierBaseClient(object):
         Generate a name to refer to the checksum for a given funcx function. Based off of the
         name generated for the function self.get_funcx_function_name. Human readable, intended
         for config.
-        :returns human readable string identifier for a function checksum (for a gladier.cfg file)
+
+        :return:  human readable string identifier for a function checksum (for a gladier.cfg file)
         """
         return f'{cls.get_funcx_function_name(funcx_function)}_checksum'
 
@@ -298,9 +313,10 @@ class GladierBaseClient(object):
         not match the actual functions provided on each of the Gladier tools. If register
         is False, no changes to the config will be made and exceptions will be raised instead.
 
-        :raises gladier.exc.RegistrationException
-        :raises gladier.exc.FunctionObsolete
-        :returns a dict of function ids where keys are names and values are funcX function ids."""
+        :raises: gladier.exc.RegistrationException
+        :raises: gladier.exc.FunctionObsolete
+        :returns: a dict of function ids where keys are names and values are funcX function ids.
+        """
         funcx_ids = dict()
         for tool in self.tools:
             log.debug(f'Checking functions for {tool}')
@@ -350,8 +366,9 @@ class GladierBaseClient(object):
         """Get the current flow id for the current Gladier flow definiton.
         If self.auto_register is True, it will automatically (re)register a flow if it
         has changed on disk, otherwise raising exceptions.
-        :raises gladier.exc.FlowObsolete
-        :raises gladier.exc.NoFlowRegistered
+
+        :raises: gladier.exc.FlowObsolete
+        :raises: gladier.exc.NoFlowRegistered
         """
         flow_id, flow_scope = self.gconfig.get('flow_id'), self.gconfig.get('flow_scope')
         if not flow_id or not flow_scope:
@@ -371,8 +388,9 @@ class GladierBaseClient(object):
         """
         Register a flow with Globus Automate. If a flow has already been registered with automate,
         the flow will attempt to update the flow instead. If not, it will deploy a new flow.
-        :raises Automate exceptions on flow deployment.
-        :returns an automate flow UUID
+
+        :raises: Automate exceptions on flow deployment.
+        :return: an automate flow UUID
         """
         flow_id = self.gconfig.get('flow_id')
         flow_definition = self.get_flow_definition()
@@ -407,9 +425,8 @@ class GladierBaseClient(object):
 
         Defaults rely on GladierDefaults.flow_input defined separately for each tool.
 
-        :raises
-        :returns input for a flow wrapped in an 'input' dict. For example:
-            {'input': {'foo': 'bar'}}
+        :return: input for a flow wrapped in an 'input' dict. For example:
+                 {'input': {'foo': 'bar'}}
         """
         flow_input = self.get_funcx_function_ids()
         for tool in self.tools:
@@ -434,7 +451,7 @@ class GladierBaseClient(object):
 
         :param tool: The gladier.defaults.GladierDefaults tool set in self.tools
         :param flow_input: Flow input intended to be passed to start_flow()
-        :raises gladier.exc.ConfigException
+        :raises: gladier.exc.ConfigException
         """
         for req_input in tool.required_input:
             if req_input not in flow_input['input']:
@@ -451,17 +468,19 @@ class GladierBaseClient(object):
         registered automate flow.
 
         :param flow_input: A dict of input to be passed to the automate flow. self.check_input()
-        is called on each tool to ensure basic needs are met for each. Input MUST be wrapped inside
-        an 'input' dict, for example {'input': {'foo': 'bar'}}.
+                           is called on each tool to ensure basic needs are met for each.
+                           Input MUST be wrapped inside an 'input' dict,
+                           for example {'input': {'foo': 'bar'}}.
         :param use_defaults: Use the result of self.get_input() to populate base input for the
-        flow. All conflicting input provided by flow_input overrides values set in use_defaults.
-        :raises gladier.exc.ConfigException by self.check_input()
-        :raises gladier.exc.FlowObsolete
-        :raises gladier.exc.NoFlowRegistered
-        :raises gladier.exc.RegistrationException
-        :raises gladier.exc.FunctionObsolete
-        :raises gladier.exc.AuthException
-        :raises Any globus_sdk.exc.BaseException
+                             flow. All conflicting input provided by flow_input overrides
+                             values set in use_defaults.
+        :raise: gladier.exc.ConfigException by self.check_input()
+        :raises: gladier.exc.FlowObsolete
+        :raises: gladier.exc.NoFlowRegistered
+        :raises: gladier.exc.RegistrationException
+        :raises: gladier.exc.FunctionObsolete
+        :raises: gladier.exc.AuthException
+        :raises: Any globus_sdk.exc.BaseException
         """
         combine_flow_input = self.get_input() if use_defaults else dict()
         if flow_input is not None:
@@ -498,10 +517,11 @@ class GladierBaseClient(object):
         """
         Get the current status of the automate flow. Attempts to do additional work on funcx
         functions to deserialize any exception output.
+
         :param action_id: The globus action UUID used for this flow. The Automate flow id is
-        always the flow_id configured for this tool.
-        :raises Globus Automate exceptions from self.flows_client.flow_action_status
-        :returns a Globus Automate status object (with varying state structures)
+                          always the flow_id configured for this tool.
+        :raises: Globus Automate exceptions from self.flows_client.flow_action_status
+        :returns: a Globus Automate status object (with varying state structures)
         """
         try:
             status = self.flows_client.flow_action_status(self.get_flow_id(),
@@ -525,10 +545,11 @@ class GladierBaseClient(object):
         Continuously call self.get_status() until the flow completes. Each status response is
         used as a parameter to the provided callback, by default will use the builtin callback
         to print the current state to stdout.
+
         :param action_id: The action id for a running flow. The flow is automatically pulled
-        based on the current tool's flow_definition.
+                          based on the current tool's flow_definition.
         :param callback: The function to call with the result from self.get_status. Must take
-        a single parameter: mycallback(self.get_status())
+                         a single parameter: mycallback(self.get_status())
         """
         callback = callback or self._default_progress_callback
         status = self.get_status(action_id)
@@ -540,9 +561,10 @@ class GladierBaseClient(object):
         """
         Attempt to extrapolate details from get_status() for a given state_name define in the flow
         definition. Note: This is usually only possible when a flow completes.
+
         :param action_id: The action_id for this flow. Flow id is automatically determined based
-        on the current tool being run.
+                          on the current tool being run.
         :param state_name: The state in the automate definition to fetch
-        :returns sub-dict of get_status() describing the :state_name:.
+        :returns: sub-dict of get_status() describing the :state_name:.
         """
         return gladier.automate.get_details(self.get_status(action_id), state_name)
