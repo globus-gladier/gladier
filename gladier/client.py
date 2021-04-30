@@ -66,15 +66,15 @@ class GladierBaseClient(object):
     @staticmethod
     def get_gladier_defaults_cls(import_string):
         """
-        Load a Gladier default class (gladier.defaults.GladierDefaults) by import string. For
+        Load a Gladier default class (gladier.GladierBaseTool) by import string. For
         Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
 
         :param import_string: A dotted string to the class to import
-        :return: gladier.defaults.GladierDefaults
+        :return: gladier.GladierBaseTool
         """
-        default_cls = gladier.dynamic_imports.import_string(import_string)
+        default_cls = gladier.utils.dynamic_imports.import_string(import_string)
         default_inst = default_cls()
-        if isinstance(default_inst, gladier.defaults.GladierDefaults):
+        if isinstance(default_inst, gladier.base.GladierBaseTool):
             return default_inst
         raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
                                           f'or a dotted import string ')
@@ -123,7 +123,7 @@ class GladierBaseClient(object):
         """
         Load the current list of tools configured on this class
 
-        :return: a list of subclassed instances of gladier.defaults.GladierDefaults
+        :return: a list of subclassed instances of gladier.GladierBaseTool
         """
         if getattr(self, '__tools', None):
             return self.__tools
@@ -265,7 +265,7 @@ class GladierBaseClient(object):
             return self.get_gladier_defaults_cls(self.flow_definition).flow_definition
         raise gladier.exc.ConfigException('"flow_definition" must be a dict or an import string '
                                           'to a sub-class of type '
-                                          '"gladier.defaults.GladierDefaults"')
+                                          '"gladier.GladierBaseTool"')
 
     def get_flow_checksum(self):
         """
@@ -419,11 +419,11 @@ class GladierBaseClient(object):
     def get_input(self):
         """
         Get funcx function ids, funcx endpoints, and each tool's default input. Default
-        input may not be enough to start the flow. For example if a tool does processing on a
+        input may not be enough to run the flow. For example if a tool does processing on a
         local filesystem, the file will always need to be provided by the user when calling
-        start_flow().
+        run_flow().
 
-        Defaults rely on GladierDefaults.flow_input defined separately for each tool.
+        Defaults rely on GladierBaseTool.flow_input defined separately for each tool.
 
         :return: input for a flow wrapped in an 'input' dict. For example:
                  {'input': {'foo': 'bar'}}
@@ -449,8 +449,8 @@ class GladierBaseClient(object):
         Do basic checking on included input against requirements set by a tool. Raises an
         exception if the check does not 'pass'
 
-        :param tool: The gladier.defaults.GladierDefaults tool set in self.tools
-        :param flow_input: Flow input intended to be passed to start_flow()
+        :param tool: The gladier.GladierBaseTool tool set in self.tools
+        :param flow_input: Flow input intended to be passed to run_flow()
         :raises: gladier.exc.ConfigException
         """
         for req_input in tool.required_input:
@@ -458,7 +458,7 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
-    def start_flow(self, flow_input=None, use_defaults=True):
+    def run_flow(self, flow_input=None, use_defaults=True):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
@@ -499,13 +499,13 @@ class GladierBaseClient(object):
         flow_id = self.get_flow_id()
         if not self.is_logged_in():
             log.info(f'Missing authorizers: {self.missing_authorizers}, need additional login '
-                     f'to start flow.')
+                     f'to run flow.')
             if self.auto_login is True:
                 self.login()
             else:
                 raise gladier.exc.AuthException(
-                    f'Need {self.missing_authorizers} to start flow!', self.missing_authorizers)
-        flow = self.flows_client.start_flow(flow_id, self.gconfig['flow_scope'],
+                    f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
+        flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
                                           combine_flow_input).data
         log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
@@ -567,4 +567,4 @@ class GladierBaseClient(object):
         :param state_name: The state in the automate definition to fetch
         :returns: sub-dict of get_status() describing the :state_name:.
         """
-        return gladier.automate.get_details(self.get_status(action_id), state_name)
+        return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
