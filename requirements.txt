@@ -1,2 +1,2 @@
-funcx>=0.0.5
+funcx==0.0.5
 globus-automate-client>=0.10.6
