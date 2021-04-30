@@ -11,10 +11,10 @@ structure of Gladier Tools.
 Hello World Tool
 ----------------
 
-.. autoclass:: gladier_tools.hello_world.HelloWorld
+.. autoclass:: gladier.tools.hello_world.HelloWorld
    :show-inheritance:
 
-.. literalinclude:: ../../../../gladier_tools/gladier_tools/hello_world/hello_world.py
+.. literalinclude:: ../../../gladier/tools/hello_world/hello_world.py
    :language: python
    :pyobject: HelloWorld
 

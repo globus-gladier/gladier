@@ -10,10 +10,10 @@ from the first.
 Hello Conversation Tool
 -----------------------
 
-.. autoclass:: gladier_tools.hello_world.HelloConversation
+.. autoclass:: gladier.tools.hello_world.HelloConversation
    :show-inheritance:
 
-.. literalinclude:: ../../../../gladier_tools/gladier_tools/hello_world/hello_conversation.py
+.. literalinclude:: ../../../gladier/tools/hello_world/hello_conversation.py
    :language: python
    :pyobject: HelloConversation
 

@@ -9,10 +9,10 @@ This module demonstrates that functionality.
 Hello Exception Tool
 ----------------------
 
-.. autoclass:: gladier_tools.hello_world.HelloException
+.. autoclass:: gladier.tools.hello_world.HelloException
    :show-inheritance:
 
-.. literalinclude:: ../../../../gladier_tools/gladier_tools/hello_world/hello_exception.py
+.. literalinclude:: ../../../gladier/tools/hello_world/hello_exception.py
    :language: python
    :pyobject: HelloException
 

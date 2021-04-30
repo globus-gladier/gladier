@@ -20,7 +20,7 @@ class HelloException(GladierBaseTool):
                 'Parameters': {
                     'tasks': [{
                         'endpoint.$': '$.input.funcx_endpoint_non_compute',
-                        'func.$': f'$.input.hello_exception_funcx_id',
+                        'func.$': '$.input.hello_exception_funcx_id',
                         'payload.$': '$.input.exception_message'
                     }]
                 },
