@@ -1,4 +1,3 @@
-from .client import GladierBaseClient
 
 class GladierBaseTool(object):
     """Gladier Defaults defines a common method of tying together
