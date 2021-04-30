@@ -4,9 +4,9 @@ from pprint import pprint
 
 class HelloGladier(GladierBaseClient):
     gladier_tools = [
-        'gladier_tools.hello_world.HelloWorld',
+        'gladier.tools.hello_world.HelloWorld',
     ]
-    flow_definition = 'gladier_tools.hello_world.HelloWorld'
+    flow_definition = 'gladier.tools.hello_world.HelloWorld'
 
 
 # Run the flow
