@@ -408,7 +408,7 @@ class GladierBaseClient(object):
         if flow_id is None:
             log.info('No flow detected, deploying new flow...')
             title = f'{self.__class__.__name__} Flow'
-            flow = self.flows_client.deploy_flow(flow_definition, title=title)
+            flow = self.flows_client.deploy_flow(flow_definition, title=title).data
             self.gconfig['flow_id'] = flow['id']
             self.gconfig['flow_scope'] = flow['globus_auth_scope']
             self.gconfig['flow_checksum'] = self.get_flow_checksum()
