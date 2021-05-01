@@ -47,3 +47,8 @@ class FlowObsolete(ObsoleteException):
 class FunctionObsolete(ObsoleteException):
     """A local funcx function definition has changed and needs to be updated"""
     pass
+
+
+class FlowGenException(GladierException):
+    """Something went wrong when auto-generating a flow"""
+    pass

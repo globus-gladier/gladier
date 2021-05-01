@@ -74,7 +74,7 @@ class GladierBaseClient(object):
         """
         default_cls = gladier.utils.dynamic_imports.import_string(import_string)
         default_inst = default_cls()
-        if isinstance(default_inst, gladier.base.GladierBaseTool):
+        if issubclass(type(default_inst), gladier.base.GladierBaseTool):
             return default_inst
         raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
                                           f'or a dotted import string ')
