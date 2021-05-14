@@ -15,6 +15,7 @@ import gladier
 import gladier.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
+import gladier.utils.name_generation
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -287,17 +288,6 @@ class GladierBaseClient(object):
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
 
     @staticmethod
-    def get_funcx_function_name(funcx_function):
-        """
-        Generate a function name given a funcx function. These function namse are used to refer
-        to funcx functions within the config. There is no guarantee of uniqueness for function
-        names.
-
-        :return: human readable string identifier for a function (intended for a gladier.cfg file)
-        """
-        return f'{funcx_function.__name__}_funcx_id'
-
-    @staticmethod
     def get_funcx_function_checksum(funcx_function):
         """
         Get the SHA256 checksum of a funcx function
@@ -306,17 +296,6 @@ class GladierBaseClient(object):
         fxs = FuncXSerializer()
         serialized_func = fxs.serialize(funcx_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
-
-    @classmethod
-    def get_funcx_function_checksum_name(cls, funcx_function):
-        """
-        Generate a name to refer to the checksum for a given funcx function. Based off of the
-        name generated for the function self.get_funcx_function_name. Human readable, intended
-        for config.
-
-        :return:  human readable string identifier for a function checksum (for a gladier.cfg file)
-        """
-        return f'{cls.get_funcx_function_name(funcx_function)}_checksum'
 
     def get_funcx_function_ids(self):
         """Get all funcx function ids for this run, registering them if there are no ids
@@ -340,9 +319,9 @@ class GladierBaseClient(object):
                     f'{type(funcx_funcs)}')
 
             for func in funcx_funcs:
-                fid_name = self.get_funcx_function_name(func)
+                fid_name = gladier.utils.name_generation.get_funcx_function_name(func)
                 checksum = self.get_funcx_function_checksum(func)
-                checksum_name = self.get_funcx_function_checksum_name(func)
+                checksum_name = gladier.utils.name_generation.get_funcx_function_checksum_name(func)
                 try:
                     if not self.gconfig.get(fid_name):
                         raise gladier.exc.RegistrationException(
@@ -367,8 +346,8 @@ class GladierBaseClient(object):
 
     def register_funcx_function(self, function):
         """Register the functions with funcx. Ids are saved in the local gladier.cfg"""
-        fxid_name = self.get_funcx_function_name(function)
-        fxck_name = self.get_funcx_function_checksum_name(function)
+        fxid_name = gladier.utils.name_generation.get_funcx_function_name(function)
+        fxck_name = gladier.utils.name_generation.get_funcx_function_checksum_name(function)
         self.gconfig[fxid_name] = self.funcx_client.register_function(function, function.__doc__)
         self.gconfig[fxck_name] = self.get_funcx_function_checksum(function)
         self.config.save()
