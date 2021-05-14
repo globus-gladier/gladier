@@ -3,40 +3,47 @@ from collections import OrderedDict
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
 from gladier.exc import FlowGenException
+from gladier.utils.flow_modifiers import FlowModifiers
+from gladier.utils.name_generation import (
+    get_funcx_flow_state_name,
+    get_funcx_function_name
+)
 
 
 log = logging.getLogger(__name__)
 
 
-def combine_tool_flows(cls: GladierBaseClient):
-    flow_states = OrderedDict()
-    for tool in cls().tools:
-        flow_states.update(tool.flow_definition['States'])
-
-    return generate_flow_definition(cls, flow_states)
-
-
-def generate_tool_flow(cls, modifiers):
-    if not issubclass(cls, GladierBaseTool):
-        raise FlowGenException(f'{cls} is not of type {GladierBaseTool}!')
-
-    # Check if modifiers were set correctly
-    modifier_names = set(m.__name__ for m in modifiers.keys())
-    func_names = set(f.__name__ for f in cls.funcx_functions)
-    fdiff = modifier_names.difference(func_names)
-    if fdiff:
-        raise FlowGenException(f'Class {cls} included modifiers for functions'
-                               f'which don\'t exist: {fdiff}')
+def combine_tool_flows(client: GladierBaseClient, modifiers):
+    flow_moder = FlowModifiers(client.tools, modifiers)
 
     flow_states = OrderedDict()
-    for fx_func in cls.funcx_functions:
+    for tool in client.tools:
+        states = get_ordered_flow_states(tool.flow_definition)
+        flow_states.update(states)
+    return flow_moder.apply_modifiers(combine_flow_states(client, flow_states))
+
+
+def generate_tool_flow(tool: GladierBaseTool, modifiers):
+
+    flow_moder = FlowModifiers([tool], modifiers)
+
+    flow_states = OrderedDict()
+    for fx_func in tool.funcx_functions:
         fx_state = generate_funcx_flow_state(fx_func, modifiers)
         flow_states.update(fx_state)
 
-    return generate_flow_definition(cls, flow_states)
+    flow_def = combine_flow_states(tool, flow_states)
+    flow_def = flow_moder.apply_modifiers(flow_def)
+    from pprint import pprint
+    pprint(flow_def)
+
+    return flow_def
 
 
-def generate_flow_definition(cls, flow_states):
+def combine_flow_states(cls, flow_states):
+    """
+    Given a GlaiderBaseClient or GladierBaseTool, generate a complete automate flow.
+    """
     keylist = list(flow_states.keys())
     first, last = keylist[0], keylist[-1]
     flow_definition = OrderedDict([
@@ -57,43 +64,21 @@ def generate_flow_definition(cls, flow_states):
         else:
             next_index = keylist.index(state_name) + 1
             state_data['Next'] = keylist[next_index]
+    if not flow_definition['Comment']:
+        state_names = ", ".join(flow_definition["States"].keys())
+        flow_definition['Comment'] = f'Flow with states: {state_names}'
 
     return flow_definition
 
 
-def generate_funcx_flow_state_name(funcx_function):
-    name_bits = funcx_function.__name__.split('_')
-    name_bits_capitalized = [nb.capitalize() for nb in name_bits]
-    return ''.join(name_bits_capitalized)
-
-
 def generate_funcx_flow_state(funcx_function, modifiers):
-    fname = funcx_function.__name__
-    supported_modifiers = {'endpoint', 'payload'}
-    fx_modifiers = modifiers.get(funcx_function, {})
-    if fx_modifiers:
-        unsupported_mods = set(modifiers[funcx_function].keys()).difference(supported_modifiers)
-        if unsupported_mods:
-            raise FlowGenException(f'Modifiers for function {fname} are unsupported: '
-                                   f'{unsupported_mods}')
 
-    log.info(f'Function "{fname}", applying modifiers: {list(fx_modifiers.keys())}')
-
-    state_name = generate_funcx_flow_state_name(funcx_function)
+    state_name = get_funcx_flow_state_name(funcx_function)
     tasks = [OrderedDict([
         ('endpoint.$', '$.input.funcx_endpoint_compute'),
-        ('func.$', f'$.input.{GladierBaseClient.get_funcx_function_name(funcx_function)}'),
+        ('func.$', f'$.input.{get_funcx_function_name(funcx_function)}'),
         ('payload.$', '$.input'),
     ])]
-    for task in tasks:
-        for key in task.keys():
-            modifier = fx_modifiers.get(key.rstrip('.$'))
-            if modifier:
-                if not modifier.startswith('$.'):
-                    modifier = f'$.input.{modifier}'
-                task[key] = modifier
-                log.debug(f'{fname}: Set modifier "{key}" to "{modifier}"')
-
     flow_state = OrderedDict([
         ('Comment', funcx_function.__doc__),
         ('Type', 'Action'),
@@ -105,3 +90,20 @@ def generate_funcx_flow_state(funcx_function, modifiers):
         ('WaitTime', 300),
     ])
     return OrderedDict([(state_name, flow_state)])
+
+
+def get_ordered_flow_states(flow_definition):
+    ordered_states = OrderedDict()
+    state = flow_definition['StartAt']
+    while state is not None:
+        ordered_states[state] = flow_definition['States'][state]
+        if flow_definition['States'][state].get('Next'):
+            state = flow_definition['States'][state].get('Next')
+        elif flow_definition['States'][state].get('End') is True:
+            break
+        else:
+            raise FlowGenException(f'Flow definition has no "Next" or "End" for state "{state}" '
+                                   f'with states: {flow_definition["States"].keys()}')
+
+    ordered_states[state] = flow_definition['States'][state]
+    return ordered_states

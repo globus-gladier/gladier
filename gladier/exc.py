@@ -52,3 +52,8 @@ class FunctionObsolete(ObsoleteException):
 class FlowGenException(GladierException):
     """Something went wrong when auto-generating a flow"""
     pass
+
+
+class FlowModifierException(FlowGenException):
+    """An error happened when applying a modifier during flow generation"""
+    pass
