@@ -64,20 +64,31 @@ class GladierBaseClient(object):
             self.login()
 
     @staticmethod
-    def get_gladier_defaults_cls(import_string):
+    def get_gladier_defaults_cls(tool_ref):
         """
         Load a Gladier default class (gladier.GladierBaseTool) by import string. For
         Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
 
-        :param import_string: A dotted string to the class to import
+        :param tool_ref: A tool ref can be a dotted import string or an actual GladierBaseTool
+                         class.
         :return: gladier.GladierBaseTool
         """
-        default_cls = gladier.utils.dynamic_imports.import_string(import_string)
-        default_inst = default_cls()
-        if issubclass(type(default_inst), gladier.base.GladierBaseTool):
-            return default_inst
-        raise gladier.exc.ConfigException(f'"{import_string}" must be a dict '
-                                          f'or a dotted import string ')
+        log.debug(f'Looking for Gladier tool: {tool_ref} ({type(tool_ref)})')
+        if isinstance(tool_ref, str):
+            default_cls = gladier.utils.dynamic_imports.import_string(tool_ref)
+            default_inst = default_cls()
+            if issubclass(type(default_inst), gladier.base.GladierBaseTool):
+                return default_inst
+            raise gladier.exc.ConfigException(f'{default_inst} is not of type '
+                                              f'{gladier.base.GladierBaseTool}')
+        elif isinstance(tool_ref, gladier.base.GladierBaseTool):
+            return tool_ref
+        else:
+            cls_inst = tool_ref()
+            if isinstance(cls_inst, gladier.base.GladierBaseTool):
+                return cls_inst
+            raise gladier.exc.ConfigException(f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} '
+                                              f'or a dotted import string ')
 
     @property
     def version(self):
