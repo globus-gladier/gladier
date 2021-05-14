@@ -6,12 +6,38 @@ mock_automate_flow_scope = ('https://auth.globus.org/scopes/mock_tool_flow_scope
 
 
 def mock_func(data):
+    """Test mock function"""
     pass
 
 
 class MockTool(GladierBaseTool):
 
-    flow_definition = {'Mock': 'Globus Flow'}
+    flow_definition = {
+        'Comment': 'Say hello, maybe to a librarian.',
+        'StartAt': 'MockFunc',
+        'States': {
+            'MockFunc': {
+                'Comment': 'This func says the thing!',
+                'Type': 'Action',
+                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionScope': 'https://auth.globus.org/scopes/'
+                               'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'ExceptionOnActionFailure': False,
+                'Parameters': {
+                    'tasks': [
+                        {
+                            'endpoint.$': '$.input.funcx_endpoint_non_compute',
+                            'func.$': '$.input.hello_world_funcx_id',
+                            'payload.$': '$.input'
+                        }
+                    ]
+                },
+                'ResultPath': '$.HelloWorld',
+                'WaitTime': 300,
+                'End': True
+            },
+        }
+    }
 
     required_input = [
         'funcx_endpoint_non_compute'
