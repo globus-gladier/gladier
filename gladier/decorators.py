@@ -28,18 +28,19 @@ def generate_flow_definition(_cls=None, *, modifiers=None):
         '$.input.funcx_endpoint_non_compute'
 
     :raises FlowGenException: For a variety of invalid inputs"""
+    modifiers = modifiers or dict()
+
     def decorator_wrapper(cls):
         @functools.wraps(cls)
         def wrapper(*args, **kwargs):
             if issubclass(cls, GladierBaseTool):
-                cls.flow_definition = generate_tool_flow(cls, modifiers)
-                return cls(*args, **kwargs)
+                c = cls()
+                c.flow_definition = generate_tool_flow(c, modifiers)
+                return c
             elif issubclass(cls, GladierBaseClient):
-                if modifiers is not None:
-                    raise FlowGenException(f'{cls}: Gladier Clients may not '
-                                           f'have modifiers.')
-                cls.flow_definition = combine_tool_flows(cls)
-                return cls(*args, **kwargs)
+                c = cls(*args, **kwargs)
+                c.flow_definition = combine_tool_flows(c, modifiers)
+                return c
             else:
                 raise FlowGenException(f'Invalid class {cls}, flow generation '
                                        f'only supported for '
