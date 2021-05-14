@@ -2,7 +2,7 @@ from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition
 from globus_automate_client.flows_client import validate_flow_definition
 
 
-def test_client_flow_generation_simple():
+def test_client_flow_generation_simple(logged_in):
 
     @generate_flow_definition
     class MyClient(GladierBaseClient):
@@ -18,7 +18,7 @@ def test_client_flow_generation_simple():
     assert flow_def['Comment'] == 'Example Docs'
 
 
-def test_client_combine_gen_and_non_gen_flows():
+def test_client_combine_gen_and_non_gen_flows(logged_in):
 
     def gen_tool_func():
         pass

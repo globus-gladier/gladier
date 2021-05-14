@@ -34,8 +34,6 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
 
     flow_def = combine_flow_states(tool, flow_states)
     flow_def = flow_moder.apply_modifiers(flow_def)
-    from pprint import pprint
-    pprint(flow_def)
 
     return flow_def
 
