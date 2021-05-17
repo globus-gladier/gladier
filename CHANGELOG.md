@@ -4,7 +4,7 @@
 Below are major changes for each version Release. For detailed information,
 see the list of commits from the last version or use `git log`.
 
-## 0.2.0 - May 3, 20201
+## 0.2.0 - May 17, 2021
 
 - Changed name ``gladier.defaults.GladierDefaults`` to ``gladier.base.GladierBaseTool``
 - Changed name ``gladier.client.GladierClient`` to ``gladier.client.GladierBaseClient``
