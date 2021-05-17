@@ -1,4 +1,5 @@
 import logging
+import json
 from collections import OrderedDict
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
@@ -14,28 +15,38 @@ log = logging.getLogger(__name__)
 
 
 def combine_tool_flows(client: GladierBaseClient, modifiers):
+    """
+    Combine flow definitions on each of a Gladier Client's **tools** and return
+    a single flow definition that runs each state in order from first to last.
+
+    Modifiers can be applied to any of the states within the flow.
+    """
     flow_moder = FlowModifiers(client.tools, modifiers)
 
     flow_states = OrderedDict()
     for tool in client.tools:
         states = get_ordered_flow_states(tool.flow_definition)
         flow_states.update(states)
-    return flow_moder.apply_modifiers(combine_flow_states(client, flow_states))
+
+    flow_def = combine_flow_states(client, flow_states)
+    flow_def = flow_moder.apply_modifiers(flow_def)
+    return json.loads(json.dumps(flow_def))
 
 
 def generate_tool_flow(tool: GladierBaseTool, modifiers):
+    """Generate a flow definition for a Gladier Tool based on the defined ``funcx_functions``.
+    Accepts modifiers for funcx functions"""
 
     flow_moder = FlowModifiers([tool], modifiers)
 
     flow_states = OrderedDict()
     for fx_func in tool.funcx_functions:
-        fx_state = generate_funcx_flow_state(fx_func, modifiers)
+        fx_state = generate_funcx_flow_state(fx_func)
         flow_states.update(fx_state)
 
     flow_def = combine_flow_states(tool, flow_states)
     flow_def = flow_moder.apply_modifiers(flow_def)
-
-    return flow_def
+    return json.loads(json.dumps(flow_def))
 
 
 def combine_flow_states(cls, flow_states):
@@ -69,7 +80,7 @@ def combine_flow_states(cls, flow_states):
     return flow_definition
 
 
-def generate_funcx_flow_state(funcx_function, modifiers):
+def generate_funcx_flow_state(funcx_function):
 
     state_name = get_funcx_flow_state_name(funcx_function)
     tasks = [OrderedDict([
