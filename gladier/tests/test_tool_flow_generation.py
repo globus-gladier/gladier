@@ -75,7 +75,7 @@ def test_tool_custom_payload():
     assert fx_task['payload.$'] == '$.MyCustomInput.details.result'
 
 
-def test_tool_dependent_payloads():
+def test_tool_modifier_dependent_payloads():
     @generate_flow_definition(modifiers={
         mock_func2: {
             'payload': mock_func,
@@ -88,3 +88,48 @@ def test_tool_dependent_payloads():
     fd = tool.flow_definition
     fx_task = fd['States']['MockFunc2']['Parameters']['tasks'][0]
     assert fx_task['payload.$'] == '$.MockFunc.details.results'
+
+
+def test_tool_modifier_by_func_name_payloads():
+    @generate_flow_definition(modifiers={
+        'mock_func2': {
+            'payload': 'mock_func',
+        }
+    })
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func, mock_func2]
+
+    tool = MockTool()
+    fd = tool.flow_definition
+    fx_task = fd['States']['MockFunc2']['Parameters']['tasks'][0]
+    assert fx_task['payload.$'] == '$.MockFunc.details.results'
+
+
+def test_tool_modifier_by_state_name_payloads():
+    @generate_flow_definition(modifiers={
+        'mock_func2': {
+            'payload': 'MockFunc',
+        }
+    })
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func, mock_func2]
+
+    tool = MockTool()
+    fd = tool.flow_definition
+    fx_task = fd['States']['MockFunc2']['Parameters']['tasks'][0]
+    assert fx_task['payload.$'] == '$.MockFunc.details.results'
+
+
+def test_tool_modifier_custom_name_payloads():
+    @generate_flow_definition(modifiers={
+        'mock_func2': {
+            'payload': '$.MyStuff.details.results',
+        }
+    })
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func, mock_func2]
+
+    tool = MockTool()
+    fd = tool.flow_definition
+    fx_task = fd['States']['MockFunc2']['Parameters']['tasks'][0]
+    assert fx_task['payload.$'] == '$.MyStuff.details.results'

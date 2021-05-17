@@ -16,6 +16,7 @@ class FlowModifiers:
         self.function_names = [f.__name__ for f in self.functions]
         self.state_names = [get_funcx_flow_state_name(f) for f in self.functions]
         self.modifiers = modifiers
+        self.check_modifiers()
 
     def get_function(self, function_identifier):
         if function_identifier in self.function_names:
@@ -23,10 +24,15 @@ class FlowModifiers:
         if function_identifier in self.functions:
             return function_identifier
 
+    def get_flow_state_name(self, function_identifier):
+        func = self.get_function(function_identifier)
+        return get_funcx_flow_state_name(func)
+
     def get_state_result_path(self, state_name):
         return f'$.{state_name}.details.results'
 
     def check_modifiers(self):
+        log.debug(f'Checking modifiers: {self.modifiers}')
         if not isinstance(self.modifiers, dict):
             raise FlowModifierException(f'{self.cls}: Flow Modifiers must be a dict')
 
@@ -39,13 +45,13 @@ class FlowModifiers:
 
             for mod_name, mod_value in mods.items():
                 if mod_name not in self.supported_modifiers:
-                    raise FlowModifierException(f'Class {self.cls}: Unsupported modifier "{mod_name}". '
-                                                f'The only supported modifiers are: '
+                    raise FlowModifierException(f'Class {self.cls}: Unsupported modifier '
+                                                f'"{mod_name}". The only supported modifiers are: '
                                                 f'{self.supported_modifiers}')
 
     def apply_modifiers(self, flow):
         for name, mods in self.modifiers.items():
-            state_name = get_funcx_flow_state_name(name)
+            state_name = self.get_flow_state_name(name)
             flow['States'][state_name] = self.apply_modifier(flow['States'][state_name], mods)
         return flow
 
@@ -75,9 +81,6 @@ class FlowModifiers:
                 mod_value = f'$.input.{mod_value}'
 
         mod_name = f'{mod_name}.$'
-        if mod_value.startswith('$.'):
-            item[mod_name] = mod_value
-        else:
-            item[mod_name] = mod_value
+        item[mod_name] = mod_value
         log.debug(f'Set modifier {mod_name} to {mod_value}')
         return item

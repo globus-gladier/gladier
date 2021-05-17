@@ -81,7 +81,8 @@ def generate_funcx_flow_state(funcx_function, modifiers):
         ('Comment', funcx_function.__doc__),
         ('Type', 'Action'),
         ('ActionUrl', 'https://api.funcx.org/automate'),
-        ('ActionScope', 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2'),
+        ('ActionScope', 'https://auth.globus.org/scopes/'
+                        'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2'),
         ('ExceptionOnActionFailure', False),
         ('Parameters', OrderedDict(tasks=tasks)),
         ('ResultPath', f'$.{state_name}'),
@@ -97,7 +98,7 @@ def get_ordered_flow_states(flow_definition):
         ordered_states[state] = flow_definition['States'][state]
         if flow_definition['States'][state].get('Next'):
             state = flow_definition['States'][state].get('Next')
-        elif flow_definition['States'][state].get('End') is True:
+        if flow_definition['States'][state].get('End') is True:
             break
         else:
             raise FlowGenException(f'Flow definition has no "Next" or "End" for state "{state}" '
