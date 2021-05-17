@@ -1,8 +1,8 @@
-from gladier.client import GladierClient
+from gladier import GladierBaseClient
 from pprint import pprint
 
 
-class HelloGladier(GladierClient):
+class HelloGladier(GladierBaseClient):
     gladier_tools = [
         'gladier.tools.hello_world.HelloWorld',
     ]
@@ -10,7 +10,7 @@ class HelloGladier(GladierClient):
 
 
 hello_cli = HelloGladier()
-flow = hello_cli.start_flow()
+flow = hello_cli.run_flow()
 hello_cli.progress(flow['action_id'])
 details = hello_cli.get_details(flow['action_id'], 'HelloFuncXResult')
 pprint(details)
