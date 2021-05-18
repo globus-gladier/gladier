@@ -41,6 +41,8 @@ class GladierBaseClient(object):
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
     client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
+    globus_group = None
+    subscription_id = None
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         self.__config = None
@@ -276,6 +278,43 @@ class GladierBaseClient(object):
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
 
     @staticmethod
+    def get_globus_urn(uuid, id_type='group'):
+        """Convenience method for appending the correct Globus URN prefix on a uuid."""
+        URN_PREFIXES = {
+            'group': 'urn:globus:groups:id:',
+            'identity': 'urn:globus:auth:identity:'
+        }
+        if id_type not in URN_PREFIXES:
+            raise gladier.exc.DevelopmentException('"id_type" must be one of '
+                                                   f'{URN_PREFIXES.keys()}. Got: {id_type}')
+        return f'{URN_PREFIXES[id_type]}{uuid}'
+
+    def get_flow_permission(self, permission_type, identities=None):
+        """
+        This function is a generic shim that should work for most Gladier clients that
+        want basic permissions that will work with a single Globus Group. This method can be
+        overridden to change any of the automate defaults:
+
+        permission_type for deploying flows:
+            'visible_to', 'runnable_by', 'administered_by',
+
+        permission_type for running flows:
+            'manage_by', 'monitor_by'
+
+        By default, always returns either None for using automate defaults, or setting every
+        permission_type above to use the set client `globus_group`.
+        """
+        if identities is None and self.globus_group:
+            identities = [self.get_globus_urn(self.globus_group)]
+        permission_types = {
+            'visible_to', 'runnable_by', 'administered_by', 'manage_by', 'monitor_by'
+        }
+        if permission_type not in permission_types:
+            raise gladier.exc.DevelopmentException(f'permission_type must be one of '
+                                                   f'{permission_types}')
+        return identities
+
+    @staticmethod
     def get_funcx_function_name(funcx_function):
         """
         Generate a function name given a funcx function. These function namse are used to refer
@@ -394,10 +433,19 @@ class GladierBaseClient(object):
         """
         flow_id = self.gconfig.get('flow_id')
         flow_definition = self.get_flow_definition()
+        flow_permissions = {
+            p_type: self.get_flow_permission(p_type)
+            for p_type in ['runnable_by', 'visible_to', 'administered_by']
+            if self.get_flow_permission(p_type)
+        }
+        log.debug(f'Flow permissions set to: {flow_permissions or "Flows defaults"}')
+        flow_kwargs = flow_permissions
+        if self.subscription_id:
+            flow_kwargs['subscription_id'] = self.subscription_id
         if flow_id:
             try:
                 log.info(f'Flow checksum failed, updating flow {flow_id}...')
-                self.flows_client.update_flow(flow_id, flow_definition)
+                self.flows_client.update_flow(flow_id, flow_definition, **flow_kwargs)
                 self.gconfig['flow_checksum'] = self.get_flow_checksum()
                 self.config.save()
             except globus_sdk.exc.GlobusAPIError as gapie:
@@ -408,7 +456,7 @@ class GladierBaseClient(object):
         if flow_id is None:
             log.info('No flow detected, deploying new flow...')
             title = f'{self.__class__.__name__} Flow'
-            flow = self.flows_client.deploy_flow(flow_definition, title=title).data
+            flow = self.flows_client.deploy_flow(flow_definition, title=title, **flow_kwargs).data
             self.gconfig['flow_id'] = flow['id']
             self.gconfig['flow_scope'] = flow['globus_auth_scope']
             self.gconfig['flow_checksum'] = self.get_flow_checksum()
@@ -505,8 +553,14 @@ class GladierBaseClient(object):
             else:
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
+        flow_permissions = {
+            p_type: self.get_flow_permission(p_type)
+            for p_type in ['manage_by', 'monitor_by']
+            if self.get_flow_permission(p_type)
+        }
+        log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
         flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
-                                          combine_flow_input).data
+                                          combine_flow_input, **flow_permissions).data
         log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
         if flow['status'] == 'FAILED':
