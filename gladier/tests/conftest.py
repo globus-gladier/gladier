@@ -25,6 +25,12 @@ def mock_config(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def mock_secrets_config(monkeypatch):
+    monkeypatch.setattr(config.GladierSecretsConfig, 'save', Mock())
+    return config.GladierSecretsConfig
+
+
+@pytest.fixture(autouse=True)
 def mock_flows_client(monkeypatch, globus_response):
     """Ensure there are no calls out to the Globus Automate Client"""
     mock_flows_cli = Mock()
