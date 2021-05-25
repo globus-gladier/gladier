@@ -3,11 +3,14 @@ from gladier.exc import FlowModifierException
 from gladier.utils.name_generation import get_funcx_flow_state_name
 
 log = logging.getLogger(__name__)
+funcx_modifiers = {'endpoint', 'payload', 'tasks'}
+state_modifiers = {'InputPath', 'ResultPath', 'WaitTime'}
 
 
 class FlowModifiers:
-    supported_modifiers = {'endpoint', 'payload'}
-    funcx_modifiers = {'endpoint', 'payload'}
+    supported_modifiers = state_modifiers.union(funcx_modifiers)
+    funcx_modifiers = funcx_modifiers
+    state_modifiers = state_modifiers
 
     def __init__(self, tools, modifiers, cls=None):
         self.cls = cls
@@ -58,12 +61,22 @@ class FlowModifiers:
     def apply_modifier(self, flow_state, state_modifiers):
 
         for modifier_name, value in state_modifiers.items():
+            log.debug(f'Applying modifier "{modifier_name}", value "{value}"')
             # If this is for a funcx task
             if modifier_name in self.funcx_modifiers:
-                flow_state['Parameters']['tasks'] = [
-                    self.generic_set_modifier(fx_task, modifier_name, value)
-                    for fx_task in flow_state['Parameters']['tasks']
-                ]
+                if modifier_name == 'tasks':
+                    flow_state['Parameters'] = self.generic_set_modifier(
+                        flow_state['Parameters'], 'tasks', value)
+                else:
+                    flow_state['Parameters']['tasks'] = [
+                        self.generic_set_modifier(fx_task, modifier_name, value)
+                        for fx_task in flow_state['Parameters']['tasks']
+                    ]
+            elif modifier_name in self.state_modifiers:
+                self.generic_set_modifier(flow_state, modifier_name, value)
+                if modifier_name == 'InputPath' and 'Parameters' in flow_state:
+                    flow_state.pop('Parameters')
+                    flow_state['InputPath'] = flow_state.pop('InputPath.$')
         return flow_state
 
     def generic_set_modifier(self, item, mod_name, mod_value):
@@ -80,7 +93,13 @@ class FlowModifiers:
             else:
                 mod_value = f'$.input.{mod_value}'
 
-        mod_name = f'{mod_name}.$'
+        # Remove duplicate keys
+        for duplicate_mod_key in (mod_name, f'{mod_name}.$'):
+            if duplicate_mod_key in item.keys():
+                item.pop(duplicate_mod_key)
+
+        if isinstance(mod_value, str) and mod_value.startswith('$.'):
+            mod_name = f'{mod_name}.$'
         item[mod_name] = mod_value
         log.debug(f'Set modifier {mod_name} to {mod_value}')
         return item
