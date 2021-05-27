@@ -1,0 +1,25 @@
+{
+  "Comment": "List files on the filesystem",
+  "StartAt": "Ls",
+  "States": {
+    "Ls": {
+      "ActionScope": "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2",
+      "ActionUrl": "https://api.funcx.org/automate",
+      "Comment": "Do an 'ls' on the filesystem, given a ``dir``",
+      "Type": "Action",
+      "ExceptionOnActionFailure": false,
+      "Parameters": {
+        "tasks": [
+          {
+            "endpoint.$": "$.input.funcx_endpoint_compute",
+            "func.$": "$.input.ls_funcx_id",
+            "payload.$": "$.input"
+          }
+        ]
+      },
+      "End": true,
+      "ResultPath": "$.Ls",
+      "WaitTime": 300
+    }
+  }
+}

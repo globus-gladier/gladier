@@ -1,12 +1,13 @@
 from unittest.mock import Mock, PropertyMock
 import pytest
-import uuid
 import fair_research_login
 import globus_sdk
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
 from gladier import GladierBaseClient, config
+
+data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +19,12 @@ def mock_login(monkeypatch):
     return fair_research_login.NativeClient
 
 
+@pytest.fixture
+def two_step_flow():
+    with open(os.path.join(data_dir, 'two_step_flow.json')) as f:
+        return json.loads(f.read())
+
+
 @pytest.fixture(autouse=True)
 def mock_config(monkeypatch):
     monkeypatch.setattr(config.GladierConfig, 'save', Mock())
@@ -25,15 +32,21 @@ def mock_config(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def mock_secrets_config(monkeypatch):
+    monkeypatch.setattr(config.GladierSecretsConfig, 'save', Mock())
+    return config.GladierSecretsConfig
+
+
+@pytest.fixture(autouse=True)
 def mock_flows_client(monkeypatch, globus_response):
     """Ensure there are no calls out to the Globus Automate Client"""
     mock_flows_cli = Mock()
     mock_flows_cli.deploy_flow.return_value = globus_response(mock_data={
-        'id': str(uuid.uuid4()),
+        'id': 'mock_flow_id',
         'globus_auth_scope': mock_automate_flow_scope,
     })
     mock_flows_cli.run_flow.return_value = globus_response(mock_data={
-        'action_id': str(uuid.uuid4()),
+        'action_id': 'mock_flow_id',
         'status': 'ACTIVE',
     })
     monkeypatch.setattr(GladierBaseClient, 'flows_client',
@@ -45,7 +58,7 @@ def mock_flows_client(monkeypatch, globus_response):
 def mock_funcx_client(monkeypatch):
     """Ensure there are no calls out to the Funcx Client"""
     mock_fx_cli = Mock()
-    mock_fx_cli.register_function.return_value = str(uuid.uuid4())
+    mock_fx_cli.register_function.return_value = 'mock_funcx_id'
     monkeypatch.setattr(GladierBaseClient, 'funcx_client',
                         PropertyMock(return_value=mock_fx_cli))
     return mock_fx_cli
