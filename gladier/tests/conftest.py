@@ -1,12 +1,16 @@
 from unittest.mock import Mock, PropertyMock
 import pytest
 import uuid
+import os
+import json
 import fair_research_login
 import globus_sdk
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
 from gladier import GladierBaseClient, config
+
+data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
 
 
 @pytest.fixture(autouse=True)
@@ -16,6 +20,12 @@ def mock_login(monkeypatch):
     monkeypatch.setattr(fair_research_login.NativeClient, 'login', Mock())
     monkeypatch.setattr(fair_research_login.NativeClient, 'logout', Mock())
     return fair_research_login.NativeClient
+
+
+@pytest.fixture
+def two_step_flow():
+    with open(os.path.join(data_dir, 'two_step_flow.json')) as f:
+        return json.loads(f.read())
 
 
 @pytest.fixture(autouse=True)
