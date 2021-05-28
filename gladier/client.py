@@ -92,8 +92,9 @@ class GladierBaseClient(object):
             cls_inst = tool_ref()
             if isinstance(cls_inst, gladier.base.GladierBaseTool):
                 return cls_inst
-            raise gladier.exc.ConfigException(f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} '
-                                              f'or a dotted import string ')
+            raise gladier.exc.ConfigException(
+                f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} or a dotted import '
+                'string ')
 
     @property
     def version(self):
@@ -275,7 +276,6 @@ class GladierBaseClient(object):
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
 
     @staticmethod
-
     def get_globus_urn(uuid, id_type='group'):
         """Convenience method for appending the correct Globus URN prefix on a uuid."""
         URN_PREFIXES = {
@@ -324,7 +324,6 @@ class GladierBaseClient(object):
         return f'{funcx_function.__name__}_funcx_id'
 
     @staticmethod
-
     def get_funcx_function_checksum(funcx_function):
         """
         Get the SHA256 checksum of a funcx function
