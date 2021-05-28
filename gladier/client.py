@@ -92,8 +92,9 @@ class GladierBaseClient(object):
             cls_inst = tool_ref()
             if isinstance(cls_inst, gladier.base.GladierBaseTool):
                 return cls_inst
-            raise gladier.exc.ConfigException(f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} '
-                                              f'or a dotted import string ')
+            raise gladier.exc.ConfigException(
+                f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} or a dotted import '
+                'string ')
 
     @property
     def version(self):
@@ -275,7 +276,6 @@ class GladierBaseClient(object):
         return hashlib.sha256(json.dumps(self.get_flow_definition()).encode()).hexdigest()
 
     @staticmethod
-
     def get_globus_urn(uuid, id_type='group'):
         """Convenience method for appending the correct Globus URN prefix on a uuid."""
         URN_PREFIXES = {
@@ -324,7 +324,6 @@ class GladierBaseClient(object):
         return f'{funcx_function.__name__}_funcx_id'
 
     @staticmethod
-
     def get_funcx_function_checksum(funcx_function):
         """
         Get the SHA256 checksum of a funcx function
@@ -386,8 +385,8 @@ class GladierBaseClient(object):
     def register_funcx_function(self, function):
         """Register the functions with funcx. Ids are saved in the local gladier.cfg"""
 
-        fxid_name = self.get_funcx_function_name(function)
-        fxck_name = self.get_funcx_function_checksum_name(function)
+        fxid_name = gladier.utils.name_generation.get_funcx_function_name(function)
+        fxck_name = gladier.utils.name_generation.get_funcx_function_checksum_name(function)
         cfg = self.get_cfg(private=True)
         cfg[self.section][fxid_name] = self.funcx_client.register_function(function,
                                                                            function.__doc__)
@@ -440,11 +439,9 @@ class GladierBaseClient(object):
         if flow_id:
             try:
                 log.info(f'Flow checksum failed, updating flow {flow_id}...')
-
                 self.flows_client.update_flow(flow_id, flow_definition, **flow_kwargs)
-                self.gconfig['flow_checksum'] = self.get_flow_checksum()
-                self.config.save()
-
+                cfg[self.section]['flow_checksum'] = self.get_flow_checksum()
+                cfg.save()
             except globus_sdk.exc.GlobusAPIError as gapie:
                 if gapie.code == 'Not Found':
                     flow_id = None
@@ -455,11 +452,11 @@ class GladierBaseClient(object):
             title = f'{self.__class__.__name__} Flow'
 
             flow = self.flows_client.deploy_flow(flow_definition, title=title, **flow_kwargs).data
-            self.gconfig['flow_id'] = flow['id']
-            self.gconfig['flow_scope'] = flow['globus_auth_scope']
-            self.gconfig['flow_checksum'] = self.get_flow_checksum()
-            self.config.save()
-            flow_id = self.gconfig['flow_id']
+            cfg[self.section]['flow_id'] = flow['id']
+            cfg[self.section]['flow_scope'] = flow['globus_auth_scope']
+            cfg[self.section]['flow_checksum'] = self.get_flow_checksum()
+            cfg.save()
+            flow_id = cfg[self.section]['flow_id']
 
         return flow_id
 
@@ -566,9 +563,10 @@ class GladierBaseClient(object):
             if self.get_flow_permission(p_type)
         }
         log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
-        flow = self.flows_client.run_flow(flow_id, self.gconfig['flow_scope'],
+        cfg_sec = self.get_section(private=True)
+        flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
                                           combine_flow_input, **flow_permissions).data
-        log.info(f'Started flow {self.section} flow id "{self.gconfig["flow_id"]}" with action '
+        log.info(f'Started flow {self.section} flow id "{cfg_sec["flow_id"]}" with action '
 
                  f'"{flow["action_id"]}"')
         if flow['status'] == 'FAILED':

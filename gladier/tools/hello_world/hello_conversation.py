@@ -53,7 +53,8 @@ class HelloConversation(GladierBaseTool):
                 'Comment': 'Say something to start the conversation',
                 'Type': 'Action',
                 'ActionUrl': 'https://api.funcx.org/automate',
-                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'ActionScope': 'https://auth.globus.org/scopes/'
+                               'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
                 'ExceptionOnActionFailure': False,
                 'Parameters': {
                     'tasks': [{
@@ -72,7 +73,8 @@ class HelloConversation(GladierBaseTool):
                 'Comment': 'Agree with the topic',
                 'Type': 'Action',
                 'ActionUrl': 'https://api.funcx.org/automate',
-                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'ActionScope': 'https://auth.globus.org/scopes/'
+                               'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
                 'ExceptionOnActionFailure': False,
                 'Parameters': {
                     'tasks': [{
@@ -91,7 +93,8 @@ class HelloConversation(GladierBaseTool):
                 'Comment': 'Disagree with the topic.',
                 'Type': 'Action',
                 'ActionUrl': 'https://api.funcx.org/automate',
-                'ActionScope': 'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
+                'ActionScope': 'https://auth.globus.org/scopes/'
+                               'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
                 'ExceptionOnActionFailure': False,
                 'Parameters': {
                     'tasks': [{
