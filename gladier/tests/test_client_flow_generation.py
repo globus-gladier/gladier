@@ -2,6 +2,16 @@ from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition
 from globus_automate_client.flows_client import validate_flow_definition
 
 
+def gen_tool_func():
+    pass
+
+
+@generate_flow_definition
+class GeneratedTool(GladierBaseTool):
+    """Mock Tool"""
+    funcx_functions = [gen_tool_func]
+
+
 def test_client_flow_generation_simple(logged_in):
 
     @generate_flow_definition
@@ -18,15 +28,26 @@ def test_client_flow_generation_simple(logged_in):
     assert flow_def['Comment'] == 'Example Docs'
 
 
-def test_client_combine_gen_and_non_gen_flows(logged_in):
-
-    def gen_tool_func():
-        pass
+def test_client_flow_generation_two_tools_two_inst(logged_in):
+    """Previously, this caused a KeyError due to overwriting a flow on a tool."""
 
     @generate_flow_definition
-    class GeneratedTool(GladierBaseTool):
-        """Mock Tool"""
-        funcx_functions = [gen_tool_func]
+    class MyClient(GladierBaseClient):
+        """Example Docs"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+            GeneratedTool,
+        ]
+
+    MyClient()
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    assert isinstance(flow_def, dict)
+    assert len(flow_def['States']) == 2
+    assert flow_def['Comment'] == 'Example Docs'
+
+
+def test_client_combine_gen_and_non_gen_flows(logged_in):
 
     @generate_flow_definition
     class MyClient(GladierBaseClient):
