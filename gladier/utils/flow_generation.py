@@ -1,5 +1,6 @@
 import logging
 import json
+import copy
 from collections import OrderedDict
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
@@ -103,17 +104,18 @@ def generate_funcx_flow_state(funcx_function):
 
 
 def get_ordered_flow_states(flow_definition):
+    flow_def = copy.deepcopy(flow_definition)
     ordered_states = OrderedDict()
-    state = flow_definition['StartAt']
+    state = flow_def['StartAt']
     while state is not None:
-        ordered_states[state] = flow_definition['States'][state]
-        if flow_definition['States'][state].get('Next'):
-            state = flow_definition['States'][state].get('Next')
-        if flow_definition['States'][state].get('End') is True:
+        ordered_states[state] = flow_def['States'][state]
+        if flow_def['States'][state].get('Next'):
+            state = flow_def['States'][state].get('Next')
+        if flow_def['States'][state].get('End') is True:
             break
         else:
             raise FlowGenException(f'Flow definition has no "Next" or "End" for state "{state}" '
-                                   f'with states: {flow_definition["States"].keys()}')
+                                   f'with states: {flow_def["States"].keys()}')
 
-    ordered_states[state] = flow_definition['States'][state]
+    ordered_states[state] = flow_def['States'][state]
     return ordered_states
