@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.2](https://github.com/globus-gladier/gladier/compare/v0.3.1...v0.3.2) (2021-06-17)
+
+
+### Bug Fixes
+
+* add funcx-endpoint==0.0.3 to Gladier requirements ([8ac47b8](https://github.com/globus-gladier/gladier/commit/8ac47b81a54839cd182a090219d6cdbb16079c44))
+
 ### [0.3.1](https://github.com/globus-gladier/gladier/compare/v0.3.0...v0.3.1) (2021-06-04)
 
 
