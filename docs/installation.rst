@@ -73,9 +73,9 @@ whats happening. The GladierClient comes with some built-in functions to help wi
   details = hello_cli.get_details(flow['action_id'], 'HelloFuncXResult')
   pprint(details)
 
-``progress()`` will periodically query the status of the flow until it finishes. It's
+``hello_cli.progress()`` will periodically query the status of the flow until it finishes. It's
 a nice way to watch progression as the flow executes. Once the flow has finished,
-``get_details()`` will fetch output from the Globus Flow, so it can be displayed in a
+``hello_cli.get_details()`` will fetch output from the Globus Flow, so it can be displayed in a
 readable format.
 
 Running A Gladier Tool
