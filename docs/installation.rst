@@ -18,6 +18,12 @@ With pip installed, you can do the following:
 Getting Started
 ===============
 
+.. note::
+   FuncX is a major component of Glaider, using FuncX Endpoints to execute
+   functions defined in Gladier Tools. See
+   `First Time Setup <https://funcx.readthedocs.io/en/latest/endpoints.html#first-time-setup>`_
+   for how to setup a local endpoint you can use for running these examples.
+
 With Gladier Installed, you can now put together some basic clients!
 Setup your workflow by overriding the Gladier Client with a list of the
 tools you want to use. An example looks like this:
@@ -71,6 +77,7 @@ whats happening. The GladierClient comes with some built-in functions to help wi
 a nice way to watch progression as the flow executes. Once the flow has finished,
 ``get_details()`` will fetch output from the Globus Flow, so it can be displayed in a
 readable format.
+
 Running A Gladier Tool
 ----------------------
 
@@ -78,3 +85,28 @@ A full code snippet for running everything above is here:
 
 .. literalinclude:: tools/gladier_example.py
    :language: python
+
+Remember to replace ``<your_funcx_endpoint>`` with the UUID for your endpoint.
+You can use ``funcx-endpoint`` to list the endpoints running on your machine.
+If you need to setup a new funcx-endpoint, see the
+`FuncX-Endpoint first time setup <https://funcx.readthedocs.io/en/latest/endpoints.html#first-time-setup>`_
+
+Running the code above with a live FuncX endpoint will result in the following:
+
+.. code-block:: bash
+
+  $ python hello_world.py
+  Starting login with Globus Auth, press ^C to cancel.
+  [ACTIVE]: State HelloFuncX of type Action started
+  [ACTIVE]: State HelloFuncX of type Action started
+  [ACTIVE]: An Action is running
+  [ACTIVE]: An Action is running
+  {'action_id': '058b3cf7-f602-4b9c-8b29-661779f7c129',
+   'details': {'completion_t': '1623959367.248737',
+               'exception': None,
+               'result': 'hello world',
+               'status': 'SUCCEEDED',
+               'task_id': '058b3cf7-f602-4b9c-8b29-661779f7c129'},
+   'release_after': 'P30D',
+   'state_name': 'HelloFuncX',
+   'status': 'SUCCEEDED'}
