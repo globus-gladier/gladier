@@ -111,7 +111,7 @@ def get_ordered_flow_states(flow_definition):
         ordered_states[state] = flow_def['States'][state]
         if flow_def['States'][state].get('Next'):
             state = flow_def['States'][state].get('Next')
-        if flow_def['States'][state].get('End') is True:
+        elif flow_def['States'][state].get('End') is True:
             break
         else:
             raise FlowGenException(f'Flow definition has no "Next" or "End" for state "{state}" '
