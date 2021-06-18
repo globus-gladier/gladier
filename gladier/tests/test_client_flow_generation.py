@@ -92,3 +92,47 @@ def test_client_tool_with_no_flow(logged_in):
 
     with pytest.raises(exc.FlowGenException):
         MyClient()
+
+
+def test_client_tool_duplication(logged_in):
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+        ]
+
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 3
+    assert set(flow_def['States']) == {'MockFunc', 'MockFunc2', 'MockFunc3'}
+
+
+def test_client_tool_complex_duplication(logged_in):
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
+        ]
+
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 9
+    assert set(flow_def['States']) == {
+        'StateOne',
+        'StateOne2',
+        'StateOne3',
+        'StateTwo',
+        'StateTwo2',
+        'StateTwo3',
+        'StateThree',
+        'StateThree2',
+        'StateThree3',
+    }
