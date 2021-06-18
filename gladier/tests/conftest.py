@@ -101,6 +101,26 @@ def globus_response():
 @pytest.fixture
 def mock_globus_api_error(monkeypatch):
     class MockGlobusAPIError(Exception):
-        pass
-    monkeypatch.setattr(globus_sdk, 'GlobusAPIError', MockGlobusAPIError)
-    return globus_sdk.GlobusAPIError
+        http_status = 400
+        code = 'Error'
+        message = json.dumps(
+            {'error': {
+                'code': 'FLOW_GENERIC_ERROR',
+                'detail': 'Something terrible happened, and its your fault.'
+                }
+             })
+    monkeypatch.setattr(globus_sdk.exc, 'GlobusAPIError', MockGlobusAPIError)
+    return globus_sdk.exc.GlobusAPIError
+
+
+@pytest.fixture
+def mock_dependent_token_change_error(mock_globus_api_error):
+    # Yes, this is a real Globus automate exception message...
+    automate_message = json.dumps(
+        {'error': {'code': 'FLOW_INPUT_ERROR',
+                   'detail': 'For RunAs value User, unable to get tokens for scopes '
+                   "{'https://auth.globus.org/scopes/actions.globus.org/transfer/transfer'}"
+                   }
+         })
+    mock_globus_api_error.message = automate_message
+    return mock_globus_api_error

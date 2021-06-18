@@ -220,7 +220,7 @@ class GladierBaseClient(object):
         See help(fair_research_login.NativeClient.login) for a full list of kwargs.
         """
         nc = self.get_native_client()
-        if self.is_logged_in():
+        if self.is_logged_in() and login_kwargs.get('force') is not True:
             log.debug('Already logged in, skipping login.')
             return
         log.info('Initiating Native App Login...')
@@ -564,8 +564,24 @@ class GladierBaseClient(object):
         }
         log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
-        flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
-                                          combine_flow_input, **flow_permissions).data
+        try:
+            flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
+                                              combine_flow_input, **flow_permissions).data
+        except globus_sdk.exc.GlobusAPIError as gapie:
+            log.debug('Encountered error when running flow', exc_info=True)
+            automate_error_message = json.loads(gapie.message)
+            detail_message = automate_error_message['error']['detail']
+            if 'unable to get tokens for scopes' in detail_message:
+                if self.auto_login:
+                    log.info('Initiating new login for dependent scope change')
+                    self.login(requested_scopes=[cfg_sec['flow_scope']], force=True)
+                    flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
+                                                      combine_flow_input, **flow_permissions).data
+                else:
+                    raise gladier.exc.AuthException('Scope change for flow, re-auth required',
+                                                    missing_scopes=(cfg_sec['flow_scope'],))
+            else:
+                raise
         log.info(f'Started flow {self.section} flow id "{cfg_sec["flow_id"]}" with action '
 
                  f'"{flow["action_id"]}"')
