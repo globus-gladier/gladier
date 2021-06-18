@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.3](https://github.com/globus-gladier/gladier/compare/v0.3.2...v0.3.3) (2021-06-18)
+
+
+### Bug Fixes
+
+* Tools with more than two states would raise error with flow gen ([dd6586e](https://github.com/globus-gladier/gladier/commit/dd6586ee9f14c9e09e4a61f08eecdb94d89b28bc))
+* when user adds new AP to flow, Gladier now handles re-auth ([e24a372](https://github.com/globus-gladier/gladier/commit/e24a372ca4af71affe5d891e6a83c99eb71c933b))
+
 ### [0.3.2](https://github.com/globus-gladier/gladier/compare/v0.3.1...v0.3.2) (2021-06-17)
 
 
