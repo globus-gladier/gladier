@@ -61,3 +61,18 @@ def test_client_combine_gen_and_non_gen_flows(logged_in):
     flow_def = mc.flow_definition
     validate_flow_definition(flow_def)
     assert len(flow_def['States']) == 2
+
+
+def test_client_tool_with_three_steps(logged_in):
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
+        ]
+
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 3

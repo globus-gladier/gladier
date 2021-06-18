@@ -52,6 +52,60 @@ class MockTool(GladierBaseTool):
     ]
 
 
+class MockToolThreeStates(GladierBaseTool):
+
+    flow_definition = {
+        'Comment': 'Do three things. Not two. Not four.',
+        'StartAt': 'StateOne',
+        'States': {
+            'StateOne': {
+                'Comment': 'Do the first thing',
+                'Type': 'Action',
+                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionScope': 'https://auth.globus.org/scopes/funcx/automate2',
+                'ExceptionOnActionFailure': False,
+                'Parameters': {
+                    'tasks': [{
+                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
+                        'func.$': '$.input.hello_world_funcx_id',
+                        'payload.$': '$.input.good_input',
+                    }]
+                },
+                'ResultPath': '$.PublishGatherMetadata',
+                'WaitTime': 60,
+                'Next': 'StateTwo',
+            },
+            'StateTwo': {
+                'Comment': 'Do the second thing',
+                'Type': 'Action',
+                'ActionUrl': 'https://actions.automate.globus.org/transfer/transfer',
+                'InputPath': '$.StateOne.details.result.foo',
+                'ResultPath': '$.StateTwo',
+                'WaitTime': 600,
+                'Next': 'StateThree',
+            },
+            'StateThree': {
+                'Comment': 'Do the third thing',
+                'Type': 'Action',
+                'ActionUrl': 'https://actions.globus.org/search/ingest',
+                'ExceptionOnActionFailure': False,
+                'InputPath': '$.StateOne.details.result.bar',
+                'ResultPath': '$.StateThree',
+                'WaitTime': 300,
+                'End': True
+            },
+        }
+    }
+
+    required_input = [
+        'funcx_endpoint_non_compute'
+    ]
+
+    flow_input = {
+        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid'
+    }
+
+
 class MockGladierClient(GladierBaseClient):
     secret_config_filename = 'gladier-secrets.cfg'
     config_filename = 'gladier.cfg'
