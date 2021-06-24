@@ -36,7 +36,7 @@ tools you want to use. An example looks like this:
 The new class has two main attributes:
 
 * ``gladier_tools`` -- Defines which tools you want to use for this client
-* ``flow_definition`` -- Defines how automate will run your tools
+* ``flow_definition`` -- Defines the Globus Flow that will run each tool
 
 You may notice that both have similar values, ``gladier.tools.hello_world.HelloWorld``.
 Each Gladier tool comes with its own built-in flow so it can easily be tested separately.
