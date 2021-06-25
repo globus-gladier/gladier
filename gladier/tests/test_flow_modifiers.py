@@ -51,3 +51,19 @@ def test_unsupported_modifiers():
     }
     with pytest.raises(FlowGenException):
         FlowModifiers([MyTool()], mods)
+
+
+def test_duplicated_tools():
+    fm = FlowModifiers([MyTool(), MyTool()], {
+        'mock_func2': {
+            'payload': 'mock_func'
+        }
+    })
+    new_flow = fm.apply_modifiers({
+        'States': {
+            'MockFunc': {'Parameters': {'tasks': [{'payload': 'foo'}]}},
+            'MockFunc2': {'Parameters': {'tasks': [{'payload': 'bar'}]}},
+        }
+    })
+    mock2_pl = new_flow['States']['MockFunc2']['Parameters']['tasks'][0]['payload.$']
+    assert mock2_pl == '$.MockFunc.details.results'
