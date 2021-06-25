@@ -1,5 +1,7 @@
+import pytest
 from gladier.base import GladierBaseTool
 from gladier.decorators import generate_flow_definition
+from gladier.exc import FlowGenException
 from globus_automate_client.flows_client import validate_flow_definition
 
 
@@ -43,6 +45,16 @@ def test_tool_generate_multiple_states():
     assert fd['StartAt'] == 'MockFunc'
     assert len(fd['States']) == 2
     assert set(fd['States']) == {'MockFunc', 'MockFunc2'}
+
+
+def test_tool_generate_no_states():
+
+    @generate_flow_definition
+    class MockTool(GladierBaseTool):
+        pass
+
+    with pytest.raises(FlowGenException):
+        MockTool()
 
 
 def test_tool_endpoint_mods():

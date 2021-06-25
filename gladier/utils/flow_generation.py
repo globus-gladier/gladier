@@ -3,6 +3,7 @@ import json
 from collections import OrderedDict
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
+from gladier.exc import FlowGenException
 from gladier.utils.flow_modifiers import FlowModifiers
 from gladier.utils.name_generation import (
     get_funcx_flow_state_name,
@@ -48,6 +49,10 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
         fx_state = generate_funcx_flow_state(fx_func)
         flow_states.update(fx_state)
 
+    if not flow_states:
+        raise FlowGenException(f'Tool {tool} has no flow states. Add a list of python functions '
+                               f'as "{tool}.funcx_functions = [myfunction]" or set a custom flow '
+                               f'definition instead using `{tool}.flow_definition = mydef`')
     flow_def = FlowCompiler.combine_flow_states(flow_states, flow_comment=tool.__doc__)
     flow_def = flow_moder.apply_modifiers(flow_def)
     return json.loads(json.dumps(flow_def))
