@@ -86,15 +86,15 @@ def generate_funcx_flow_state(funcx_function):
     state_name = get_funcx_flow_state_name(funcx_function)
     tasks = [OrderedDict([
         ('endpoint.$', '$.input.funcx_endpoint_compute'),
-        ('func.$', f'$.input.{get_funcx_function_name(funcx_function)}'),
+        ('function.$', f'$.input.{get_funcx_function_name(funcx_function)}'),
         ('payload.$', '$.input'),
     ])]
     flow_state = OrderedDict([
         ('Comment', funcx_function.__doc__),
         ('Type', 'Action'),
-        ('ActionUrl', 'https://api.funcx.org/automate'),
+        ('ActionUrl', 'https://automate.funcx.org'),
         ('ActionScope', 'https://auth.globus.org/scopes/'
-                        'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2'),
+                        'b3db7e59-a6f1-4947-95c2-59d6b7a70f8c/action_all'),
         ('ExceptionOnActionFailure', False),
         ('Parameters', OrderedDict(tasks=tasks)),
         ('ResultPath', f'$.{state_name}'),
