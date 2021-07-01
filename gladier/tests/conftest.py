@@ -78,6 +78,8 @@ def logged_in(monkeypatch):
     scopes = list(flows_client.ALL_FLOW_SCOPES) + [
         # Funcx Scope
         'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all',
+        # Required by FuncX
+        'urn:globus:auth:scope:search.api.globus.org:all', 'openid',
         # The scope we got back from 'deploying' a flow with automate (of course, this is a mock)
         mock_automate_flow_scope,
     ]
