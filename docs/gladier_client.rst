@@ -19,6 +19,8 @@ There are two main components of a Gladier Client:
 
 The Gladier Client allows for some extra runtime configuration:
 
+
+* ``globus_group`` -- adds the Globus Group to all Automate permission levels: visible_to, runnable_by, administered_by, manage_by, monitor_by. See the `Flows Client Docs <https://globus-automate-client.readthedocs.io/en/latest/cli_reference.html?highlight=visible_to#cli-reference>`_ for more info.
 * ``secret_config_filename`` -- defines where login credentials are stored
 * ``config_filename`` -- defines where GladierClient specific runtime variables are stored
 * ``app_name`` -- The name of the application, as it appears in Globus
