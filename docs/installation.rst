@@ -48,12 +48,12 @@ More on these components later. For now, let's run the flow!
 .. code-block:: python
 
    hello_cli = HelloGladier()
-   flow = hello_cli.start_flow()
+   flow = hello_cli.run_flow()
 
 The first line instantiates the client with default values, which means it will automatically
 trigger login for Globus Auth and register Flows and FuncX functions as needed, without asking.
 
-The second line, ``flow = hello_cli.start_flow()``, iterates over all defined tools and starts the flow. A bunch of things happen
+The second line, ``flow = hello_cli.run_flow()``, iterates over all defined tools and starts the flow. A bunch of things happen
 here, including:
 
 * Gathering input from each tool
