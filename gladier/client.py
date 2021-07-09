@@ -535,7 +535,7 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
-    def run_flow(self, flow_input=None, flow_label=None, use_defaults=True):
+    def run_flow(self, flow_input=None, **flow_kwargs):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
@@ -548,7 +548,7 @@ class GladierBaseClient(object):
                            is called on each tool to ensure basic needs are met for each.
                            Input MUST be wrapped inside an 'input' dict,
                            for example {'input': {'foo': 'bar'}}.
-        :param flow_label: Set the label to be used in the automate app. If no label is passed
+        :param label: Set the label to be used in the automate app. If no label is passed
                            the standard automate label is used. 
         :param use_defaults: Use the result of self.get_input() to populate base input for the
                              flow. All conflicting input provided by flow_input overrides
@@ -561,7 +561,7 @@ class GladierBaseClient(object):
         :raises: gladier.exc.AuthException
         :raises: Any globus_sdk.exc.BaseException
         """
-        combine_flow_input = self.get_input() if use_defaults else dict()
+        combine_flow_input = self.get_input() if flow_kwargs['use_defaults'] else dict()
         if flow_input is not None:
             if not flow_input.get('input') or len(flow_input.keys()) != 1:
                 raise gladier.exc.ConfigException(
@@ -585,21 +585,19 @@ class GladierBaseClient(object):
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
 
-        flow_permissions = {
+        flow_kwargs = {
             p_type: self.get_flow_permission(p_type)
             for p_type in ['manage_by', 'monitor_by']
             if self.get_flow_permission(p_type)
         }
-        log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
+        log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
 
-        flow_kwargs=flow_permissions
-        if flow_label:
-            flow_kwargs['label']=flow_label
-            log.debug(f'Flow label set to: {flow_label}')
+        if flow_kwargs['label']:
+            log.debug(f'Flow label set to: {flow_kwargs.get("label")}')
         else:
             log.debug(f'No label set. Using automate default.')
-            
+
         try:
             flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
                                               combine_flow_input, **flow_kwargs).data
