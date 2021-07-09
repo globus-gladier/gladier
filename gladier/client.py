@@ -16,6 +16,7 @@ import gladier.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
+import gladier.utils.config_migrations
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -79,6 +80,16 @@ class GladierBaseClient(object):
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
         self.auto_registration = auto_registration
+
+        private_cfg = self.get_cfg(private=True)
+        private_cfg = gladier.utils.config_migrations.migrate_gladier(private_cfg)
+        private_cfg.save()
+
+        if os.path.exists(self.config_filename):
+            pub_cfg = self.get_cfg(private=False)
+            pub_cfg = gladier.utils.config_migrations.migrate_gladier(pub_cfg)
+            pub_cfg.save()
+
         if self.authorizers and self.auto_login:
             log.warning('Authorizers provided when "auto_login=True", you probably want to set '
                         'auto_login=False if you are providing your own authorizers...')
