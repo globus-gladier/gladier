@@ -593,7 +593,7 @@ class GladierBaseClient(object):
         log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
 
-        if flow_kwargs['label']:
+        if flow_kwargs.get('label'):
             log.debug(f'Flow label set to: {flow_kwargs.get("label")}')
         else:
             log.debug(f'No label set. Using automate default.')
