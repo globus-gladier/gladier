@@ -561,7 +561,7 @@ class GladierBaseClient(object):
         :raises: gladier.exc.AuthException
         :raises: Any globus_sdk.exc.BaseException
         """
-        combine_flow_input = self.get_input() if flow_kwargs['use_defaults'] else dict()
+        combine_flow_input = self.get_input() if flow_kwargs.get('use_defaults') else dict()
         if flow_input is not None:
             if not flow_input.get('input') or len(flow_input.keys()) != 1:
                 raise gladier.exc.ConfigException(
