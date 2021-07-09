@@ -535,7 +535,7 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
-    def run_flow(self, flow_input=None, **flow_kwargs):
+    def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
@@ -561,7 +561,7 @@ class GladierBaseClient(object):
         :raises: gladier.exc.AuthException
         :raises: Any globus_sdk.exc.BaseException
         """
-        combine_flow_input = self.get_input() if flow_kwargs.get('use_defaults') else dict()
+        combine_flow_input = self.get_input() if use_defaults else dict()
         if flow_input is not None:
             if not flow_input.get('input') or len(flow_input.keys()) != 1:
                 raise gladier.exc.ConfigException(
