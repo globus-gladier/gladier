@@ -592,10 +592,17 @@ class GladierBaseClient(object):
         }
         log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
+
+        flow_kwargs=flow_permissions
+        if flow_label:
+            flow_kwargs['label']=flow_label
+            log.debug(f'Flow label set to: {flow_label}')
+        else:
+            log.debug(f'No label set. Using automate default.')
+            
         try:
             flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
-                                              combine_flow_input, label=flow_label, 
-                                              **flow_permissions).data
+                                              combine_flow_input, **flow_kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
             log.debug('Encountered error when running flow', exc_info=True)
             automate_error_message = json.loads(gapie.message)
@@ -605,18 +612,14 @@ class GladierBaseClient(object):
                     log.info('Initiating new login for dependent scope change')
                     self.login(requested_scopes=[cfg_sec['flow_scope']], force=True)
                     flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
-                                                      combine_flow_input, label=flow_label,
-                                                       **flow_permissions).data
+                                                      combine_flow_input, **flow_kwargs).data
                 else:
                     raise gladier.exc.AuthException('Scope change for flow, re-auth required',
                                                     missing_scopes=(cfg_sec['flow_scope'],))
             else:
                 raise
-        if flow_label:
-            log.info(f'Started flow {flow_label} flow id "{cfg_sec["flow_id"]}" with action '
-                 f'"{flow["action_id"]}"')
-        else:
-            log.info(f'Started flow {self.section} flow id "{cfg_sec["flow_id"]}" with action '
+
+        log.info(f'Started flow {flow_kwargs.get("label")} flow id "{cfg_sec["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
 
         if flow['status'] == 'FAILED':
