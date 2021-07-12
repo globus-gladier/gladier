@@ -23,6 +23,7 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    tools/index
    flow_generation
    glossary
+   CHANGELOG
 
 
 Indices and tables
