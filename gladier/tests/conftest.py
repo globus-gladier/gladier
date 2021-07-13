@@ -7,7 +7,7 @@ import globus_sdk
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
-from gladier import GladierBaseClient, config
+from gladier import GladierBaseClient, config, version
 
 data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
 
@@ -27,10 +27,25 @@ def two_step_flow():
         return json.loads(f.read())
 
 
+@pytest.fixture
+def mock_version_030(monkeypatch):
+    monkeypatch.setattr(version, '__version__', '0.3.0')
+    return version.__version__
+
+
+@pytest.fixture
+def mock_version_040(monkeypatch):
+    monkeypatch.setattr(version, '__version__', '0.4.0a1')
+    return version.__version__
+
+
 @pytest.fixture(autouse=True)
 def mock_config(monkeypatch):
-    monkeypatch.setattr(config.GladierConfig, 'save', Mock())
-    return config.GladierConfig
+    monkeypatch.setattr(config.GladierSecretsConfig, 'save', Mock())
+    monkeypatch.setattr(config.GladierSecretsConfig, 'read', Mock())
+    cfg = config.GladierSecretsConfig('mock_filename', 'section', 'client_id')
+    monkeypatch.setattr(GladierBaseClient, '_load_private_config', Mock(return_value=cfg))
+    return cfg
 
 
 @pytest.fixture(autouse=True)
