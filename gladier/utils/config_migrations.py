@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from packaging import version
 import logging
-from gladier.version import __version__ as gladier_version
-from funcx.sdk.version import VERSION as funcx_version
+import gladier.version
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class ConfigMigration(ABC):
         cfg_version = self.config['general'].get('version')
 
         self.config_version = version.parse(cfg_version) if cfg_version else None
-        self.version = version.parse(gladier_version)
+        self.version = version.parse(gladier.version.__version__)
 
     @abstractmethod
     def is_applicable(self):
@@ -54,14 +53,14 @@ class FuncX024Upgrade(ConfigMigration):
 
     message = """
     WARNING: {context}
-    
+
     The new version of funcx-endpoint uses a different service, and old
     FuncX endpoints will no longer work. You will need to recreate all of your
     FuncX endpoints for this version. Common names look like the following:\n
-    
+
     funcx_endpoint_non_compute
     funcx_endpoint_compute
-    
+
     https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
     """
 
@@ -78,7 +77,7 @@ class FuncX024Upgrade(ConfigMigration):
 class FuncX005Downgrade(ConfigMigration):
     message = """
     WARNING: {context}
-    
+
     Use of this version is not recommended!
 
     The new version of funcx-endpoint uses a different service, and old
@@ -87,7 +86,7 @@ class FuncX005Downgrade(ConfigMigration):
 
     funcx_endpoint_non_compute
     funcx_endpoint_compute
-    
+
     See https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
     """
 

@@ -74,9 +74,8 @@ class GladierBaseClient(object):
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         self.__flows_client = None
         self.__tools = None
-        self.public_config = gladier.config.GladierConfig(self.config_filename, self.section)
-        self.private_config = gladier.config.GladierSecretsConfig(self.secret_config_filename,
-                                                                  self.section, self.client_id)
+        self.public_config = self._load_public_config()
+        self.private_config = self._load_private_config()
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
         self.auto_registration = auto_registration
@@ -103,6 +102,13 @@ class GladierBaseClient(object):
             log.debug('Load from disk failed, login will be required.')
         if self.auto_login and not self.is_logged_in():
             self.login()
+
+    def _load_public_config(self):
+        return gladier.config.GladierConfig(self.config_filename, self.section)
+
+    def _load_private_config(self):
+        return gladier.config.GladierSecretsConfig(self.secret_config_filename,
+                                                   self.section, self.client_id)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref):
