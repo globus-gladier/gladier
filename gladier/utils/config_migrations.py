@@ -35,6 +35,12 @@ class AddVersionToConfig(ConfigMigration):
         return self.config_version is None
 
     def migrate(self):
+        # We can't be certain which version of Gladier the user was using previously.
+        # It's possible they simply upgraded from 3 to 4 and are using incompatible
+        # funcx functions. Run the migration here just in case.
+        migrate_delete_all_funcx_functions(self.config)
+
+        # Set the version
         self.config['general']['version'] = str(self.version)
         log.info(f'Setting Version {self.version}')
 
