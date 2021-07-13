@@ -105,3 +105,23 @@ Additionally for FuncX Payloads, Function UUIDs are passed with a different name
 Needs to be changed to:
 
 'function.$': '$.input.'
+
+FuncX Flow Result Format
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The format of the return value from FuncX functions has changed format. This only
+affects Flow states that depend on the output of a FuncX function/flow state.
+
+Previous flow states were not returned in a list, and were referenced with the following:
+
+
+.. code-block::
+
+   'InputPath': '$.MyFuncXFunctionOutput.details.result',
+
+FuncX now returns these in a list, and they need to be index. The above needs to be changed
+to the following:
+
+.. code-block::
+
+   'InputPath': '$.MyFuncXFunctionOutput.details.result[0]',
