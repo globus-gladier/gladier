@@ -61,6 +61,8 @@ class FuncX024Upgrade(ConfigMigration):
     
     funcx_endpoint_non_compute
     funcx_endpoint_compute
+    
+    https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
     """
 
     def is_applicable(self):
@@ -85,6 +87,8 @@ class FuncX005Downgrade(ConfigMigration):
 
     funcx_endpoint_non_compute
     funcx_endpoint_compute
+    
+    See https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
     """
 
     def is_applicable(self):
