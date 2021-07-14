@@ -22,6 +22,7 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    gladier_tools
    tools/index
    flow_generation
+   migration
    glossary
    CHANGELOG
 
