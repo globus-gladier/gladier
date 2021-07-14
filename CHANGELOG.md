@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.5](https://github.com/globus-gladier/gladier/compare/v0.3.4...v0.3.5) (2021-07-14)
+
+
+### Features
+
+* Added config migration system to Gladier ([cdc7875](https://github.com/globus-gladier/gladier/commit/cdc7875c1c263bcf5eb9c5c61db58ce1df75ec23))
+
 ### [0.3.4](https://github.com/globus-gladier/gladier/compare/v0.3.3...v0.3.4) (2021-07-09)
 
 
