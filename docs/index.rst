@@ -25,7 +25,6 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    glossary
    CHANGELOG
 
-
 Indices and tables
 ==================
 

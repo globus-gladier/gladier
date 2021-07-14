@@ -16,6 +16,7 @@ import gladier.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
+import gladier.utils.config_migrations
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -73,12 +74,21 @@ class GladierBaseClient(object):
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         self.__flows_client = None
         self.__tools = None
-        self.public_config = gladier.config.GladierConfig(self.config_filename, self.section)
-        self.private_config = gladier.config.GladierSecretsConfig(self.secret_config_filename,
-                                                                  self.section, self.client_id)
+        self.public_config = self._load_public_config()
+        self.private_config = self._load_private_config()
         self.authorizers = authorizers or dict()
         self.auto_login = auto_login
         self.auto_registration = auto_registration
+
+        private_cfg = self.get_cfg(private=True)
+        private_cfg = gladier.utils.config_migrations.migrate_gladier(private_cfg)
+        private_cfg.save()
+
+        if os.path.exists(self.config_filename):
+            pub_cfg = self.get_cfg(private=False)
+            pub_cfg = gladier.utils.config_migrations.migrate_gladier(pub_cfg)
+            pub_cfg.save()
+
         if self.authorizers and self.auto_login:
             log.warning('Authorizers provided when "auto_login=True", you probably want to set '
                         'auto_login=False if you are providing your own authorizers...')
@@ -92,6 +102,13 @@ class GladierBaseClient(object):
             log.debug('Load from disk failed, login will be required.')
         if self.auto_login and not self.is_logged_in():
             self.login()
+
+    def _load_public_config(self):
+        return gladier.config.GladierConfig(self.config_filename, self.section)
+
+    def _load_private_config(self):
+        return gladier.config.GladierSecretsConfig(self.secret_config_filename,
+                                                   self.section, self.client_id)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref):
