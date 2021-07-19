@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/globus-gladier/gladier/compare/v0.3.4...v0.4.0) (2021-07-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* -- This will break all current funcx functions without
+modification. Everyone will need to upgrade to the new funcX endpoint
+package wherever they are executing functions. See the full migration doc
+in [Migrating to V0.4.0](https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0)
+
+### Features
+
+* Upgrade to FuncX 0.2.3 (from 0.0.5) ([83507f7](https://github.com/globus-gladier/gladier/commit/83507f79d0de2332a4f10e063284fc7685581f9c))
+
+### [0.3.5](https://github.com/globus-gladier/gladier/compare/v0.3.4...v0.3.5) (2021-07-14)
+
+
+### Features
+
+* Added config migration system to Gladier ([cdc7875](https://github.com/globus-gladier/gladier/commit/cdc7875c1c263bcf5eb9c5c61db58ce1df75ec23))
+
 ### [0.3.4](https://github.com/globus-gladier/gladier/compare/v0.3.3...v0.3.4) (2021-07-09)
 
 
