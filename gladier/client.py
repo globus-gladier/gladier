@@ -639,6 +639,7 @@ class GladierBaseClient(object):
                  f'"{flow["action_id"]}"')
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
+        flow['run_url'] = 'https://app.globus.org/flows/%s/runs/%s' % (flow_id,flow["action_id"])
         return flow
 
     def get_status(self, action_id):
