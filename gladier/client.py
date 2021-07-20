@@ -639,7 +639,6 @@ class GladierBaseClient(object):
                  f'"{flow["action_id"]}"')
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
-        flow['run_url'] = 'https://app.globus.org/flows/%s/runs/%s' % (flow_id,flow["action_id"])
         return flow
 
     def get_status(self, action_id):
@@ -697,3 +696,13 @@ class GladierBaseClient(object):
         :returns: sub-dict of get_status() describing the :state_name:.
         """
         return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
+    
+    def get_run_url(self, action_id):
+        """
+        Returns a globus automate webapp link for a given run on this flow. 
+        :param action_id: The action_id for this flow. Flow id is automatically determined based
+                          on the current tool being run.
+        :returns: Globus webapp url of a particular run of this flow.
+        """
+        return 'https://app.globus.org/flows/%s/runs/%s' % (self.flow_id,action_id)
+
