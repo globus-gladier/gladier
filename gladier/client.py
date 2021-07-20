@@ -697,5 +697,5 @@ class GladierBaseClient(object):
                           on the current tool being run.
         :returns: Globus webapp url of a particular run of this flow.
         """
-        return 'https://app.globus.org/flows/%s/runs/%s' % (self.flow_id,action_id)
+        return 'https://app.globus.org/flows/%s/runs/%s' % (self.get_flow_id(),action_id)
 
