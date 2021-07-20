@@ -17,6 +17,7 @@ import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
 import gladier.utils.config_migrations
+import gladier.utils.flow_generation
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -309,6 +310,14 @@ class GladierBaseClient(object):
         raise gladier.exc.ConfigException('"flow_definition" must be a dict or an import string '
                                           'to a sub-class of type '
                                           '"gladier.GladierBaseTool"')
+
+    def get_flow_steps(self):
+        """
+        Get the flow steps in an ordered list attached to this class.
+
+        :return: A list of Step names
+        """
+        return flow_generation.get_ordered_flow_states(self.get_flow_definition(self))
 
     def get_flow_checksum(self):
         """
