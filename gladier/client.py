@@ -311,14 +311,6 @@ class GladierBaseClient(object):
                                           'to a sub-class of type '
                                           '"gladier.GladierBaseTool"')
 
-    def get_flow_steps(self):
-        """
-        Get the flow steps in an ordered list attached to this class.
-
-        :return: A list of Step names
-        """
-        return flow_generation.get_ordered_flow_states(self.get_flow_definition(self))
-
     def get_flow_checksum(self):
         """
         Get the SHA256 checksum of the current flow definition.
