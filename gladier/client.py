@@ -548,11 +548,12 @@ class GladierBaseClient(object):
                            is called on each tool to ensure basic needs are met for each.
                            Input MUST be wrapped inside an 'input' dict,
                            for example {'input': {'foo': 'bar'}}.
-        :param label: Set the label to be used in the automate app. If no label is passed
-                           the standard automate label is used. 
+
         :param use_defaults: Use the result of self.get_input() to populate base input for the
                              flow. All conflicting input provided by flow_input overrides
                              values set in use_defaults.
+        :param **flow_kwargs: Set several keyed arguments that include the label to be used in the automate app. 
+                             If no label is passed the standard automate label is used. 
         :raise: gladier.exc.ConfigException by self.check_input()
         :raises: gladier.exc.FlowObsolete
         :raises: gladier.exc.NoFlowRegistered
