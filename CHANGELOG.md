@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.1](https://github.com/globus-gladier/gladier/compare/v0.4.0...v0.4.1) (2021-07-20)
+
+### Features
+
+* Added get_run_url for fetching the link to a running flow in the Globus webapp
+* Arguments to run_flow support pass through args to the flows service
+
 ## [0.4.0](https://github.com/globus-gladier/gladier/compare/v0.3.4...v0.4.0) (2021-07-19)
 
 
