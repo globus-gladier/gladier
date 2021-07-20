@@ -585,11 +585,11 @@ class GladierBaseClient(object):
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
 
-        flow_kwargs = {
+        flow_kwargs.update({
             p_type: self.get_flow_permission(p_type)
             for p_type in ['manage_by', 'monitor_by']
             if self.get_flow_permission(p_type)
-        }
+        })
         log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
 
