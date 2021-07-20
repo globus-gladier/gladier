@@ -552,7 +552,7 @@ class GladierBaseClient(object):
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')
 
-    def run_flow(self, flow_input=None, use_defaults=True):
+    def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
         """
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
@@ -565,9 +565,12 @@ class GladierBaseClient(object):
                            is called on each tool to ensure basic needs are met for each.
                            Input MUST be wrapped inside an 'input' dict,
                            for example {'input': {'foo': 'bar'}}.
+
         :param use_defaults: Use the result of self.get_input() to populate base input for the
                              flow. All conflicting input provided by flow_input overrides
                              values set in use_defaults.
+        :param **flow_kwargs: Set several keyed arguments that include the label to be used in the automate app. 
+                             If no label is passed the standard automate label is used. 
         :raise: gladier.exc.ConfigException by self.check_input()
         :raises: gladier.exc.FlowObsolete
         :raises: gladier.exc.NoFlowRegistered
@@ -600,16 +603,17 @@ class GladierBaseClient(object):
                 raise gladier.exc.AuthException(
                     f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
 
-        flow_permissions = {
+        flow_kwargs.update({
             p_type: self.get_flow_permission(p_type)
             for p_type in ['manage_by', 'monitor_by']
             if self.get_flow_permission(p_type)
-        }
-        log.debug(f'Flow run permissions set to: {flow_permissions or "Flows defaults"}')
+        })
+        log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
+
         try:
             flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
-                                              combine_flow_input, **flow_permissions).data
+                                              combine_flow_input, **flow_kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
             log.debug('Encountered error when running flow', exc_info=True)
             automate_error_message = json.loads(gapie.message)
@@ -619,15 +623,16 @@ class GladierBaseClient(object):
                     log.info('Initiating new login for dependent scope change')
                     self.login(requested_scopes=[cfg_sec['flow_scope']], force=True)
                     flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
-                                                      combine_flow_input, **flow_permissions).data
+                                                      combine_flow_input, **flow_kwargs).data
                 else:
                     raise gladier.exc.AuthException('Scope change for flow, re-auth required',
                                                     missing_scopes=(cfg_sec['flow_scope'],))
             else:
                 raise
-        log.info(f'Started flow {self.section} flow id "{cfg_sec["flow_id"]}" with action '
 
+        log.info(f'Started flow {flow_kwargs.get("label")} flow id "{cfg_sec["flow_id"]}" with action '
                  f'"{flow["action_id"]}"')
+
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
         return flow
