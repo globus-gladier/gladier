@@ -282,6 +282,8 @@ class GladierBaseClient(object):
                                             '"client_id" to use "login()!')
         log.info(f'Revoking the following scopes: {self.scopes}')
         self.get_native_client().logout()
+        # Clear authorizers cache
+        self.authorizers = dict()
 
     def is_logged_in(self):
         """
