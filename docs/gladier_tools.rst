@@ -25,6 +25,6 @@ The main attributes of a Gladier Tool are here:
 
 A full "Hello World" Tool definition looks like this:
 
-.. literalinclude:: tools/hello_world/hello_world_tool.py
+.. literalinclude:: tools/hello_world_tool.py
    :language: python
    :pyobject: HelloWorld

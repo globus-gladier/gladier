@@ -16,3 +16,10 @@ def test_logged_in(logged_in):
 def test_scopes(logged_in):
     cli = MockGladierClient()
     assert not set(ALL_FLOW_SCOPES).difference(cli.scopes)
+
+
+def test_authorizers_cleared_after_logout(logged_in):
+    cli = MockGladierClient()
+    assert cli.authorizers
+    cli.logout()
+    assert cli.authorizers == dict()

@@ -1,4 +1,5 @@
-from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition
+import pytest
+from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition, exc
 from globus_automate_client.flows_client import validate_flow_definition
 
 
@@ -76,3 +77,18 @@ def test_client_tool_with_three_steps(logged_in):
     flow_def = mc.flow_definition
     validate_flow_definition(flow_def)
     assert len(flow_def['States']) == 3
+
+
+def test_client_tool_with_no_flow(logged_in):
+
+    class MyTool(GladierBaseTool):
+        flow_definition = None
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        gladier_tools = [
+            MyTool,
+        ]
+
+    with pytest.raises(exc.FlowGenException):
+        MyClient()

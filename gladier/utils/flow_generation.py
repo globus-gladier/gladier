@@ -26,6 +26,10 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
 
     flow_states = OrderedDict()
     for tool in client.tools:
+        if tool.flow_definition is None:
+            raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
+                                   f'@generate_flow_definition (funcx functions only). Please set a '
+                                   f'flow definition for {tool.__class__.__name__}.')
         states = get_ordered_flow_states(tool.flow_definition)
         flow_states.update(states)
 
