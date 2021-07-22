@@ -14,3 +14,5 @@ Each Gladier tool is a set of two things:
    :maxdepth: 1
    :caption: List of Gladier Tools:
 
+   globus/index
+   posix/index
