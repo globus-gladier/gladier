@@ -19,14 +19,14 @@ Getting Started
 ===============
 
 .. note::
-   FuncX is a major component of Glaider, using FuncX Endpoints to execute
-   functions defined in Gladier Tools. See
-   `First Time Setup <https://funcx.readthedocs.io/en/latest/endpoints.html#first-time-setup>`_
-   for how to setup a local endpoint you can use for running these examples.
+   Below requires setting up your own **FuncX Endpoint**. If you only want to run
+   Gladier Examples without setting up your own endpoints, we recommend
+   `The Binder Notebook Examples <https://github.com/globus-gladier/gladier-examples>`_.
 
-With Gladier Installed, you can now put together some basic clients!
-Setup your workflow by overriding the Gladier Client with a list of the
-tools you want to use. An example looks like this:
+
+Before you run your first Gladier Client, you need to setup your Funcx Endpoint. The
+`First Time Setup Guide <https://funcx.readthedocs.io/en/latest/endpoints.html#first-time-setup>`_
+in the FuncX docs covers this well. After that, you can run the example below:
 
 .. literalinclude:: tools/gladier_example.py
    :language: python
