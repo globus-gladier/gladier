@@ -1,4 +1,5 @@
 sphinx
 sphinx-rtd-theme
-gladier
 m2r2
+gladier
+git+https://github.com/globus-gladier/gladier-tools.git#egg=gladier-tools
