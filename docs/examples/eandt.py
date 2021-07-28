@@ -9,13 +9,13 @@ def makeFiles(**data):
     if '~' in input_path:
         input_path = os.path.expanduser(input_path)
 
-    with open(input_path+"/file1.txt") as file1:
+    with open(input_path+"/file1.txt", "w") as file1:
         file1.write("This is file no. 1")
 
-    with open(input_path+"/file2.txt") as file2:
+    with open(input_path+"/file2.txt", "w") as file2:
         file2.write("This is file no. 2")
 
-    with open(input_path+"/file3.txt") as file3:
+    with open(input_path+"/file3.txt", "w") as file3:
         file3.write("This is file no. 3")
 
     return input_path
