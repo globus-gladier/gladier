@@ -1,7 +1,3 @@
-"""
-Requires Gladier and Gladier Tools.
-pip install gladier gladier-tools
-"""
 from gladier import GladierBaseClient, generate_flow_definition
 from pprint import pprint
 
