@@ -46,9 +46,9 @@ if __name__ == '__main__':
             # Set this to the folder in which you want to run the makeFiles function in
             'make_input': '/tmp/myfiles',
             # Set this to the same folder as above
-            'tar_input': '',
+            'tar_input': '/tmp/myfiles',
             # Set this to the resultant archive of the above folder
-            'encrypt_input': '',
+            'encrypt_input': '/tmp/myfiles.tgz',
             # Set this to the symmetric key you want to use to encrypt/decrypt the file
             'encrypt_key': '',
             # Set this to your own funcx endpoint where you want to encrypt files
@@ -57,7 +57,7 @@ if __name__ == '__main__':
             'transfer_source_endpoint_id': '',
             # By default, this will transfer the encrypt file to Globus Tutorial Endpoint 1
             'transfer_destination_endpoint_id': 'ddb59aef-6d04-11e5-ba46-22000b92c6ec',
-            'transfer_source_path': '',
+            'transfer_source_path': '/tmp/myfiles.tgz.aes',
             'transfer_destination_path': '',
             'transfer_recursive': False,
         }

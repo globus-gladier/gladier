@@ -10,14 +10,14 @@ This example highlights the usage of built in tools (Tar, Encrypt and Transfer) 
 Steps
 -----
 We start by writing our own custom tool. For the example, MakeFiles is a trivial tool that creates three files in a given folder.
-The funcx function that achieves this functionality is ``makeFiles()``. We then define the tool using ``GladierBaseTool``. 
+The funcx function that achieves this functionality is ``make_files``. We then define the tool using ``GladierBaseTool``. 
 
 
 .. code-block:: python
     
     @generate_flow_definition
     class MakeFiles(GladierBaseTool):
-        funcx_functions = [makeFiles]
+        funcx_functions = [make_files]
         required_input = [
             'make_input',
             'funcx_endpoint_compute'
