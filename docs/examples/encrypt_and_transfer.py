@@ -2,21 +2,20 @@ from gladier import GladierBaseClient, generate_flow_definition, GladierBaseTool
 from pprint import pprint
 
 
-def makeFiles(**data):
+def make_files(**data):
     import os
-    input_path = data['make_input']
+    
+    input_path = pathlib.Path(data['make_input'])
 
     if '~' in input_path:
         input_path = os.path.expanduser(input_path)
 
-    with open(input_path+"/file1.txt", "w") as file1:
-        file1.write("This is file no. 1")
-
-    with open(input_path+"/file2.txt", "w") as file2:
-        file2.write("This is file no. 2")
-
-    with open(input_path+"/file3.txt", "w") as file3:
-        file3.write("This is file no. 3")
+     if not os.path.exists(input_path):
+        os.makedirs(input_path)
+        
+    for number in range(3):
+        with open(input_path / f'file{number}.txt', 'w') as f:
+            f.write(f'This is file no. {number}')
 
     return input_path
 
@@ -44,7 +43,7 @@ if __name__ == '__main__':
     flow_input = {
         'input': {
             # Set this to the folder in which you want to run the makeFiles function in
-            'make_input': '',
+            'make_input': '/tmp/myfiles',
             # Set this to the same folder as above
             'tar_input': '',
             # Set this to the resultant archive of the above folder

@@ -3,7 +3,7 @@ Encrypt and Transfer
 
 This example highlights the usage of built in tools (Tar, Encrypt and Transfer) along with a custom defined tool (MakeFiles) in the same flow.
 
-.. literalinclude:: eandt.py
+.. literalinclude:: encrypt_and_transfer.py
    :language: python
 
 

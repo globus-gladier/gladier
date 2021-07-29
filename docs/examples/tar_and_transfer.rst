@@ -3,7 +3,7 @@ Tar and Transfer
 
 This example highlights the usage of the Tar and Transfer Gladier tools in a single flow. The tar step creates an archive of the input file, and the transfer step transfers the archived file between Globus Endpoints.
 
-.. literalinclude:: tandt.py
+.. literalinclude:: tar_and_transfer.py
    :language: python
 
 
