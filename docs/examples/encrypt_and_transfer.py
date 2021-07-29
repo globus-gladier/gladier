@@ -22,7 +22,7 @@ def make_files(**data):
 
 @generate_flow_definition
 class MakeFiles(GladierBaseTool):
-    funcx_functions = [makeFiles]
+    funcx_functions = [make_files]
     required_input = [
         'make_input',
         'funcx_endpoint_compute'
