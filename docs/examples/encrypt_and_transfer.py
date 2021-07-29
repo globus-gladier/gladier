@@ -1,18 +1,19 @@
 from gladier import GladierBaseClient, generate_flow_definition, GladierBaseTool
 from pprint import pprint
+import pathlib
 
 
 def make_files(**data):
     import os
-    
+
     input_path = pathlib.Path(data['make_input'])
 
     if '~' in input_path:
         input_path = os.path.expanduser(input_path)
 
-     if not os.path.exists(input_path):
+    if not os.path.exists(input_path):
         os.makedirs(input_path)
-        
+
     for number in range(3):
         with open(input_path / f'file{number}.txt', 'w') as f:
             f.write(f'This is file no. {number}')
