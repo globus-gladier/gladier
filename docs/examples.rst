@@ -5,7 +5,13 @@ Examples
 Pre Requisites
 ---------------
 
-Before we run the below examples, there are a few things we need to have up and running. 
+Before we run the below examples, there are a few things we need to have up and running.
+The Examples below show some common real-world problems. They can typically be split into two parts:
+
+   * Transfer data into a location where execution can be performed (usually a super computer)
+   * Perform the execution
+
+The first part is solved by Globus Transfer, and the second by FuncX Endpoints. In order for your computer to be accessible by Globus, it needs to be running a Globus Endpoint. See the Globus Connect Personal section below for how to set that up. For the second part, you will need to setup a FuncX Endpoint to tell funcx where it should execute functions. See the funcx-endpoint section below for setting up a funcx-endpoint on your machine.
 
 GlobusConnectPersonal
 ######################
