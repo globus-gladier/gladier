@@ -24,7 +24,8 @@ funcx-endpoint
 ###############
 
 Another thing we need to run flows are an endpoint to run the funcx-functions on. There is a tutorial endpoint that can be used but it is generally preferred to set up a funcx-endpoint. 
-Follow the instructions `here <https://funcx.readthedocs.io/en/latest/endpoints.html>`_ to set up your own endpoint.
+Follow the instructions `here <https://funcx.readthedocs.io/en/latest/endpoints.html>`_ to set up your own endpoint. Once an endpoint has been configured, you can list all the endpoints you have using
+``funcx-endpoint list``. To start an endpoint, use ``funcx-endpoint start <endpoint-name>``.
 
 Example Flows
 --------------
