@@ -20,6 +20,8 @@ To run tools like ``gladier_tools.globus.Transfer``, we need access to Globus en
 However, setting up your own endpoint gives you more control over the data you transfer, which brings us to GlobusConnectPersonal. Follow the instructions `here <https://www.globus.org/globus-connect-personal>`_ to set up your own GCP endpoint, then navigate to `Globus Webapp endpoints <https://app.globus.org/endpoints>`_ to see details about the endpoint. 
 
 
+**Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.**
+
 funcx-endpoint
 ###############
 
