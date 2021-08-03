@@ -1,9 +1,10 @@
 import os
-from gladier.client import GladierBaseClient
-from my_repo.flows import analysis_flow
+from gladier import GladierBaseClient, generate_flow_definition
+from my_tools import RunAnalysis
 
 
-class HelloGladier(GladierBaseClient):
+@generate_flow_definition
+class ExampleAnalysisPipeline(GladierBaseClient):
     secret_config_filename = os.path.expanduser('~/.gladier-secrets.cfg')
     config_filename = 'gladier.cfg'
     app_name = 'gladier_client'
@@ -11,9 +12,7 @@ class HelloGladier(GladierBaseClient):
 
     gladier_tools = [
         'my_repo.custom_tools.PrepareData',
-        'my_repo.custom_tools.RunAnalysis',
+        RunAnalysis,
         'my_other_repo.stats.GenerateStatistics',
         'my_other_repo.custom_tools.Publish',
     ]
-    flow_definition = analysis_flow
-

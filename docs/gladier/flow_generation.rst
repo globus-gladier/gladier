@@ -1,3 +1,5 @@
+.. _flow_generation:
+
 Flow Generation
 ===============
 
