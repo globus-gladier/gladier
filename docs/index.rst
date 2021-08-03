@@ -23,11 +23,8 @@ Binder notebooks listed below with all requirements pre-installed.
    :maxdepth: 2
    :caption: Contents:
 
-   installation
-   gladier_client
-   gladier_tools
-   tools/index
-   flow_generation
+   gladier/overview
+   gladier_tools/index
    examples
    migration
    glossary

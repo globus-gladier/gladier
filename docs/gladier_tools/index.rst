@@ -1,5 +1,5 @@
-List of Built-In Gladier Tools
-==============================
+Gladier Tools
+=============
 
 Gladier tools are reusable components that can be strung together to create
 a new workflow. Each flow may be unique, but the components of a
@@ -11,8 +11,8 @@ Each Gladier tool is a set of two things:
 * An example introductory flow
 
 .. toctree::
-   :maxdepth: 1
-   :caption: List of Gladier Tools:
+   :maxdepth: 3
+   :caption: Gladier Tools:
 
    globus/index
    posix/index

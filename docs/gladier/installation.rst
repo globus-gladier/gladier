@@ -28,7 +28,7 @@ Before you run your first Gladier Client, you need to setup your Funcx Endpoint.
 `First Time Setup Guide <https://funcx.readthedocs.io/en/latest/endpoints.html#first-time-setup>`_
 in the FuncX docs covers this well. After that, you can run the example below:
 
-.. literalinclude:: tools/gladier_example.py
+.. literalinclude:: gladier_example.py
    :language: python
    :pyobject: HelloGladier
 
@@ -83,7 +83,7 @@ Running A Gladier Tool
 
 A full code snippet for running everything above is here:
 
-.. literalinclude:: tools/gladier_example.py
+.. literalinclude:: gladier_example.py
    :language: python
 
 Remember to replace ``<your_funcx_endpoint>`` with the UUID for your endpoint.
