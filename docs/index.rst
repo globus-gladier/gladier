@@ -8,10 +8,16 @@ Welcome to Gladier's documentation!
 
 Gladier: The Globus Architecture for Data-Intensive Experimental Research.
 
-Gladier is a programmable data capture, storage, and analysis architecture for experimental facilities.
-The architecture leverages a data/computing substrate based on 
-data and compute agents deployed across computer and storage 
-systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services.
+Gladier is a development tool for rapidly building new scientific flows for
+experimental facilities. It seamlessly integrates FuncX's remote function
+execution capabilities with the Globus Flows Services, enabling complete data
+pipelines to be established from data capture to publication. Run your experiments,
+analyze inside a super computing environment, and publish your results to Globus
+Search.
+
+For a full explanation of the Gladier architecture and API below, continue reading
+the docs here. If you would like to skip ahead and play with **Examples**, there are
+Binder notebooks listed below with all requirements pre-installed.
 
 .. toctree::
    :maxdepth: 2
