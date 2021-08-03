@@ -17,11 +17,8 @@ systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services
    :maxdepth: 2
    :caption: Contents:
 
-   installation
-   gladier_client
-   gladier_tools
-   tools/index
-   flow_generation
+   gladier/overview
+   gladier_tools/index
    examples
    migration
    glossary

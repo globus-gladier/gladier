@@ -1,8 +1,8 @@
 
-The Gladier Client
-------------------
+Clients
+-------
 
-.. literalinclude:: tools/example_client.py
+.. literalinclude:: example_client.py
    :language: python
 
 
@@ -25,10 +25,3 @@ The Gladier Client allows for some extra runtime configuration:
 * ``config_filename`` -- defines where GladierClient specific runtime variables are stored
 * ``app_name`` -- The name of the application, as it appears in Globus
 * ``client_id`` -- The UUID of the registered Globus Application, from https://developers.globus.org
-
-
-.. autoclass:: gladier.client.GladierBaseClient
-   :members:
-   :member-order: bysource
-   :show-inheritance:
-   :exclude-members:

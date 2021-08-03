@@ -1,6 +1,6 @@
 
-Gladier Tools
--------------
+Tools
+-----
 
 Gladier Tools are the glue that holds together Globus Flows and FuncX functions.
 Tools bundle everything the FuncX function needs to run, so the Glaider Client
