@@ -12,3 +12,5 @@ Below are Gladier Tools for common operations on posix filesystems.
    https_download_file
    encrypt
    decrypt
+   asymmetric_encrypt
+   asymmetric_decrypt
