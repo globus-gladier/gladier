@@ -30,7 +30,7 @@ class MakeFiles(GladierBaseTool):
 
 
 @generate_flow_definition
-class CustomTransfer(GladierBaseClient):
+class EncryptAndTransfer(GladierBaseClient):
     gladier_tools = [
         MakeFiles,
         'gladier_tools.posix.Tar',
@@ -49,21 +49,29 @@ if __name__ == '__main__':
             # Set this to the resultant archive of the above folder
             'encrypt_input': '/tmp/myfiles.tgz',
             # Set this to the symmetric key you want to use to encrypt/decrypt the file
-            'encrypt_key': '',
+            'encrypt_key': 'my_secret',
             # Set this to your own funcx endpoint where you want to encrypt files
-            'funcx_endpoint_compute': '',
+            # 'funcx_endpoint_compute': '',
             # Set this to the globus endpoint where your encrypted archive has been created
-            'transfer_source_endpoint_id': '',
+            # 'transfer_source_endpoint_id': '',
             # By default, this will transfer the encrypt file to Globus Tutorial Endpoint 1
             'transfer_destination_endpoint_id': 'ddb59aef-6d04-11e5-ba46-22000b92c6ec',
             'transfer_source_path': '/tmp/myfiles.tgz.aes',
-            'transfer_destination_path': '',
+            'transfer_destination_path': 'my_encrypted_files/myfiles.tgz.aes',
             'transfer_recursive': False,
         }
     }
-    ct = CustomTransfer()
-    pprint(ct.flow_definition)
-    flow = ct.run_flow(flow_input=flow_input)
+
+    # Create the Client
+    encrypt_and_transfer = EncryptAndTransfer()
+
+    # Optionally print the flow definition
+    # pprint(encrypt_and_transfer.flow_definition)
+
+    # Run the flow
+    flow = encrypt_and_transfer.run_flow(flow_input=flow_input)
+
+    # Track progress
     action_id = flow['action_id']
-    ct.progress(action_id)
-    pprint(ct.get_status(action_id))
+    encrypt_and_transfer.progress(action_id)
+    pprint(encrypt_and_transfer.get_status(action_id))
