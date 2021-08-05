@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/globus-gladier/gladier/compare/v0.4.1...v0.5.0) (2021-08-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removal of older introductory testing tools
+
+### Bug Fixes
+
+* logout not properly clearing authorizers cache ([05b0d6c](https://github.com/globus-gladier/gladier/commit/05b0d6c7d958baf41787e282e017407c1d213cfe))
+* Pass an 'empty' schema by default to fulfill automate requirement ([bf9eb80](https://github.com/globus-gladier/gladier/commit/bf9eb801446b8dc85f6dddce4101264229068861))
+* pin automate version to avoid future incompatible releases ([b736fa2](https://github.com/globus-gladier/gladier/commit/b736fa20f36190b3fb5192632aeedc3a46e2ec07))
+* Raise better exception when no flow definition set on tool ([eb8ac03](https://github.com/globus-gladier/gladier/commit/eb8ac03c9483b354fa65b14fa716cee2826f5928))
+
+
+* Remove old "Hello World" tools. We have better ones now. ([3a889f9](https://github.com/globus-gladier/gladier/commit/3a889f98cc21dc2c5e883cb3fb4c748905629d0a))
+
 ### [0.4.1](https://github.com/globus-gladier/gladier/compare/v0.4.0...v0.4.1) (2021-07-20)
 
 ### Features
