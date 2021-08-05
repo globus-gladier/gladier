@@ -1,6 +1,18 @@
 Upgrade Migrations
 ==================
 
+Migrating to v0.5.0
+-------------------
+
+The only major change in v0.5.0 was the removal of the HelloWorld Tools from the
+main Gladier package. The following are no longer present:
+
+* ``gladier.tools.hello_world.HelloWorld``
+* ``gladier.tools.manifest.ManifestTransfer``
+* ``gladier.tools.manifest.ManifestToFuncXTasks``
+
+There currently aren't plans to rewrite them in the Gladier Tools package, but
+open an issue if you would like us to consider changing that!
 
 Migrating to v0.4.0
 -------------------
