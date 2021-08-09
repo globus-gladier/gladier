@@ -700,12 +700,3 @@ class GladierBaseClient(object):
         """
         return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
     
-    def get_run_url(self, action_id):
-        """
-        Returns a globus automate webapp link for a given run on this flow. 
-        :param action_id: The action_id for this flow. Flow id is automatically determined based
-                          on the current tool being run.
-        :returns: Globus webapp url of a particular run of this flow.
-        """
-        return 'https://app.globus.org/flows/%s/runs/%s' % (self.flow_id,action_id)
-
