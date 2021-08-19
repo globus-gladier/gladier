@@ -21,11 +21,6 @@ import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
 
-# The funcx scope is a class variable after 0.0.5. After we upgrade this can be
-# removed
-funcx_scope = getattr(FuncXClient, 'FUNCX_SCOPE',
-                      'https://auth.globus.org/scopes/'
-                      'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all')
 
 search_scope = 'urn:globus:auth:scope:search.api.globus.org:all'
 
@@ -33,7 +28,7 @@ GLADIER_SCOPES = [
     # FuncX requires search, auth, and its own funcx scope
     search_scope,
     'openid',
-    funcx_scope,
+    FuncXClient.FUNCX_SCOPE,
 
     # Automate scopes
     *globus_automate_client.flows_client.ALL_FLOW_SCOPES,
@@ -250,7 +245,7 @@ class GladierBaseClient(object):
         if getattr(self, '__funcx_client', None) is not None:
             return self.__funcx_client
         self.__funcx_client = FuncXClient(
-            fx_authorizer=self.authorizers[funcx_scope],
+            fx_authorizer=self.authorizers[FuncXClient.FUNCX_SCOPE],
             search_authorizer=self.authorizers[search_scope],
             openid_authorizer=self.authorizers['openid'],
         )
