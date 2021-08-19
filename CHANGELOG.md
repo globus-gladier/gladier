@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/globus-gladier/gladier/compare/v0.5.0...v0.5.1) (2021-08-19)
+
+
+### Bug Fixes
+
+* Deploying new flows with the latest version of the flows service ([afa5adf](https://github.com/globus-gladier/gladier/commit/afa5adfa321971ff359a6d60b7d428294ecab477))
+
 ## [0.5.0](https://github.com/globus-gladier/gladier/compare/v0.4.1...v0.5.0) (2021-08-05)
 
 
