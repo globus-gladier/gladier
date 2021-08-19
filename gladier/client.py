@@ -481,9 +481,14 @@ class GladierBaseClient(object):
         }
         log.debug(f'Flow permissions set to: {flow_permissions or "Flows defaults"}')
         flow_kwargs = flow_permissions
-        # Input schema will be (probably is now) a required field. Returning {} is a temporary
-        # fix to avoid an automate error, until we can properly generate an input schema.
-        flow_kwargs['input_schema'] = {}
+        # Input schema is a required field and must be part of all flows.
+        flow_kwargs['input_schema'] = {
+            'input_schema': {
+                'additionalProperties': True,
+                'properties': {},
+                'type': 'object'
+            }
+        }
         if self.subscription_id:
             flow_kwargs['subscription_id'] = self.subscription_id
         if flow_id:
