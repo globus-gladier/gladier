@@ -312,8 +312,6 @@ class GladierBaseClient(object):
                                           'to a sub-class of type '
                                           '"gladier.GladierBaseTool"')
 
-
-
     def get_flow_checksum(self):
         """
         Get the SHA256 checksum of the current flow definition.
@@ -441,7 +439,7 @@ class GladierBaseClient(object):
         cfg.save()
 
     def get_flow_id(self):
-        """Get the current flow id for the current Gladier flow definiton.
+        """Get the current flow id for the current Gladier flow definition.
         If self.auto_register is True, it will automatically (re)register a flow if it
         has changed on disk, otherwise raising exceptions.
 
@@ -565,7 +563,7 @@ class GladierBaseClient(object):
                     f'{tool} requires flow input value: "{req_input}"')
 
     def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
-        """
+        r"""
         Start a Globus Automate flow. Flows and Functions must be registered prior or
         self.auto_registration must be True.
 
@@ -581,8 +579,9 @@ class GladierBaseClient(object):
         :param use_defaults: Use the result of self.get_input() to populate base input for the
                              flow. All conflicting input provided by flow_input overrides
                              values set in use_defaults.
-        :param \**flow_kwargs: Set several keyed arguments that include the label to be used in the automate app.
-                             If no label is passed the standard automate label is used. 
+        :param \**flow_kwargs: Set several keyed arguments that include the label to be used
+                               in the automate app. If no label is passed the standard automate
+                               label is used.
         :raise: gladier.exc.ConfigException by self.check_input()
         :raises: gladier.exc.FlowObsolete
         :raises: gladier.exc.NoFlowRegistered
@@ -642,8 +641,8 @@ class GladierBaseClient(object):
             else:
                 raise
 
-        log.info(f'Started flow {flow_kwargs.get("label")} flow id "{cfg_sec["flow_id"]}" with action '
-                 f'"{flow["action_id"]}"')
+        log.info(f'Started flow {flow_kwargs.get("label")} flow id '
+                 f'"{cfg_sec["flow_id"]}" with action "{flow["action_id"]}"')
 
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
@@ -704,4 +703,3 @@ class GladierBaseClient(object):
         :returns: sub-dict of get_status() describing the :state_name:.
         """
         return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
-    
