@@ -4,7 +4,22 @@ from gladier.utils.name_generation import get_funcx_flow_state_name
 
 log = logging.getLogger(__name__)
 funcx_modifiers = {'endpoint', 'payload', 'tasks'}
-state_modifiers = {'InputPath', 'ResultPath', 'WaitTime'}
+# All top level states can be modified.
+# https://globus-automate-client.readthedocs.io/en/latest/authoring_flows.html#action-state-type
+state_modifiers = {
+    'Type',
+    'ActionUrl',
+    'WaitTime',
+    'ExceptionOnActionFailure',
+    'RunAs',
+    'InputPath',
+    'Parameters',
+    'ResultPath',
+    'Catch',
+    'ActionScope',
+    'Next',
+    'End',
+}
 
 
 class FlowModifiers:
@@ -74,9 +89,6 @@ class FlowModifiers:
                     ]
             elif modifier_name in self.state_modifiers:
                 self.generic_set_modifier(flow_state, modifier_name, value)
-                if modifier_name == 'InputPath' and 'Parameters' in flow_state:
-                    flow_state.pop('Parameters')
-                    flow_state['InputPath'] = flow_state.pop('InputPath.$')
         return flow_state
 
     def generic_set_modifier(self, item, mod_name, mod_value):
@@ -98,7 +110,9 @@ class FlowModifiers:
             if duplicate_mod_key in item.keys():
                 item.pop(duplicate_mod_key)
 
-        if isinstance(mod_value, str) and mod_value.startswith('$.'):
+        # Note: Top level State types don't end with '.$', all others must end with
+        # '.$' to indicate the value should be replaced. '.=' is not supported or possible yet
+        if isinstance(mod_value, str) and mod_value.startswith('$.') and mod_name not in state_modifiers:
             mod_name = f'{mod_name}.$'
         item[mod_name] = mod_value
         log.debug(f'Set modifier {mod_name} to {mod_value}')
