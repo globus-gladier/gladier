@@ -641,8 +641,10 @@ class GladierBaseClient(object):
             else:
                 raise
 
+
         log.info(f'Started flow {flow_kwargs.get("label")} flow id '
                  f'"{cfg_sec["flow_id"]}" with action "{flow["action_id"]}"')
+
 
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')

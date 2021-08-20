@@ -22,7 +22,7 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
 
     Modifiers can be applied to any of the states within the flow.
     """
-    flow_moder = FlowModifiers(client.tools, modifiers)
+    flow_moder = FlowModifiers(client.tools, modifiers, cls=client)
 
     flow_states = OrderedDict()
     for tool in client.tools:
@@ -42,7 +42,7 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
     """Generate a flow definition for a Gladier Tool based on the defined ``funcx_functions``.
     Accepts modifiers for funcx functions"""
 
-    flow_moder = FlowModifiers([tool], modifiers)
+    flow_moder = FlowModifiers([tool], modifiers, cls=tool)
 
     flow_states = OrderedDict()
     for fx_func in tool.funcx_functions:
