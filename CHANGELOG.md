@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.2](https://github.com/globus-gladier/gladier/compare/v0.5.1...v0.5.2) (2021-08-23)
+
+
+### Features
+
+* Expanded flow modifiers to accept all top level state fields ([3b3135f](https://github.com/globus-gladier/gladier/commit/3b3135f3e962661c70a1aa126589f9842e466f61))
+
+
+### Bug Fixes
+
+* Flow Modifier errors not propagating Client or Tool names ([1af9724](https://github.com/globus-gladier/gladier/commit/1af972431615e0d9ff1a13354bedf35bb72a33ca))
+* Remove funcx-endpoint version check ([8fe88a3](https://github.com/globus-gladier/gladier/commit/8fe88a3094a1b4fb3204c176db3318c0bc273b8b))
+
 ### [0.5.1](https://github.com/globus-gladier/gladier/compare/v0.5.0...v0.5.1) (2021-08-19)
 
 
