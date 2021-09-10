@@ -576,7 +576,7 @@ class GladierBaseClient(object):
                              values set in use_defaults.
         :param \**flow_kwargs: Set several keyed arguments that include the label to be used
                                in the automate app. If no label is passed the standard automate
-                               label is used.
+                               label is used. Also ensure label <= 64 chars long.
         :raise: gladier.exc.ConfigException by self.check_input()
         :raises: gladier.exc.FlowObsolete
         :raises: gladier.exc.NoFlowRegistered
@@ -616,6 +616,11 @@ class GladierBaseClient(object):
         })
         log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
         cfg_sec = self.get_section(private=True)
+
+        # Ensure the label is not longer than 64 chars
+        if 'label' in flow_kwargs:
+            label = flow_kwargs['label']
+            flow_kwargs['label'] = (label[-62:] + '..') if len(label) > 64 else label
 
         try:
             flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
