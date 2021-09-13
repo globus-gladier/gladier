@@ -1,3 +1,4 @@
+import sys
 import pytest
 from unittest.mock import Mock
 from gladier.tests.test_data.gladier_mocks import MockGladierClient
@@ -45,6 +46,26 @@ def test_pub_config_overrides_priv(logged_in, mock_config, mock_secrets_config):
 def test_run_flow(logged_in):
     cli = MockGladierClient()
     cli.run_flow()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason='py37 missing key test feature')
+def test_run_flow_with_label(logged_in, mock_flows_client):
+    cli = MockGladierClient()
+    cli.run_flow(label='my flow')
+    # Python 3.7 doesn't support checking kwargs this way. Skip it.
+    assert mock_flows_client.run_flow.call_args.kwargs['label'] == 'my flow'
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason='py37 missing key test feature')
+def test_run_flow_with_long_label(logged_in, mock_flows_client):
+    cli = MockGladierClient()
+    my_label = 'fl' + 'o' * 63
+    expected_label = 'fl' + 'o' * 60 + '..'
+    assert len(my_label) == 65
+    assert len(expected_label) == 64
+    cli.run_flow(label=my_label)
+    # Python 3.7 doesn't support checking kwargs this way. Skip it.
+    assert mock_flows_client.run_flow.call_args.kwargs['label'] == expected_label
 
 
 def test_dependent_scope_change_run_flow(logged_in, mock_flows_client,
