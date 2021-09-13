@@ -620,7 +620,7 @@ class GladierBaseClient(object):
         # Ensure the label is not longer than 64 chars
         if 'label' in flow_kwargs:
             label = flow_kwargs['label']
-            flow_kwargs['label'] = (label[-62:] + '..') if len(label) > 64 else label
+            flow_kwargs['label'] = (label[:62] + '..') if len(label) > 64 else label
 
         try:
             flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],

@@ -47,6 +47,22 @@ def test_run_flow(logged_in):
     cli.run_flow()
 
 
+def test_run_flow_with_label(logged_in, mock_flows_client):
+    cli = MockGladierClient()
+    cli.run_flow(label='my flow')
+    assert mock_flows_client.run_flow.call_args.kwargs['label'] == 'my flow'
+
+
+def test_run_flow_with_long_label(logged_in, mock_flows_client):
+    cli = MockGladierClient()
+    my_label = 'fl' + 'o' * 63
+    expected_label = 'fl' + 'o' * 60 + '..'
+    assert len(my_label) == 65
+    assert len(expected_label) == 64
+    cli.run_flow(label=my_label)
+    assert mock_flows_client.run_flow.call_args.kwargs['label'] == expected_label
+
+
 def test_dependent_scope_change_run_flow(logged_in, mock_flows_client,
                                          mock_dependent_token_change_error,
                                          monkeypatch):
