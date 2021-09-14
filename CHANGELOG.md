@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.3](https://github.com/globus-gladier/gladier/compare/v0.5.2...v0.5.3) (2021-09-14)
+
+
+### Bug Fixes
+
+* Limits run label length to 64 chars ([53cd20f](https://github.com/globus-gladier/gladier/commit/53cd20f867c74a7f560d4008d7503b72249041ef)), closes [#146](https://github.com/globus-gladier/gladier/issues/146)
+
 ### [0.5.2](https://github.com/globus-gladier/gladier/compare/v0.5.1...v0.5.2) (2021-08-23)
 
 
