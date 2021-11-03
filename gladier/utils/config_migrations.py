@@ -106,14 +106,20 @@ class FuncX005Downgrade(ConfigMigration):
         panic_print(self.message.format(context=ctx))
 
 
+MIGRATIONS = [
+    AddVersionToConfig,
+    FuncX024Upgrade,
+    FuncX005Downgrade,
+    UpdateConfigVersion,
+]
+
+
+def needs_migration(config):
+    return any(m(config).is_applicable() for m in MIGRATIONS)
+
+
 def migrate_gladier(config):
-    migrations = [
-        AddVersionToConfig,
-        FuncX024Upgrade,
-        FuncX005Downgrade,
-        UpdateConfigVersion,
-    ]
-    for migration in migrations:
+    for migration in MIGRATIONS:
         m_instance = migration(config)
         if m_instance.is_applicable():
             log.info(f'Applying migration: {m_instance.__class__.__name__}')

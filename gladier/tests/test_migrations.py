@@ -24,3 +24,12 @@ def test_migrate_to_v03x(mock_config, logged_in, mock_version_030):
     mock_config['mock_gladier_client']['myfuncx_funcx_id'] = 'uuid'
     mc = MockGladierClient()
     assert mc.get_cfg()['general']['version'] == mock_version_030
+
+
+def test_no_migration_needed(mock_config, logged_in):
+    """Ensure the config isn't written when no migrations are needed.
+    This can corrupt the tokens file if the client is written rapidly."""
+    mock_config['general'] = {}
+    mock_config['general']['version'] = __version__
+    MockGladierClient()
+    assert not mock_config.save.called

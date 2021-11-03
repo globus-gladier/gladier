@@ -76,13 +76,15 @@ class GladierBaseClient(object):
         self.auto_registration = auto_registration
 
         private_cfg = self.get_cfg(private=True)
-        private_cfg = gladier.utils.config_migrations.migrate_gladier(private_cfg)
-        private_cfg.save()
+        if gladier.utils.config_migrations.needs_migration(private_cfg):
+            private_cfg = gladier.utils.config_migrations.migrate_gladier(private_cfg)
+            private_cfg.save()
 
         if os.path.exists(self.config_filename):
             pub_cfg = self.get_cfg(private=False)
-            pub_cfg = gladier.utils.config_migrations.migrate_gladier(pub_cfg)
-            pub_cfg.save()
+            if gladier.utils.config_migrations.needs_migration(pub_cfg):
+                pub_cfg = gladier.utils.config_migrations.migrate_gladier(pub_cfg)
+                pub_cfg.save()
 
         if self.authorizers and self.auto_login:
             log.warning('Authorizers provided when "auto_login=True", you probably want to set '
