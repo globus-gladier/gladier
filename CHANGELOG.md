@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.4](https://github.com/globus-gladier/gladier/compare/v0.5.3...v0.5.4) (2021-11-15)
+
+
+### Bug Fixes
+
+* Only apply migrations when needed ([670daea](https://github.com/globus-gladier/gladier/commit/670daead98ec6c4fde796ec5b5e9a60378b8da9e))
+
 ### [0.5.3](https://github.com/globus-gladier/gladier/compare/v0.5.2...v0.5.3) (2021-09-14)
 
 
