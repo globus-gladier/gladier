@@ -15,6 +15,24 @@ your client like so:
    :language: python
    :pyobject: TarAndTransfer
 
+The following Gladier Tools are available:
+
+.. code-block:: python
+    # Posix
+    'gladier_tools.posix.Tar',
+    'gladier_tools.posix.UnTar',
+    'gladier_tools.posix.Encrypt',
+    'gladier_tools.posix.Decrypt',
+    'gladier_tools.posix.AsymmetricEncrypt',
+    'gladier_tools.posix.AsymmetricDecrypt',
+    'gladier_tools.posix.HttpsDownloadFile',
+
+    # Globus
+    'gladier_tools.globus.Transfer',
+
+    # Publish
+    'gladier_tools.publish.Publish',
+
 See the sections below for detailed information about each tool.
 
 .. toctree::
