@@ -5,19 +5,14 @@ from pprint import pprint
 def make_files(**data):
     from pathlib import Path
 
-    input_path = Path(data['make_input'])
-
-    if '~' in input_path:
-        input_path = input_path.expanduser()
-
-    if not Path.exists(input_path):
-        Path.mkdir(input_path)
+    input_path = Path(data['make_input']).expanduser()
+    input_path.mkdir(exist_ok=True, parents=True)
 
     for number in range(3):
         with open(input_path / f'file{number}.txt', 'w') as f:
             f.write(f'This is file no. {number}')
 
-    return input_path
+    return str(input_path)
 
 
 @generate_flow_definition
