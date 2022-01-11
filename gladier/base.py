@@ -8,3 +8,6 @@ class GladierBaseTool(object):
     required_input = []
     funcx_endpoints = dict()
     funcx_functions = []
+
+    def __init__(self, alias=None):
+        self.alias = alias

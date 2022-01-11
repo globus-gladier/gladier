@@ -9,7 +9,7 @@ from gladier.utils.name_generation import (
     get_funcx_flow_state_name,
     get_funcx_function_name
 )
-from gladier.utils.flow_compiler import FlowCompiler
+from gladier.utils.tool_chain import AliasSuffixedToolChain, ToolChain
 
 
 log = logging.getLogger(__name__)
@@ -23,18 +23,10 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
     Modifiers can be applied to any of the states within the flow.
     """
     flow_moder = FlowModifiers(client.tools, modifiers, cls=client)
+    tool_chain = AliasSuffixedToolChain(client.tools, flow_comment=client.__doc__)
+    tool_chain.compile_flow()
 
-    flow_states = OrderedDict()
-    for tool in client.tools:
-        if tool.flow_definition is None:
-            raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
-                                   f'@generate_flow_definition (funcx functions only). Please '
-                                   f'set a flow definition for {tool.__class__.__name__}.')
-        states = get_ordered_flow_states(tool.flow_definition)
-        flow_states.update(states)
-
-    flow_def = combine_flow_states(client, flow_states)
-    flow_def = flow_moder.apply_modifiers(flow_def)
+    flow_def = flow_moder.apply_modifiers(tool_chain.flow_definition)
     return json.loads(json.dumps(flow_def))
 
 
@@ -53,7 +45,7 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
         raise FlowGenException(f'Tool {tool} has no flow states. Add a list of python functions '
                                f'as "{tool}.funcx_functions = [myfunction]" or set a custom flow '
                                f'definition instead using `{tool}.flow_definition = mydef`')
-    flow_def = FlowCompiler.combine_flow_states(flow_states, flow_comment=tool.__doc__)
+    flow_def = ToolChain.combine_flow_states(flow_states, flow_comment=tool.__doc__)
     flow_def = flow_moder.apply_modifiers(flow_def)
     return json.loads(json.dumps(flow_def))
 

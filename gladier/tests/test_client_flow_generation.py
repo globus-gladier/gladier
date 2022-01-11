@@ -100,15 +100,15 @@ def test_client_tool_duplication(logged_in):
         """My very cool Client"""
         gladier_tools = [
             'gladier.tests.test_data.gladier_mocks.MockTool',
-            'gladier.tests.test_data.gladier_mocks.MockTool',
-            'gladier.tests.test_data.gladier_mocks.MockTool',
+            'gladier.tests.test_data.gladier_mocks.MockTool:MockTool2',
+            'gladier.tests.test_data.gladier_mocks.MockTool:MockTool3',
         ]
 
     mc = MyClient()
     flow_def = mc.flow_definition
     validate_flow_definition(flow_def)
     assert len(flow_def['States']) == 3
-    assert set(flow_def['States']) == {'MockFunc', 'MockFunc2', 'MockFunc3'}
+    assert set(flow_def['States']) == {'MockFunc', 'MockFuncMockTool2', 'MockFuncMockTool3'}
 
 
 def test_client_tool_complex_duplication(logged_in):
@@ -117,8 +117,8 @@ def test_client_tool_complex_duplication(logged_in):
         """My very cool Client"""
         gladier_tools = [
             'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
-            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
-            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates',
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates:DoItAgain',
+            'gladier.tests.test_data.gladier_mocks.MockToolThreeStates:DoItRightThisTime',
         ]
 
     mc = MyClient()
@@ -127,12 +127,12 @@ def test_client_tool_complex_duplication(logged_in):
     assert len(flow_def['States']) == 9
     assert set(flow_def['States']) == {
         'StateOne',
-        'StateOne2',
-        'StateOne3',
+        'StateOneDoItAgain',
+        'StateOneDoItRightThisTime',
         'StateTwo',
-        'StateTwo2',
-        'StateTwo3',
+        'StateTwoDoItAgain',
+        'StateTwoDoItRightThisTime',
         'StateThree',
-        'StateThree2',
-        'StateThree3',
+        'StateThreeDoItAgain',
+        'StateThreeDoItRightThisTime',
     }

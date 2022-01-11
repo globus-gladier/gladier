@@ -120,7 +120,8 @@ class GladierBaseClient(object):
         log.debug(f'Looking for Gladier tool: {tool_ref} ({type(tool_ref)})')
         if isinstance(tool_ref, str):
             default_cls = gladier.utils.dynamic_imports.import_string(tool_ref)
-            default_inst = default_cls()
+            _, alias = gladier.utils.dynamic_imports.parse_alias(tool_ref)
+            default_inst = default_cls(alias)
             if issubclass(type(default_inst), gladier.base.GladierBaseTool):
                 return default_inst
             raise gladier.exc.ConfigException(f'{default_inst} is not of type '
