@@ -1,7 +1,6 @@
 import os
 import logging
 import hashlib
-import re
 import json
 from collections.abc import Iterable
 
@@ -145,10 +144,7 @@ class GladierBaseClient(object):
         """Get the default section name for the config. The section name is derived
         from the name of the user's flow_definition class turned snake case."""
         name = self.__class__.__name__
-        # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
-        snake_name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        snake_name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', snake_name).lower()
-        return snake_name
+        return gladier.utils.name_generation.get_snake_case(name)
 
     @property
     def tools(self):
