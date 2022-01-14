@@ -66,8 +66,8 @@ class GladierBaseClient(object):
     subscription_id = None
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
-        self.__flows_client = None
-        self.__tools = None
+        self._flows_client = None
+        self._tools = None
         self.public_config = self._load_public_config()
         self.private_config = self._load_private_config()
         self.authorizers = authorizers or dict()
@@ -153,15 +153,15 @@ class GladierBaseClient(object):
 
         :return: a list of subclassed instances of gladier.GladierBaseTool
         """
-        if getattr(self, '__tools', None):
-            return self.__tools
+        if getattr(self, '_tools', None):
+            return self._tools
 
         if not getattr(self, 'gladier_tools', None) or not isinstance(self.gladier_tools, Iterable):
             raise gladier.exc.ConfigException(
                 '"gladier_tools" must be a defined list of Gladier Tools. '
                 'Ex: ["gladier.tools.hello_world.HelloWorld"]')
-        self.__tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
-        return self.__tools
+        self._tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
+        return self._tools
 
     def get_cfg(self, private=True):
         cfg = self.private_config if private is True else self.public_config
@@ -220,8 +220,9 @@ class GladierBaseClient(object):
         """
         :return: an authorized Gloubs Automate Client
         """
-        if getattr(self, '__flows_client', None) is not None:
-            return self.__flows_client
+        if getattr(self, '_flows_client', None) is not None:
+            return self._flows_client
+
         automate_authorizer = self.authorizers[
             globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE
         ]
@@ -231,10 +232,10 @@ class GladierBaseClient(object):
         def get_flow_authorizer(*args, **kwargs):
             return flow_authorizer
 
-        self.__flows_client = globus_automate_client.FlowsClient.new_client(
+        self._flows_client = globus_automate_client.FlowsClient.new_client(
             self.client_id, get_flow_authorizer, automate_authorizer,
         )
-        return self.__flows_client
+        return self._flows_client
 
     @property
     def funcx_client(self):
