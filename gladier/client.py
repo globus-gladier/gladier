@@ -16,6 +16,7 @@ import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
 import gladier.utils.config_migrations
+import gladier.utils.tool_alias
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class GladierBaseClient(object):
     client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
     globus_group = None
     subscription_id = None
+    alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
     def __init__(self, authorizers=None, auto_login=True, auto_registration=True):
         self._flows_client = None
@@ -107,7 +109,7 @@ class GladierBaseClient(object):
                                                    self.section, self.client_id)
 
     @staticmethod
-    def get_gladier_defaults_cls(tool_ref):
+    def get_gladier_defaults_cls(tool_ref, alias_class=None):
         """
         Load a Gladier default class (gladier.GladierBaseTool) by import string. For
         Example: get_gladier_defaults_cls('gladier.tools.hello_world.HelloWorld')
@@ -120,7 +122,7 @@ class GladierBaseClient(object):
         if isinstance(tool_ref, str):
             default_cls = gladier.utils.dynamic_imports.import_string(tool_ref)
             _, alias = gladier.utils.dynamic_imports.parse_alias(tool_ref)
-            default_inst = default_cls(alias)
+            default_inst = default_cls(alias, alias_class)
             if issubclass(type(default_inst), gladier.base.GladierBaseTool):
                 return default_inst
             raise gladier.exc.ConfigException(f'{default_inst} is not of type '
@@ -160,7 +162,8 @@ class GladierBaseClient(object):
             raise gladier.exc.ConfigException(
                 '"gladier_tools" must be a defined list of Gladier Tools. '
                 'Ex: ["gladier.tools.hello_world.HelloWorld"]')
-        self._tools = [self.get_gladier_defaults_cls(gt) for gt in self.gladier_tools]
+        self._tools = [self.get_gladier_defaults_cls(gt, self.alias_class)
+                       for gt in self.gladier_tools]
         return self._tools
 
     def get_cfg(self, private=True):
@@ -529,11 +532,10 @@ class GladierBaseClient(object):
             #             if set(flow_input.keys()).intersection(set(tool.flow_input)):
             #                 raise gladier.exc.ConfigException(
             #                   f'Conflict: Tools {tool} and {prev_tool} 'both define {r}')
-            flow_input.update(tool.flow_input)
+            flow_input.update(tool.get_flow_input())
             # Iterate over both private and public input variables, and include any relevant ones
             # Note: Precedence starts and ends with: Public --> Private --> Default on Tool
-            t_input, t_required = set(tool.flow_input), set(getattr(tool, 'required_input', []))
-            input_keys = t_input.union(t_required)
+            input_keys = set(tool.get_flow_input()) | set(tool.get_required_input())
             log.debug(f'{tool}: Looking for overrides for the following input keys: {input_keys}')
             for cfg in (self.get_cfg(private=True), self.get_cfg(private=False)):
                 override_values = {k: cfg[self.section][k] for k in input_keys
@@ -552,7 +554,7 @@ class GladierBaseClient(object):
         :param flow_input: Flow input intended to be passed to run_flow()
         :raises: gladier.exc.ConfigException
         """
-        for req_input in tool.required_input:
+        for req_input in tool.get_required_input():
             if req_input not in flow_input['input']:
                 raise gladier.exc.ConfigException(
                     f'{tool} requires flow input value: "{req_input}"')

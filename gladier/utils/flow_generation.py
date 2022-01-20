@@ -9,7 +9,7 @@ from gladier.utils.name_generation import (
     get_funcx_flow_state_name,
     get_funcx_function_name
 )
-from gladier.utils.tool_chain import AliasSuffixedToolChain, ToolChain
+from gladier.utils.tool_chain import ToolChain
 
 
 log = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
     Modifiers can be applied to any of the states within the flow.
     """
     flow_moder = FlowModifiers(client.tools, modifiers, cls=client)
-    tool_chain = AliasSuffixedToolChain(client.tools, flow_comment=client.__doc__)
+    tool_chain = ToolChain(client.tools, flow_comment=client.__doc__)
     tool_chain.compile_flow()
 
     flow_def = flow_moder.apply_modifiers(tool_chain.flow_definition)

@@ -35,13 +35,10 @@ class ToolChain:
             self.states.update(new_states)
         self._flow_definition = self.combine_flow_states(self.states, self.flow_comment)
 
-    def get_state_name(self, name, state_data, tool):
-        return name, state_data
-
     def get_unique_states(self, tool):
         unique_flow_states = OrderedDict()
         for state_name, state_data in self.get_ordered_flow_states(tool.flow_definition).items():
-            new_state_name, new_state_data = self.get_state_name(state_name, state_data, tool)
+            new_state_name, new_state_data = tool.rename_state(state_name, state_data)
             unique_flow_states[new_state_name] = new_state_data
         log.debug(f'Complete flow states: {list(unique_flow_states.keys())}')
         return unique_flow_states
@@ -101,11 +98,3 @@ class ToolChain:
 
         ordered_states[state] = flow_def['States'][state]
         return ordered_states
-
-
-class AliasSuffixedToolChain(ToolChain):
-
-    def get_state_name(self, name, state, tool):
-        if tool.alias:
-            return f'{name}{tool.alias}', state
-        return name, state
