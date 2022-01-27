@@ -640,13 +640,28 @@ class GladierBaseClient(object):
                 else:
                     raise gladier.exc.AuthException('Scope change for flow, re-auth required',
                                                     missing_scopes=(cfg_sec['flow_scope'],))
+            elif gapie.http_status == 404:
+                log.warning(f'Flow {flow_id} returned 404 and is either deleted or unavailable. '
+                            f'Purging flow_id from config file...')
+                # On a 404, Gladier can't do anything since it cannot access the old flow.
+                # Therefore, purge the old flow and deploy a new one by calling get_flow_id()
+                cfg = self.get_cfg()
+                del cfg[self.section]['flow_id']
+                cfg.save()
+                log.info('Deploying new flow ')
+                flow_id = self.get_flow_id()
+                if self.auto_login:
+                    self.login(requested_scopes=[cfg_sec['flow_scope']], force=True)
+                    flow = self.flows_client.run_flow(flow_id, cfg_sec['flow_scope'],
+                                                      combine_flow_input, **flow_kwargs).data
+                else:
+                    raise gladier.exc.AuthException('Scope change for flow, re-auth required',
+                                                    missing_scopes=(cfg_sec['flow_scope'],))
             else:
                 raise
 
-
         log.info(f'Started flow {flow_kwargs.get("label")} flow id '
                  f'"{cfg_sec["flow_id"]}" with action "{flow["action_id"]}"')
-
 
         if flow['status'] == 'FAILED':
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
