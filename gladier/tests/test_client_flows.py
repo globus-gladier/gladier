@@ -12,6 +12,18 @@ def test_get_input(logged_in):
     }}
 
 
+def test_get_input_from_aliased_tool(logged_in):
+
+    class MockGladierClientAlias(MockGladierClient):
+        gladier_tools = ['gladier.tests.test_data.gladier_mocks.MockToolWithRequirements:MyAlias']
+
+    assert MockGladierClientAlias().get_input() == {'input': {
+        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
+        'mock_func_funcx_id': 'mock_funcx_id',
+        'my_alias_default_var': 'is a thing!',
+    }}
+
+
 def test_get_input_from_priv_config(logged_in, mock_secrets_config):
     cli = MockGladierClient()
     cli.get_cfg(private=True)[cli.section]['funcx_endpoint_non_compute'] = 'new_ep_uuid'

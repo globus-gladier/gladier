@@ -52,6 +52,20 @@ class MockTool(GladierBaseTool):
     ]
 
 
+class MockToolWithRequirements(GladierBaseTool):
+    required_input = [
+        'funcx_endpoint_non_compute',
+        'required_var'
+    ]
+    flow_input = {
+        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
+        'default_var': 'is a thing!'
+    }
+    funcx_functions = [
+        mock_func,
+    ]
+
+
 class MockToolThreeStates(GladierBaseTool):
 
     flow_definition = {

@@ -147,4 +147,4 @@ def test_client_tool_conflicting_state_names(logged_in):
             'gladier.tests.test_data.gladier_mocks.MockTool',
         ]
     with pytest.raises(exc.StateNameConflict):
-        mc = MyClient()
+        MyClient()
