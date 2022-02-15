@@ -57,6 +57,4 @@ class StateSuffixVariablePrefix(ToolAlias):
         return f'{state_name}{self.alias}'
 
     def rename_variable(self, variable_name, tool):
-        new_name = f'{gladier.utils.name_generation.get_snake_case(self.alias)}_{variable_name}'
-        # log.debug(f'Renaming {variable_name} to {new_name}')
-        return new_name
+        return f'{gladier.utils.name_generation.get_snake_case(self.alias)}_{variable_name}'

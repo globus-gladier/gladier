@@ -136,3 +136,15 @@ def test_client_tool_complex_duplication(logged_in):
         'StateThreeDoItAgain',
         'StateThreeDoItRightThisTime',
     }
+
+
+def test_client_tool_conflicting_state_names(logged_in):
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+        ]
+    with pytest.raises(exc.StateNameConflict):
+        mc = MyClient()

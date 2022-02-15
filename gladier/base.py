@@ -13,18 +13,29 @@ class GladierBaseTool(object):
     funcx_functions = []
 
     def __init__(self, alias=None, alias_class=None):
+        self.alias = alias
         alias_cls = alias_class or gladier.utils.tool_alias.NoAlias
         self.alias_renamer = alias_cls(alias)
 
     def get_required_input(self):
-        return [self.alias_renamer.rename_variable(input_var, self)
+        required_input = self.required_input.copy()
+        if self.alias:
+            required_input.extend(
+                [self.alias_renamer.rename_variable(input_var, self)
                 for input_var in self.required_input
                 if input_var not in self.alias_exempt]
+            )
+        return required_input
 
     def get_flow_input(self):
-        return {self.alias_renamer.rename_variable(input_var, self): val
-                for input_var, val in self.flow_input.items()
-                if input_var not in self.alias_exempt}
+        flow_input = self.flow_input.copy()
+        if self.alias:
+            flow_input.update(
+                {self.alias_renamer.rename_variable(input_var, self): val
+                 for input_var, val in self.flow_input.items()
+                 if input_var not in self.alias_exempt}
+                 )
+        return flow_input
 
     def get_original_inputs(self):
         return [input_var for input_var in set(self.required_input) | set(self.flow_input.keys())
