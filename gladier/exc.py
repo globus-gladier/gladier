@@ -54,6 +54,11 @@ class FlowGenException(GladierException):
     pass
 
 
+class StateNameConflict(FlowGenException):
+    """Two or more flow states share the same name"""
+    pass
+
+
 class FlowModifierException(FlowGenException):
     """An error happened when applying a modifier during flow generation"""
     pass

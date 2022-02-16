@@ -1,6 +1,5 @@
 import logging
 import json
-import copy
 from collections import OrderedDict
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
@@ -10,6 +9,7 @@ from gladier.utils.name_generation import (
     get_funcx_flow_state_name,
     get_funcx_function_name
 )
+from gladier.utils.tool_chain import ToolChain
 
 
 log = logging.getLogger(__name__)
@@ -23,18 +23,10 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
     Modifiers can be applied to any of the states within the flow.
     """
     flow_moder = FlowModifiers(client.tools, modifiers, cls=client)
+    tool_chain = ToolChain(client.tools, flow_comment=client.__doc__)
+    tool_chain.compile_flow()
 
-    flow_states = OrderedDict()
-    for tool in client.tools:
-        if tool.flow_definition is None:
-            raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
-                                   f'@generate_flow_definition (funcx functions only). Please '
-                                   f'set a flow definition for {tool.__class__.__name__}.')
-        states = get_ordered_flow_states(tool.flow_definition)
-        flow_states.update(states)
-
-    flow_def = combine_flow_states(client, flow_states)
-    flow_def = flow_moder.apply_modifiers(flow_def)
+    flow_def = flow_moder.apply_modifiers(tool_chain.flow_definition)
     return json.loads(json.dumps(flow_def))
 
 
@@ -49,40 +41,13 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
         fx_state = generate_funcx_flow_state(fx_func)
         flow_states.update(fx_state)
 
-    flow_def = combine_flow_states(tool, flow_states)
+    if not flow_states:
+        raise FlowGenException(f'Tool {tool} has no flow states. Add a list of python functions '
+                               f'as "{tool}.funcx_functions = [myfunction]" or set a custom flow '
+                               f'definition instead using `{tool}.flow_definition = mydef`')
+    flow_def = ToolChain.combine_flow_states(flow_states, flow_comment=tool.__doc__)
     flow_def = flow_moder.apply_modifiers(flow_def)
     return json.loads(json.dumps(flow_def))
-
-
-def combine_flow_states(cls, flow_states):
-    """
-    Given a GlaiderBaseClient or GladierBaseTool, generate a complete automate flow.
-    """
-    keylist = list(flow_states.keys())
-    first, last = keylist[0], keylist[-1]
-    flow_definition = OrderedDict([
-        ('Comment', cls.__doc__),
-        ('StartAt', first),
-        ('States', flow_states)
-    ])
-
-    for fs_data in flow_states.values():
-        if fs_data.get('End'):
-            fs_data.pop('End')
-
-    # Set the order for each of the flow states. Order is linear, based
-    # on the order of the funcx functions defined in the tool
-    for state_name, state_data in flow_states.items():
-        if state_name == last:
-            state_data['End'] = True
-        else:
-            next_index = keylist.index(state_name) + 1
-            state_data['Next'] = keylist[next_index]
-    if not flow_definition['Comment']:
-        state_names = ", ".join(flow_definition["States"].keys())
-        flow_definition['Comment'] = f'Flow with states: {state_names}'
-
-    return flow_definition
 
 
 def generate_funcx_flow_state(funcx_function):
@@ -105,21 +70,3 @@ def generate_funcx_flow_state(funcx_function):
         ('WaitTime', 300),
     ])
     return OrderedDict([(state_name, flow_state)])
-
-
-def get_ordered_flow_states(flow_definition):
-    flow_def = copy.deepcopy(flow_definition)
-    ordered_states = OrderedDict()
-    state = flow_def['StartAt']
-    while state is not None:
-        ordered_states[state] = flow_def['States'][state]
-        if flow_def['States'][state].get('Next'):
-            state = flow_def['States'][state].get('Next')
-        elif flow_def['States'][state].get('End') is True:
-            break
-        else:
-            raise FlowGenException(f'Flow definition has no "Next" or "End" for state "{state}" '
-                                   f'with states: {flow_def["States"].keys()}')
-
-    ordered_states[state] = flow_def['States'][state]
-    return ordered_states
