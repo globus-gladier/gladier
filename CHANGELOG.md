@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0b1](https://github.com/globus-gladier/gladier/compare/v0.5.4...v0.6.0b1) (2022-02-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* The following versions of FuncX and the Globus Automate
+Client will no longer be supported:
+
+* Globus Automate Client: Requires 0.13.0 and above
+* FuncX: Requires 0.3.6 and above
+
+Older versions of these packages are only compatible with Globus SDK
+v2, and require updating any code that relies on the older Globus SDK
+version. See the SDK upgrade guide here:
+
+### Features
+
+* Added 'aliased' tool chaining feature ([48cbaaf](https://github.com/globus-gladier/gladier/commit/48cbaaf2e0e85f1ff8846ffad3ed06694a1f82b4))
+
+
+### Bug Fixes
+
+* Added check when adding tool without flow states ([c612383](https://github.com/globus-gladier/gladier/commit/c612383fe05ab0c7d018153b3b639df0c2b6e63f))
+* Redeploy flow on 404s ([6c0d3a7](https://github.com/globus-gladier/gladier/commit/6c0d3a7cf1792ccb08cf440559b7114f7a95c03c))
+* tools/flows client not properly being cached in gladier clients ([a6e5cec](https://github.com/globus-gladier/gladier/commit/a6e5cecf4928820025bb828eeb3d825a9292c5c5))
+
+
+* Drop support for old versions of globus-automate-client/funcx ([5d17d96](https://github.com/globus-gladier/gladier/commit/5d17d967af16b9cd98a0ea9e3615224ad0f1c3d6)), closes [/globus-sdk-python.readthedocs.io/en/stable/upgrading.html#from-1-x-or-2-x-to-3-0](https://github.com/globus-gladier//globus-sdk-python.readthedocs.io/en/stable/upgrading.html/issues/from-1-x-or-2-x-to-3-0)
+
 ### [0.5.4](https://github.com/globus-gladier/gladier/compare/v0.5.3...v0.5.4) (2021-11-15)
 
 
