@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.5](https://github.com/globus-gladier/gladier/compare/v0.5.4...v0.5.5) (2022-03-25)
+
+
+### Bug Fixes
+
+* Add packaging dependency ([b21494b](https://github.com/globus-gladier/gladier/commit/b21494b4423cf0fc1b6f18db8b3ef93ec103e688))
+
 ### [0.5.4](https://github.com/globus-gladier/gladier/compare/v0.5.3...v0.5.4) (2021-11-15)
 
 
