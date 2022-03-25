@@ -1,2 +1,3 @@
 funcx>=0.2.3
 globus-automate-client<0.12.0>=0.10.6
+packaging>=21.3
