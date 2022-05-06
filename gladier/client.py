@@ -270,6 +270,7 @@ class GladierBaseClient(object):
         login_kwargs['refresh_tokens'] = login_kwargs.get('refresh_tokens', True)
         nc.login(**login_kwargs)
         self.authorizers = nc.get_authorizers_by_scope()
+        self._flows_client = None
 
     def logout(self):
         """Log out and revoke this client's tokens. This object will no longer
