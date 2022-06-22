@@ -432,8 +432,7 @@ class GladierBaseClient(object):
         fxid_name = gladier.utils.name_generation.get_funcx_function_name(function)
         fxck_name = gladier.utils.name_generation.get_funcx_function_checksum_name(function)
         cfg = self.get_cfg(private=True)
-        cfg[self.section][fxid_name] = self.funcx_client.register_function(function,
-                                                                           function.__doc__)
+        cfg[self.section][fxid_name] = self.funcx_client.register_function(function)
         cfg[self.section][fxck_name] = self.get_funcx_function_checksum(function)
         cfg.save()
 
