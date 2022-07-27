@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.3](https://github.com/globus-gladier/gladier/compare/v0.6.2...v0.6.3) (2022-07-20)
+
+### Bug Fixes
+
+* Fix error when docstring is too long ([a19a4bf](https://github.com/globus-gladier/gladier/commit/a19a4bfd7ca43a8f82ef1179071bd05c302951ef))
+
+
+### [0.6.2](https://github.com/globus-gladier/gladier/compare/v0.6.1...v0.6.2) (2022-05-06)
+
+
+### Bug Fixes
+
+* Possible flows client 401 due to client caching ([3b5a307](https://github.com/globus-gladier/gladier/commit/3b5a307072e82cdc40b1292bc7225eb8b293ebe4))
+
 ### [0.6.1](https://github.com/globus-gladier/gladier/compare/v0.6.0...v0.6.1) (2022-05-05)
 
 
