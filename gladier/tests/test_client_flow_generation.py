@@ -1,6 +1,7 @@
 import pytest
 from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition, exc
 from globus_automate_client.flows_client import validate_flow_definition
+from gladier.utils.tool_alias import StateSuffixVariablePrefix
 
 
 def gen_tool_func():
@@ -109,6 +110,41 @@ def test_client_tool_duplication(logged_in):
     validate_flow_definition(flow_def)
     assert len(flow_def['States']) == 3
     assert set(flow_def['States']) == {'MockFunc', 'MockFuncMockTool2', 'MockFuncMockTool3'}
+
+
+def test_client_tool_duplication_with_generated_defs(logged_in):
+
+    @generate_flow_definition
+    class Sorted(GladierBaseTool):
+        funcx_functions = [sorted]
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            Sorted(alias='First', alias_class=StateSuffixVariablePrefix),
+            Sorted(alias='Second', alias_class=StateSuffixVariablePrefix),
+        ]
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 2
+    assert set(flow_def['States']) == {'SortedFirst', 'SortedSecond'}
+
+
+def test_client_tool_duplication_with_generated_def_strs(logged_in):
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """My very cool Client"""
+        gladier_tools = [
+            'gladier.tests.test_data.gladier_mocks.GeneratedTool:First',
+            'gladier.tests.test_data.gladier_mocks.GeneratedTool:Second',
+        ]
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 2
+    assert set(flow_def['States']) == {'MockFuncFirst', 'MockFuncSecond'}
 
 
 def test_client_tool_complex_duplication(logged_in):

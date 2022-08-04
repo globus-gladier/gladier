@@ -39,6 +39,7 @@ class ToolChain:
         unique_flow_states = OrderedDict()
         for state_name, state_data in self.get_ordered_flow_states(tool.flow_definition).items():
             if tool.alias:
+                log.debug(f'Renaming state {state_name} to use alias {tool.alias}')
                 state_name, state_data = tool.rename_state(state_name, state_data)
             unique_flow_states[state_name] = state_data
         log.debug(f'Complete flow states: {list(unique_flow_states.keys())}')

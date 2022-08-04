@@ -34,7 +34,7 @@ def generate_flow_definition(_cls=None, *, modifiers=None):
         @functools.wraps(cls)
         def wrapper(*args, **kwargs):
             if issubclass(cls, GladierBaseTool):
-                c = cls()
+                c = cls(*args, **kwargs)
                 c.flow_definition = generate_tool_flow(c, modifiers)
                 return c
             elif issubclass(cls, GladierBaseClient):
