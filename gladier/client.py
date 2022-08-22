@@ -335,10 +335,10 @@ class GladierBaseClient(object):
         overridden to change any of the automate defaults:
 
         permission_type for deploying flows:
-            'visible_to', 'runnable_by', 'administered_by',
+            'flow_viewer', 'flow_starter', 'flow_administrator',
 
         permission_type for running flows:
-            'manage_by', 'monitor_by'
+            'run_manager', 'run_monitor'
 
         By default, always returns either None for using automate defaults, or setting every
         permission_type above to use the set client `globus_group`.
@@ -346,7 +346,7 @@ class GladierBaseClient(object):
         if identities is None and self.globus_group:
             identities = [self.get_globus_urn(self.globus_group)]
         permission_types = {
-            'visible_to', 'runnable_by', 'administered_by', 'manage_by', 'monitor_by'
+            'flow_viewer', 'flow_starter', 'flow_administrator', 'run_manager', 'run_monitor'
         }
         if permission_type not in permission_types:
             raise gladier.exc.DevelopmentException(f'permission_type must be one of '
@@ -469,7 +469,7 @@ class GladierBaseClient(object):
         flow_definition = self.get_flow_definition()
         flow_permissions = {
             p_type: self.get_flow_permission(p_type)
-            for p_type in ['runnable_by', 'visible_to', 'administered_by']
+            for p_type in ['flow_viewer', 'flow_starter', 'flow_administrator',]
             if self.get_flow_permission(p_type)
         }
         log.debug(f'Flow permissions set to: {flow_permissions or "Flows defaults"}')
@@ -610,7 +610,7 @@ class GladierBaseClient(object):
 
         flow_kwargs.update({
             p_type: self.get_flow_permission(p_type)
-            for p_type in ['manage_by', 'monitor_by']
+            for p_type in ['run_manager', 'run_monitor']
             if self.get_flow_permission(p_type)
         })
         log.debug(f'Flow run permissions set to: {flow_kwargs or "Flows defaults"}')
