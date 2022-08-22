@@ -17,6 +17,7 @@ import gladier.utils.automate
 import gladier.utils.name_generation
 import gladier.utils.config_migrations
 import gladier.utils.tool_alias
+import gladier.utils.funcx_login_manager
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -25,10 +26,8 @@ log = logging.getLogger(__name__)
 search_scope = 'urn:globus:auth:scope:search.api.globus.org:all'
 
 GLADIER_SCOPES = [
-    # FuncX requires search, auth, and its own funcx scope
-    search_scope,
-    'openid',
-    FuncXClient.FUNCX_SCOPE,
+    # Get all FuncX Scopes
+    *gladier.utils.funcx_login_manager.FuncXLoginManager.SCOPES,
 
     # Automate scopes
     *globus_automate_client.flows_client.ALL_FLOW_SCOPES,
@@ -247,11 +246,9 @@ class GladierBaseClient(object):
         """
         if getattr(self, '__funcx_client', None) is not None:
             return self.__funcx_client
-        self.__funcx_client = FuncXClient(
-            fx_authorizer=self.authorizers[FuncXClient.FUNCX_SCOPE],
-            search_authorizer=self.authorizers[search_scope],
-            openid_authorizer=self.authorizers['openid'],
-        )
+
+        login_manager = gladier.utils.funcx_login_manager.FuncXLoginManager(authorizers=self.authorizers)
+        self.__funcx_client = FuncXClient(login_manager=login_manager)
         return self.__funcx_client
 
     def login(self, **login_kwargs):
