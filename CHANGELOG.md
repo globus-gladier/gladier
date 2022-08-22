@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/globus-gladier/gladier/compare/v0.6.3...v0.7.0) (2022-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Older funcx versions before v1.0 are no longer supported.
+    * No code changes are required to migrate to Gladier v0.7.0 or FuncX v1.0
+
+### Features
+
+* Add support for globus-automate-client 0.16 ([dc9e82c](https://github.com/globus-gladier/gladier/commit/dc9e82ca02ebf63217d9fabadada725579f038b3))
+* Upgrade to funcx v1 ([c947077](https://github.com/globus-gladier/gladier/commit/c947077c733b50f3aa20d4e041dba8eb5c47da0b))
+
+
+### Bug Fixes
+
+* Aliases not working with tools that use `@generate_flow_definition` ([da30756](https://github.com/globus-gladier/gladier/commit/da3075662703298291d776b1c25fb95348a6fdaa))
+
+
 ### [0.6.3](https://github.com/globus-gladier/gladier/compare/v0.6.2...v0.6.3) (2022-07-20)
 
 ### Bug Fixes
