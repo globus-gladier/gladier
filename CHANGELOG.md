@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/globus-gladier/gladier/compare/v0.7.0...v0.7.1) (2022-08-25)
+
+
+### Bug Fixes
+
+* Error on first time flow deployment if using group perms ([b444f2b](https://github.com/globus-gladier/gladier/commit/b444f2b8e09ab77efaa5c7d7b4f9698a1ddc9164))
+
 ## [0.7.0](https://github.com/globus-gladier/gladier/compare/v0.6.3...v0.7.0) (2022-08-22)
 
 
