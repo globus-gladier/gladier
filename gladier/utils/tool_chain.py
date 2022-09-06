@@ -1,4 +1,5 @@
 import logging
+from typings import Set, Mapping, Any, Optional, List, Boolean
 import json
 import copy
 from collections import OrderedDict
@@ -6,6 +7,9 @@ from collections import OrderedDict
 from gladier.exc import FlowGenException, StateNameConflict
 
 log = logging.getLogger(__name__)
+
+STATE_TRANSITION_KEYS = {"Next", "Default", "StartAt"}
+BRANCHING_STATE_TYPES = {"Choice"}
 
 
 class ToolChain:
@@ -76,27 +80,71 @@ class ToolChain:
                 state_data['End'] = True
             else:
                 next_index = keylist.index(state_name) + 1
-                state_data['Next'] = keylist[next_index]
+                if state_data['Type'] == 'Choice':
+                    state_data['Default'] = keylist[next_index]
+                else:
+                    state_data['Next'] = keylist[next_index]
         if not flow_definition['Comment']:
             state_names = ", ".join(flow_definition["States"].keys())
             flow_definition['Comment'] = f'Flow with states: {state_names}'
 
         return flow_definition
 
-    @staticmethod
-    def get_ordered_flow_states(flow_definition):
-        flow_def = copy.deepcopy(flow_definition)
-        ordered_states = OrderedDict()
-        state = flow_def['StartAt']
-        while state is not None:
-            ordered_states[state] = flow_def['States'][state]
-            if flow_def['States'][state].get('Next'):
-                state = flow_def['States'][state].get('Next')
-            elif flow_def['States'][state].get('End') is True:
-                break
-            else:
-                raise FlowGenException(f'Flow definition has no "Next" or "End" for state '
-                                       f'"{state}" with states: {flow_def["States"].keys()}')
+    @classmethod
+    def get_
+    
+    @classmethod
+    def get_flow_states(
+        cls,
+        flow_def: Mapping[str, Any],
+        key_name_set: Set[str] = STATE_TRANSITION_KEYS,
+        no_traverse_key_set: Optional[Set[str]] = {"Parameters"},
+        branching: bool = True
+    ) -> List[str]:
+        flow_states = set()
+        for k, v in flow_def.items():
+            if k in key_name_set and isinstance(v, str):
+                flow_states.add(v)
+            if no_traverse_key_set is not None and k in no_traverse_key_set:
+                continue
+            if isinstance(v, list):
+                for val in v:
+                    if k in key_name_set and isinstance(val, str):
+                        flow_states.add(val)
+                    elif isinstance(val, dict):
+                        flow_states.update(
+                            cls.get_flow_states(
+                                val,
+                                key_name_se=key_name_set,
+                                no_traverse_key_set=no_traverse_key_set,
+                                branching=branching,
+                            )
+                        )
+            elif isinstance(v, dict):
+                flow_states.update(
+                    cls.get_flow_states(
+                        v, key_name_set=key_name_set, no_traverse_key_set=no_traverse_key_set, branching=branching
+                    )
+                )
+        return flow_states
 
-        ordered_states[state] = flow_def['States'][state]
-        return ordered_states
+    # @classmethod
+    # def get_ordered_flow_states(cls, flow_definition):
+    #     return cls.get_flow_states(flow_definition, branching=False)
+        # flow_def = copy.deepcopy(flow_definition)
+        # ordered_states = OrderedDict()
+        # state = flow_def['StartAt']
+        # while state is not None:
+        #     ordered_states[state] = flow_def['States'][state]
+        #     if flow_def['States'][state].get('Next'):
+        #         state = flow_def['States'][state].get('Next')
+        #     elif flow_def['States'][state].get('Type') == 'Choice':
+        #         state = flow_def['States'][state].get('Default')
+        #     elif flow_def['States'][state].get('End') is True:
+        #         break
+        #     else:
+        #         raise FlowGenException(f'Flow definition has no "Next" or "End" for state '
+        #                                f'"{state}" with states: {flow_def["States"].keys()}')
+
+        # ordered_states[state] = flow_def['States'][state]
+        # return ordered_states

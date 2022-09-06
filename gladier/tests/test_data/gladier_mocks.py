@@ -126,6 +126,11 @@ class MockToolThreeStates(GladierBaseTool):
     }
 
 
+class MockToolChoiceState(GladierBaseTool):
+    pass
+    
+
+
 class MockGladierClient(GladierBaseClient):
     secret_config_filename = 'gladier-secrets.cfg'
     config_filename = 'gladier.cfg'
