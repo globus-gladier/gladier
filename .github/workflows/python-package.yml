@@ -37,14 +37,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-    - name: Build a binary wheel and a source tarball
-      run: >-
-        python -m
-        build
-        --sdist
-        --wheel
-        --outdir dist/
-        .
+    - name: Test build a binary wheel and a source tarball and check with twine
+      run: |
+        python -m build --sdist --wheel --outdir dist/ .
         twine check dist/*
     - name: Test Docs
       run: |
