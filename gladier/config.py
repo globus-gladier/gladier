@@ -3,6 +3,7 @@ import os
 import stat
 import configparser
 from fair_research_login.token_storage import flat_pack, flat_unpack
+from gladier.utils.config_migrations import needs_migration, migrate_gladier
 
 log = logging.getLogger(__name__)
 
@@ -29,9 +30,25 @@ class GladierSecretsConfig(GladierConfig):
     def __init__(self, filename, section, client_id):
         super().__init__(filename, section)
         self.tokens_section = self.TOKENS_SECTION_DEFAULT.format(client_id=client_id)
-        if self.tokens_section not in self.sections():
-            log.debug(f'Adding new section {section} to {self.filename}')
-            self[self.tokens_section] = {}
+        for sec in [section, self.tokens_section]:
+            if sec not in self.sections():
+                log.debug(f'Adding new section {sec} to {self.filename}')
+                self[sec] = {}
+                self.save()
+
+    def get_value(self, name: str):
+        try:
+            return self.get(self.section, name)
+        except configparser.NoOptionError:
+            return None
+
+    def set_value(self, name: str, value: str):
+        self.set(self.section, name, value)
+        self.save()
+
+    def update(self):
+        if needs_migration(self):
+            self = migrate_gladier(self)
             self.save()
 
     def save(self):
