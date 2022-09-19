@@ -1,21 +1,30 @@
 import os
 import logging
+import warnings
+from typing import Union, Mapping
 from collections.abc import Iterable
 
 from gladier.base import GladierBaseTool
+from gladier.managers.login_manager import (
+    BaseLoginManager, CallbackLoginManager, AutoLoginManager
+)
+from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
+from gladier.managers import FlowsManager, FuncXManager
+
 import globus_automate_client
 
+from gladier.storage.tokens import GladierSecretsConfig
+from gladier.storage.config import GladierConfig
 import gladier
-import gladier.config
+import gladier.storage.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
-import gladier.utils.config_migrations
+import gladier.storage.migrations
 import gladier.utils.tool_alias
 import gladier.utils.funcx_login_manager
 import gladier.exc
 import gladier.version
-from gladier.managers import FlowsManager, FuncXManager, LoginManager
 log = logging.getLogger(__name__)
 
 
@@ -43,14 +52,10 @@ class GladierBaseClient(object):
     easy to automate.
 
     Default options are intended for CLI usage and maximum user convenience.
-
-    :param authorizers: Provide live globus_sdk authorizers with a dict keyed by
-                        scope.
-    :type globus_sdk.AccessTokenAuthorizer: A globus authorizer
-    :param auto_login: Automatically trigger login() calls when needed. Should not be used
-                       with authorizers.
     :param auto_registration: Automatically register functions or flows if they are not
                               previously registered or obsolete.
+    :param login_manager: Class defining login behavior. Defaults to AutoLoginManager, and
+                          will auto-login when additional scopes are needed.
     :raises gladier.exc.AuthException: if authorizers given are insufficient
 
     """
@@ -62,28 +67,44 @@ class GladierBaseClient(object):
     subscription_id = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
-    def __init__(self, authorizers=None, auto_login=True, auto_registration=True,
-                 login_manager=None, funcx_manager=None, flows_manager=None, storage=None):
+    def __init__(
+        self,
+        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]] = None,
+        auto_login: bool = True,
+        auto_registration: bool = True,
+        login_manager: BaseLoginManager = None,
+            ):
 
         self._tools = None
-        # self.authorizers = authorizers or dict()
-        # self.auto_login = auto_login
-        self.auto_registration = auto_registration
 
-        if storage is None:
-            class_name = self.__class__.__name__
-            section = gladier.utils.name_generation.get_snake_case(class_name)
-            storage = gladier.config.GladierSecretsConfig(
-                self.secret_config_filename, section, self.client_id
-            )
-            storage.update()
-        self.storage = storage
-        self.login_manager = login_manager or LoginManager(self.client_id, self.storage,
-                                                           self.app_name)
-        self.flows_manager = flows_manager or FlowsManager(login_manager=self.login_manager,
-                                                           storage=self.storage)
-        self.funcx_manager = funcx_manager or FuncXManager(login_manager=self.login_manager,
-                                                           storage=self.storage)
+        # Setup storage
+        section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
+        self.storage = GladierConfig(self.secret_config_filename, section)
+        self.storage.update()
+
+        if auto_login is False:
+            warnings.warn('Auto-Login in Gladier clients is deprecated and will be removed in '
+                          'v0.8. Instead, use'
+                          'login_manager=CallbackLoginManager(authorizers=authorizers)',
+                          category=DeprecationWarning)
+        if authorizers:
+            warnings.warn('Calling Gladier clients with "authorizers" is deprecated. Instead, '
+                          'use login_manager=CallbackLoginManager(authorizers=authorizers)',
+                          category=DeprecationWarning)
+            self.login_manager = CallbackLoginManager(authorizers=authorizers)
+        elif not login_manager:
+            section_name = f'tokens_{self.client_id}'
+            token_storage = GladierSecretsConfig(self.secret_config_filename, section_name)
+            self.login_manager = AutoLoginManager(self.client_id, token_storage, self.app_name,
+                                                  auto_login=auto_login)
+        else:
+            self.login_manager = login_manager
+        self.flows_manager = FlowsManager(login_manager=self.login_manager,
+                                          storage=self.storage,
+                                          auto_registration=auto_registration)
+        self.funcx_manager = FuncXManager(login_manager=self.login_manager,
+                                          storage=self.storage,
+                                          auto_registration=auto_registration)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref, alias_class=None):

@@ -3,11 +3,14 @@ import json
 from unittest.mock import Mock, PropertyMock
 import pytest
 import fair_research_login
+from gladier.storage import config, tokens
 import globus_sdk
+import globus_automate_client
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
-from gladier import GladierBaseClient, config, version
+from gladier import version
+from gladier.managers import FuncXManager
 
 data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
 
@@ -41,17 +44,16 @@ def mock_version_040(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def mock_config(monkeypatch):
-    monkeypatch.setattr(config.GladierSecretsConfig, 'save', Mock())
-    monkeypatch.setattr(config.GladierSecretsConfig, 'read', Mock())
-    cfg = config.GladierSecretsConfig('mock_filename', 'section', 'client_id')
-    monkeypatch.setattr(GladierBaseClient, '_load_private_config', Mock(return_value=cfg))
+    monkeypatch.setattr(config.GladierConfig, 'write', Mock())
+    monkeypatch.setattr(config.GladierConfig, 'read', Mock())
+    cfg = tokens.GladierSecretsConfig('mock_filename', 'tokens_client_id')
     return cfg
 
 
 @pytest.fixture(autouse=True)
 def mock_secrets_config(monkeypatch):
-    monkeypatch.setattr(config.GladierSecretsConfig, 'save', Mock())
-    return config.GladierSecretsConfig
+    monkeypatch.setattr(tokens.GladierSecretsConfig, 'save', Mock())
+    return tokens.GladierSecretsConfig
 
 
 @pytest.fixture(autouse=True)
@@ -63,11 +65,11 @@ def mock_flows_client(monkeypatch, globus_response):
         'globus_auth_scope': mock_automate_flow_scope,
     })
     mock_flows_cli.run_flow.return_value = globus_response(mock_data={
-        'action_id': 'mock_flow_id',
+        'run_id': 'mock_flow_id',
         'status': 'ACTIVE',
     })
-    monkeypatch.setattr(GladierBaseClient, 'flows_client',
-                        PropertyMock(return_value=mock_flows_cli))
+    monkeypatch.setattr(globus_automate_client.FlowsClient, 'new_client',
+                        Mock(return_value=mock_flows_cli))
     return mock_flows_cli
 
 
@@ -76,7 +78,7 @@ def mock_funcx_client(monkeypatch):
     """Ensure there are no calls out to the Funcx Client"""
     mock_fx_cli = Mock()
     mock_fx_cli.register_function.return_value = 'mock_funcx_id'
-    monkeypatch.setattr(GladierBaseClient, 'funcx_client',
+    monkeypatch.setattr(FuncXManager, 'funcx_client',
                         PropertyMock(return_value=mock_fx_cli))
     return mock_fx_cli
 

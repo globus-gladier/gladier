@@ -26,17 +26,7 @@ def test_get_input_from_aliased_tool(logged_in):
 
 def test_get_input_from_priv_config(logged_in, mock_secrets_config):
     cli = MockGladierClient()
-    cli.get_cfg(private=True)[cli.section]['funcx_endpoint_non_compute'] = 'new_ep_uuid'
-    assert cli.get_input() == {'input': {
-        'funcx_endpoint_non_compute': 'new_ep_uuid',
-        'mock_func_funcx_id': 'mock_funcx_id',
-        }
-    }
-
-
-def test_get_input_from_pub_config(logged_in, mock_config):
-    cli = MockGladierClient()
-    cli.get_cfg(private=False)[cli.section]['funcx_endpoint_non_compute'] = 'new_ep_uuid'
+    cli.storage.set_value('funcx_endpoint_non_compute', 'new_ep_uuid')
     assert cli.get_input() == {'input': {
         'funcx_endpoint_non_compute': 'new_ep_uuid',
         'mock_func_funcx_id': 'mock_funcx_id',
@@ -46,8 +36,8 @@ def test_get_input_from_pub_config(logged_in, mock_config):
 
 def test_pub_config_overrides_priv(logged_in, mock_config, mock_secrets_config):
     cli = MockGladierClient()
-    cli.get_cfg(private=True)[cli.section]['funcx_endpoint_non_compute'] = 'priv_ep_uuid'
-    cli.get_cfg(private=False)[cli.section]['funcx_endpoint_non_compute'] = 'pub_ep_uuid'
+    cli.storage.set_value('funcx_endpoint_non_compute', 'priv_ep_uuid')
+    cli.storage.set_value('funcx_endpoint_non_compute', 'pub_ep_uuid')
     assert cli.get_input() == {'input': {
         'funcx_endpoint_non_compute': 'pub_ep_uuid',
         'mock_func_funcx_id': 'mock_funcx_id',
@@ -85,24 +75,26 @@ def test_dependent_scope_change_run_flow(logged_in, mock_flows_client,
                                          monkeypatch):
     mock_flows_client.run_flow.side_effect = mock_dependent_token_change_error
     cli = MockGladierClient()
-    cli.login = Mock()
+    cli.login_manager.login = Mock()
+    assert not cli.login_manager.scope_changes
 
     # Gladier will re-run run_flow after login, so catch the second 'run_flow()'
-    with pytest.raises(mock_dependent_token_change_error):
+    with pytest.raises(gladier.exc.AuthException):
         cli.run_flow()
-    assert cli.login.call_count == 1
+    assert cli.login_manager.scope_changes == {
+        'https://auth.globus.org/scopes/mock_tool_flow_scope/flow_mock_tool_flow_scope_user'
+    }
+    assert cli.login_manager.login.call_count == 1
 
 
 def test_dependent_scope_change_no_login(logged_in, mock_flows_client,
-                                         mock_dependent_token_change_error,
                                          monkeypatch):
-    mock_flows_client.run_flow.side_effect = mock_dependent_token_change_error
     cli = MockGladierClient(auto_login=False)
-    cli.login = Mock()
+    cli.login_manager.login = Mock()
+    cli.login_manager.add_scope_change(['foo'])
 
     with pytest.raises(gladier.exc.AuthException):
         cli.run_flow()
-    assert cli.login.call_count == 0
 
 
 def test_gladier_raises_globus_errors(logged_in, mock_flows_client, mock_globus_api_error,

@@ -7,11 +7,11 @@ import globus_sdk
 import globus_automate_client
 
 import gladier
-import gladier.config
+import gladier.storage.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
 import gladier.utils.name_generation
-import gladier.utils.config_migrations
+import gladier.storage.migrations
 import gladier.utils.tool_alias
 import gladier.utils.funcx_login_manager
 import gladier.exc
@@ -19,7 +19,7 @@ import gladier.version
 
 from gladier.exc import GladierException
 
-from gladier.managers import LoginManager
+from gladier.managers import BaseLoginManager
 
 from globus_automate_client.flows_client import (
     MANAGE_FLOWS_SCOPE,
@@ -43,7 +43,7 @@ class FlowsManager:
     ]
 
     def __init__(self,
-                 login_manager: LoginManager = None,
+                 login_manager: BaseLoginManager = None,
                  storage: Any = None,
                  auto_registration: bool = True,
                  globus_group: str = None,
@@ -100,8 +100,7 @@ class FlowsManager:
         """
         if getattr(self, '_flows_client', None) is not None:
             return self._flows_client
-
-        authorizers = self.login_manager.get_authorizers()
+        authorizers = self.login_manager.get_manager_authorizers()
 
         automate_authorizer = authorizers[
             globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE
@@ -112,9 +111,13 @@ class FlowsManager:
             return flow_authorizer
 
         self._flows_client = globus_automate_client.FlowsClient.new_client(
-            self.login_manager.client_id, get_flow_authorizer, automate_authorizer,
+            None, get_flow_authorizer, automate_authorizer,
         )
         return self._flows_client
+
+    def refresh_flows_client(self) -> globus_automate_client.FlowsClient:
+        self._flows_client = None
+        return self.flows_client
 
     @staticmethod
     def get_flow_checksum(flow_definition):
@@ -233,6 +236,8 @@ class FlowsManager:
             self.storage.set_value('flow_id', flow['id'])
             self.storage.set_value('flow_scope', flow['globus_auth_scope'])
             self.storage.set_value('flow_checksum', self.get_flow_checksum(self.flow_definition))
+            self.login_manager.add_requirements([flow['globus_auth_scope']])
+            self.refresh_flows_client()
 
         return flow_id
 
@@ -301,7 +306,7 @@ class FlowsManager:
             detail_message = automate_error_message['error']['detail']
             if 'unable to get tokens for scopes' in detail_message:
                 self.login_manager.add_scope_change([flow_scope])
-                self.login_manager.ensure_logged_in()
+                self.refresh_flows_client()
                 log.info('Initiating new login for dependent scope change')
                 flow = self.flows_client.run_flow(flow_id, flow_scope, **kwargs).data
             elif gapie.http_status == 404:
@@ -322,7 +327,6 @@ class FlowsManager:
                                                     missing_scopes=(flow_scope,))
             else:
                 raise
-
         log.info(f'Started flow {kwargs.get("label")} flow id '
                  f'"{flow_id}" with run "{flow["run_id"]}"')
 

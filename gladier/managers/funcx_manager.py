@@ -6,7 +6,7 @@ from gladier.base import GladierBaseTool
 from funcx import FuncXClient
 from funcx.serialize import FuncXSerializer
 
-from gladier.managers import LoginManager
+from gladier.managers import BaseLoginManager
 import gladier.utils.funcx_login_manager
 
 log = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class FuncXManager:
 
-    def __init__(self, login_manager: LoginManager = None, storage: Any = None,
+    def __init__(self, login_manager: BaseLoginManager = None, storage: Any = None,
                  auto_registration: bool = True):
         self.storage = storage
 
@@ -80,9 +80,9 @@ class FuncXManager:
         except (gladier.exc.RegistrationException, gladier.exc.FunctionObsolete):
             if self.auto_registration is True:
                 log.info(f'{tool.__class__.__name__}: function {function.__name__} is out of date')
-                fx_uuid = self.register_function(tool, function)
+                fid = self.register_function(tool, function)
                 fx_name = gladier.utils.name_generation.get_funcx_function_name(function)
-                self.storage.set_value(fx_name, fx_uuid)
+                self.storage.set_value(fx_name, fid)
                 self.storage.set_value(checksum_name, checksum)
             else:
                 raise

@@ -1,5 +1,6 @@
 import logging
-from typing import List, Union, Any
+from typing import List, Set, Iterable, Union, Any, Mapping
+import abc
 
 import fair_research_login
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
@@ -8,34 +9,72 @@ from gladier.exc import AuthException
 log = logging.getLogger(__name__)
 
 
-class LoginManager:
+class BaseLoginManager(abc.ABC):
 
-    def __init__(self, client_id: str, storage: Any, app_name: str):
-        self.storage = storage
-        self.client_id = client_id
-        self.app_name = app_name
+    def __init__(self, *args, **kwargs):
         self.required_scopes = set()
         self.scope_changes = set()
 
     @property
-    def missing_authorizers(self) -> List[str]:
+    def missing_authorizers(self) -> Set[str]:
+        return self.get_missing_authorizers(self.get_authorizers())
+
+    def get_missing_authorizers(
+        self,
+        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]
+            ) -> Set[str]:
+        # Disregard any scopes not in the 'required' list. This allows implementers to return
+        # unrelated scopes.
+        absent = self.required_scopes.difference(authorizers)
+        log.info(f'Scopes Absent: {absent or None}, Need Update: {self.scope_changes or None}')
+        return absent | self.scope_changes
+
+    def get_manager_authorizers(self):
+        authorizers = self.get_authorizers()
+        missing = self.get_missing_authorizers(authorizers)
+
+        if missing:
+            log.info('Attempting login to fetch missing authorizers.')
+            self.login(missing)
+            authorizers = self.get_authorizers()
+            missing = self.get_missing_authorizers(authorizers)
+
+        if missing:
+            raise AuthException('Manager Failed to produce '
+                                f'authorizers for missing scopes: {missing}')
+        return authorizers
+
+    @abc.abstractmethod
+    def get_authorizers(self) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
         """
-        :return:  a list of Globus scopes for which there are no authorizers
+        This method MUST be implemented by the implementing class.
+
+        Load any existing authorizers and return them to the client. A login *should not* be
+        attempted. The Login Manager will determine if the scopes provided are sufficient, and
+        automatically call login() they are not.
         """
-        loaded = set(self.get_native_client().get_authorizers_by_scope())
-        missing = self.required_scopes.difference(loaded)
-        for scope in self.scope_changes:
-            missing.add(scope)
-        return missing
+        raise NotImplementedError(f'{self.__class__.__name__} must implement .get_authorizers()')
+
+    @abc.abstractmethod
+    def login(self, scopes: List[str]):
+        """
+        This method MUST be implemented by the implementing class.
+
+        If this method is called, get_authorizers() has insufficient scopes and requires more
+        scopes to continue operations. ``scopes`` MAY reference scopes already saved, which can
+        happen if dependent scopes have been added to the scope since last login. For this reason,
+        previously saved scopes in this list should be disregarded.
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} must implement .ensure_logged_in()')
 
     def is_logged_in(self) -> bool:
         return not bool(self.missing_authorizers)
 
-    def add_requirements(self, scopes: List[str]):
+    def add_requirements(self, scopes: Iterable[str]):
         log.debug(f'Added required scopes {scopes}')
         self.required_scopes = self.required_scopes | set(scopes)
 
-    def add_scope_change(self, scopes: List[str]):
+    def add_scope_change(self, scopes: Iterable[str]):
         """
         A scope change happens when the underlying scope gets updated with new dependent scopes,
         and the current token we now have is invalid and can no longer be used. The solution is
@@ -44,54 +83,24 @@ class LoginManager:
         log.debug(f'Tracking scope change: {scopes}')
         self.scope_changes = self.scope_changes | set(scopes)
 
-    def get_authorizers(self) -> List[Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
-        self.ensure_logged_in()
-        return self.get_native_client().get_authorizers_by_scope()
 
-    def ensure_logged_in(self):
-        missing = self.missing_authorizers
-        if missing:
-            log.debug(f'Missing the following scopes requiring a login: {missing}')
-            kwargs = {}
-            if self.scope_changes:
-                kwargs['force'] = True
-            self.login(requested_scopes=missing, **kwargs)
+class AutoLoginManager(BaseLoginManager):
+    """
+    Default Login Manager class in Gladier. Automatically initiates a login if any scope
+    is missing or needs to be updated.
+    """
 
-    def login(self, **login_kwargs):
-        """Login to the Gladier client. This will ensure the user has the correct
-        tokens configured but it DOES NOT guarantee they are in the correct group to
-        run a flow. Can be run both locally and on a server.
-        See help(fair_research_login.NativeClient.login) for a full list of kwargs.
-        """
-        nc = self.get_native_client()
-        # if self.is_logged_in() and login_kwargs.get('force') is not True:
-        #     log.debug('Already logged in, skipping login.')
-        #     return
-        log.info('Initiating Native App Login...')
-        log.debug(f'Requesting Scopes: {self.required_scopes}')
-        login_kwargs['requested_scopes'] = login_kwargs.get('requested_scopes',
-                                                            self.required_scopes)
-        login_kwargs['refresh_tokens'] = login_kwargs.get('refresh_tokens', True)
-        nc.login(**login_kwargs)
-        self.authorizers = nc.get_authorizers_by_scope()
+    refresh_tokens = True
 
-    def logout(self):
-        """Log out and revoke this client's tokens. This object will no longer
-        be usable until a new login is called.
-        """
-        log.info(f'Revoking the following scopes: {self.scopes}')
-        self.get_native_client().logout()
-        # Clear authorizers cache
-        self.authorizers = dict()
+    def __init__(self, client_id: str, storage: Any, app_name: str, auto_login=True):
+        super().__init__()
+        self.storage = storage
+        self.client_id = client_id
+        self.app_name = app_name
+        self.auto_login = auto_login
 
-    def get_native_client(self):
-        """
-        fair_research_login.NativeClient is used when ``authorizers`` are not provided to __init__.
-        This enables local login to the Globus Automate Client, FuncX, and any other Globus
-        Resource Server.
-
-        :return: an instance of fair_research_login.NativeClient
-        """
+    @property
+    def native_client(self):
         if getattr(self, 'client_id', None) is None:
             raise AuthException(
                 'Gladier client must be instantiated with a '
@@ -100,3 +109,38 @@ class LoginManager:
         return fair_research_login.NativeClient(client_id=self.client_id,
                                                 app_name=self.app_name,
                                                 token_storage=self.storage)
+
+    def get_authorizers(self) -> List[Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+        try:
+            return self.native_client.get_authorizers_by_scope()
+        except fair_research_login.LoadError:
+            return dict()
+
+    def login(self, scopes):
+        if self.auto_login is False:
+            raise AuthException(f'Automatic login is disabled. Missing scopes: {scopes}')
+        self.native_client.login(requested_scopes=scopes,
+                                 refresh_toknes=self.refresh_tokens,
+                                 force=True)
+
+    def logout(self):
+        self.native_client.logout()
+
+
+class CallbackLoginManager(BaseLoginManager):
+
+    def __init__(self, authorizers, callback=None):
+        super().__init__()
+        self.authorizers = authorizers
+        self.callback = callback
+
+    def get_authorizers(self) -> List[Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+        return self.authorizers
+
+    def login(self, scopes):
+        if not self.callback:
+            raise AuthException('New login required for scopes and no callback set on '
+                                f'login manager: {scopes}')
+        new_authorizers = self.callback(scopes)
+        self.authorizers.update(new_authorizers)
+        log.info('New authorizers have been cached for re-use.')
