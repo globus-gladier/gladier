@@ -12,6 +12,7 @@ class ConfigMigration(ABC):
         self.config = config
 
         if 'general' not in self.config.sections():
+            log.debug('No version in config, adding...')
             self.config.add_section('general')
         cfg_version = self.config['general'].get('version')
 
