@@ -107,10 +107,42 @@ class FuncX005Downgrade(ConfigMigration):
         panic_print(self.message.format(context=ctx))
 
 
+class GladierClientUpgrade(ConfigMigration):
+    """
+    Remove the old client ID tokens, if they exist.
+    """
+    old_client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
+
+    @property
+    def old_tokens_section(self):
+        return f'tokens_{self.old_client_id}'
+
+    def is_applicable(self):
+        has_old_sec = self.old_tokens_section in self.config.sections()
+        old_v = (self.config_version and version.parse('0.8.0') > self.config_version)
+        return has_old_sec and old_v
+
+    def migrate(self):
+        try:
+            from gladier.storage.tokens import GladierSecretsConfig  # noqa
+            from gladier.managers.login_manager import AutoLoginManager  # noqa
+            log.info('Revoking old tokens...')
+            token_storage = GladierSecretsConfig(self.config.filename, self.old_tokens_section)
+            AutoLoginManager(self.old_client_id, token_storage, 'GC').logout()
+            log.info('Revocation successful.')
+        except Exception:
+            log.info('Error during revocation', exc_info=True)
+        finally:
+            if self.old_tokens_section in self.config.sections():
+                log.info('Removing old tokens section.')
+                self.config.remove_section(self.old_tokens_section)
+
+
 MIGRATIONS = [
     AddVersionToConfig,
     FuncX024Upgrade,
     FuncX005Downgrade,
+    GladierClientUpgrade,
     UpdateConfigVersion,
 ]
 
