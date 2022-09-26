@@ -56,61 +56,8 @@ class UpdateConfigVersion(ConfigMigration):
         self.config['general']['version'] = str(self.version)
 
 
-class FuncX024Upgrade(ConfigMigration):
-
-    message = """
-    WARNING: {context}
-
-    The new version of funcx-endpoint uses a different service, and old
-    FuncX endpoints will no longer work. You will need to recreate all of your
-    FuncX endpoints for this version. Common names look like the following:\n
-
-    funcx_endpoint_non_compute
-    funcx_endpoint_compute
-
-    https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
-    """
-
-    def is_applicable(self):
-        return (self.config_version and
-                self.version >= version.parse('0.4.0a0') > self.config_version)
-
-    def migrate(self):
-        migrate_delete_all_funcx_functions(self.config)
-        ctx = f'Upgrade from Gladier {self.config_version} to {self.version}'
-        panic_print(self.message.format(context=ctx))
-
-
-class FuncX005Downgrade(ConfigMigration):
-    message = """
-    WARNING: {context}
-
-    Use of this version is not recommended!
-
-    The new version of funcx-endpoint uses a different service, and old
-    FuncX endpoints will no longer work. You will need to recreate all of your
-    FuncX endpoints for this version. Common names look like the following:\n
-
-    funcx_endpoint_non_compute
-    funcx_endpoint_compute
-
-    See https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-4-0
-    """
-
-    def is_applicable(self):
-        return (self.config_version and
-                self.version < version.parse('0.4.0a0') < self.config_version)
-
-    def migrate(self):
-        migrate_delete_all_funcx_functions(self.config)
-        ctx = f'Downgrade from Gladier {self.config_version} to {self.version}'
-        panic_print(self.message.format(context=ctx))
-
-
 MIGRATIONS = [
     AddVersionToConfig,
-    FuncX024Upgrade,
-    FuncX005Downgrade,
     UpdateConfigVersion,
 ]
 
