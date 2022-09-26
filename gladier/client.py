@@ -60,9 +60,8 @@ class GladierBaseClient(object):
 
     """
     secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
-    # config_filename = 'gladier.cfg'
-    app_name = 'gladier_client'
-    client_id = 'e6c75d97-532a-4c88-b031-8584a319fa3e'
+    app_name = 'Gladier Client'
+    client_id = 'f1631610-d9e4-4db2-81ba-7f93ad4414e3'
     globus_group = None
     subscription_id = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
