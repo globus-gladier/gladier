@@ -11,10 +11,13 @@ class GladierConfig(configparser.ConfigParser):
         super().__init__()
         self.section = section
         self.filename = filename
+        self.load()
+
+    def load(self):
         self.read(self.filename)
-        if section not in self.sections():
-            log.debug(f'Section {section} missing, adding to config.')
-            self[section] = {}
+        if self.section not in self.sections():
+            log.debug(f'Section {self.section} missing, adding to config.')
+            self[self.section] = {}
             self.save()
 
     def save(self):
@@ -29,10 +32,12 @@ class GladierConfig(configparser.ConfigParser):
 
     def get_value(self, name: str) -> str:
         try:
+            self.load()
             return self.get(self.section, name)
         except configparser.NoOptionError:
             return None
 
     def set_value(self, name: str, value: str):
+        self.load()
         self.set(self.section, name, value)
         self.save()
