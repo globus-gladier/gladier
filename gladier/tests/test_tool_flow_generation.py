@@ -25,7 +25,7 @@ def test_tool_generate_basic_flow_no_mods():
     fd = tool.flow_definition
     validate_flow_definition(fd)
     assert isinstance(fd, dict)
-    assert fd['Comment'] == 'Mock Tool'
+    assert fd['Comment'] == 'Flow with states: MockFunc'
     assert fd['StartAt'] == 'MockFunc'
     assert set(fd['States']) == {'MockFunc'}
     assert fd['States']['MockFunc']['Comment'] == 'Test mock function'

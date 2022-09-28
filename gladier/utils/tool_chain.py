@@ -3,18 +3,17 @@ from typing import Mapping, Any, List
 import copy
 
 from gladier.base import GladierBaseTool
-from gladier.exc import FlowGenException
+from gladier.exc import FlowGenException, StateNameConflict
+from gladier.utils.flow_traversal import get_end_states
 
 log = logging.getLogger(__name__)
 
 
 class ToolChain:
 
-    STATE_TRANSITION_KEYS = {"Next", "Default", "StartAt"}
-
     def __init__(self, flow_comment=None):
         self._flow_definition = {
-            'States': [],
+            'States': dict(),
             'Comment': flow_comment,
             'StartAt': None,
         }
@@ -33,7 +32,7 @@ class ToolChain:
         for tool in tools:
             log.debug(f'Chaining tool {tool.__class__.__name__} to existing flow '
                       f'({len(self._flow_definition["States"])} states)')
-            self._chain_flow(tool.flow_definition)
+            self._chain_flow(tool.get_flow_definition())
         return self
 
     def chain_state(self, name: str, definition: Mapping[str, Any]):
@@ -46,14 +45,14 @@ class ToolChain:
         self._chain_flow(temp_flow)
         return self
 
-    def _chain_flow(self, new_flow):
+    def _chain_flow(self, new_flow: Mapping[str, dict]):
+        # Base case, if this is the first 'chain' and no states exist yet.
         if not self._flow_definition['States']:
             self._flow_definition['States'] = copy.deepcopy(new_flow['States'])
             self._flow_definition['StartAt'] = new_flow['StartAt']
             return
 
-        current_terms = self.get_end_states(self._flow_definition['States'],
-                                            self._flow_definition['StartAt'])
+        current_terms = list(get_end_states(self._flow_definition))
         if not current_terms:
             raise FlowGenException(f'Could not find a transition state to '
                                    f'chain flow {self._flow_definition}')
@@ -64,60 +63,23 @@ class ToolChain:
         self.add_transition(current_terms[0], new_flow['StartAt'])
 
     def add_transition(self, cur_flow_term: str, new_chain_start: str):
-        self._flow_definition['States'][cur_flow_term].pop('End')
+        if self._flow_definition['States'][cur_flow_term].get('End'):
+            self._flow_definition['States'][cur_flow_term].pop('End')
         log.debug(f'Chaining {cur_flow_term} --> {new_chain_start}')
         self._flow_definition['States'][cur_flow_term]['Next'] = new_chain_start
 
-    @classmethod
-    def _get_transition(cls, state):
-        for k in cls.STATE_TRANSITION_KEYS:
-            if k in state:
-                return k, state[k]
-
-    @classmethod
-    def get_end_states(
-        cls,
-        flow_states: Mapping[str, Any],
-        state: str,
-        previously_visited: List[str] = None,
-    ) -> List[str]:
-        end_states = list()
-        visited = previously_visited.copy() if previously_visited else list()
-
-        if state is None or state in visited:
-            return end_states
-
-        visited.append(state)
-
-        if state not in flow_states:
-            raise FlowGenException(f'State {state} not in definition!')
-
-        transition_state = cls._get_transition(flow_states[state])
-        if transition_state:
-            _, state_name = transition_state
-            end_states += cls.get_end_states(flow_states, state_name, previously_visited=visited)
-        else:
-            if not flow_states[state].get('End'):
-                flow_states[state]['End'] = True
-            end_states.append(state)
-
-        state_info = flow_states[state]
-        if state_info['Type'] == 'Choice':
-            for choice in state_info.get('Choices', []):
-                if choice.get('Next'):
-                    end_states += cls.get_end_states(flow_states, choice['Next'],
-                                                     previously_visited=visited)
-                elif choice.get('End'):
-                    end_states.append(state)
-                else:
-                    raise FlowGenException(f'Choice state {state} contains invalid choince.')
-
-        return end_states
-
     def check_tools(self, tools: List[GladierBaseTool]):
+
+        states = set()
         for tool in tools:
-            if tool.flow_definition is None:
+            flow_def = tool.get_flow_definition()
+            if flow_def is None:
                 raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
                                        f'@generate_flow_definition (funcx functions only). Please '
                                        f'set a flow definition for {tool.__class__.__name__}.')
-        # TODO: Check for state name conflict
+            new_states = set(flow_def.get('States'))
+            conflicts = states & new_states
+            if conflicts:
+                raise StateNameConflict(f'States in tool {tool} '
+                                        f'has been defined more than once: {conflicts}')
+            states = states | new_states

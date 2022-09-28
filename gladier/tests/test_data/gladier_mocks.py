@@ -128,7 +128,6 @@ class MockToolThreeStates(GladierBaseTool):
 
 class MockToolChoiceState(GladierBaseTool):
     pass
-    
 
 
 class MockGladierClient(GladierBaseClient):
