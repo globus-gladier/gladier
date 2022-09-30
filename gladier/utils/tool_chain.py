@@ -32,7 +32,22 @@ class ToolChain:
         for tool in tools:
             log.debug(f'Chaining tool {tool.__class__.__name__} to existing flow '
                       f'({len(self._flow_definition["States"])} states)')
-            self._chain_flow(tool.get_flow_definition())
+
+            flow_definition = tool.get_flow_definition()
+            t_states = list(get_end_states(flow_definition))
+            tool_t_states = tool.get_flow_transition_states()
+            if len(t_states) > 1 and not tool_t_states:
+                raise FlowGenException(f'Tool {tool} has multiple branching end states and must '
+                                       'define which states a flow may continue by setting '
+                                       '"flow_transition_states" containing one or more of '
+                                       f'{", ".join(t_states)} ')
+            elif not t_states:
+                raise FlowGenException(f'{tool}: Could not find any end states in flow.')
+
+            # Use the tool-defined states if they are defined, otherwise there is only one
+            # End state on the flow and therefore can be assumed.
+            transition_states = tool_t_states if tool_t_states else t_states
+            self._chain_flow(flow_definition, transition_states)
         return self
 
     def chain_state(self, name: str, definition: Mapping[str, Any]):
@@ -42,25 +57,19 @@ class ToolChain:
             'States': {name: definition},
         }
         temp_flow['States'][name]['End'] = True
-        self._chain_flow(temp_flow)
+        self._chain_flow(temp_flow, [name])
         return self
 
-    def _chain_flow(self, new_flow: Mapping[str, dict]):
+    def _chain_flow(self, new_flow: Mapping[str, dict], transition_states: List[str]):
         # Base case, if this is the first 'chain' and no states exist yet.
         if not self._flow_definition['States']:
             self._flow_definition['States'] = copy.deepcopy(new_flow['States'])
             self._flow_definition['StartAt'] = new_flow['StartAt']
             return
 
-        current_terms = list(get_end_states(self._flow_definition))
-        if not current_terms:
-            raise FlowGenException(f'Could not find a transition state to '
-                                   f'chain flow {self._flow_definition}')
-
         self._flow_definition['States'].update(new_flow['States'])
-        log.debug(f'Chaning main flow {self._flow_definition["StartAt"]}'
-                  f'to new flow at {current_terms[0]}')
-        self.add_transition(current_terms[0], new_flow['StartAt'])
+        for t_state in transition_states:
+            self.add_transition(t_state, new_flow['StartAt'])
 
     def add_transition(self, cur_flow_term: str, new_chain_start: str):
         if self._flow_definition['States'][cur_flow_term].get('End'):
@@ -77,6 +86,7 @@ class ToolChain:
                 raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
                                        f'@generate_flow_definition (funcx functions only). Please '
                                        f'set a flow definition for {tool.__class__.__name__}.')
+
             new_states = set(flow_def.get('States'))
             conflicts = states & new_states
             if conflicts:

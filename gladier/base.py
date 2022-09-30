@@ -10,6 +10,7 @@ class GladierBaseTool(object):
 
     flow_definition = None
     flow_input = dict()
+    flow_transition_states = []
     required_input = []
     alias_exempt = ['funcx_endpoint_compute', 'funcx_endpoint_non_compute']
     funcx_endpoints = dict()
@@ -48,6 +49,9 @@ class GladierBaseTool(object):
             else:
                 flow_input[input_var] = val
         return flow_input
+
+    def get_flow_transition_states(self) -> List[str]:
+        return self.flow_transition_states
 
     def get_original_inputs(self) -> Mapping[str, Any]:
         return [input_var for input_var in set(self.required_input) | set(self.flow_input.keys())
