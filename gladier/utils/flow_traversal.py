@@ -26,6 +26,7 @@ def iter_flow_states(
 
     if state is None or state in visited:
         return
+    visited.append(state)
 
     if state not in flow_states:
         raise FlowGenException(f'State {state} not in definition!')
@@ -36,9 +37,6 @@ def iter_flow_states(
     if transition_state:
         _, state_name = transition_state
         yield from iter_flow_states(flow_states, state_name, previously_visited=visited)
-    else:
-        if not flow_states[state].get('End'):
-            flow_states[state]['End'] = True
 
     state_info = flow_states[state]
     if state_info['Type'] == 'Choice':
@@ -60,4 +58,4 @@ def get_end_states(flow_definition: Mapping[str, Any]) -> Iterator[str]:
     """Get all states for a flow that will cause the flow to exit normally. This includes any
     state which contains "End": True. A termination state is assumed if there is no next
     state to transition."""
-    yield from (name for name, state in iter_flow(flow_definition) if not get_transition(state))
+    yield from {name for name, state in iter_flow(flow_definition) if not get_transition(state)}
