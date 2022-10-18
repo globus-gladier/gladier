@@ -17,6 +17,7 @@ class ToolChain:
             'Comment': flow_comment,
             'StartAt': None,
         }
+        self.transition_states = list()
 
     @property
     def flow_definition(self):
@@ -34,6 +35,9 @@ class ToolChain:
                       f'({len(self._flow_definition["States"])} states)')
 
             flow_definition = tool.get_flow_definition()
+            self._chain_flow(flow_definition, self.transition_states)
+            # Use the tool-defined states if they are defined, otherwise there is only one
+            # End state on the flow and therefore can be assumed.
             t_states = list(get_end_states(flow_definition))
             tool_t_states = tool.get_flow_transition_states()
             if len(t_states) > 1 and not tool_t_states:
@@ -44,10 +48,7 @@ class ToolChain:
             elif not t_states:
                 raise FlowGenException(f'{tool}: Could not find any end states in flow.')
 
-            # Use the tool-defined states if they are defined, otherwise there is only one
-            # End state on the flow and therefore can be assumed.
-            transition_states = tool_t_states if tool_t_states else t_states
-            self._chain_flow(flow_definition, transition_states)
+            self.transition_states = tool_t_states if tool_t_states else t_states
         return self
 
     def chain_state(self, name: str, definition: Mapping[str, Any]):
