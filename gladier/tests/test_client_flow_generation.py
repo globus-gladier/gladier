@@ -184,3 +184,47 @@ def test_client_tool_conflicting_state_names(logged_in):
         ]
     with pytest.raises(exc.StateNameConflict):
         MyClient()
+
+
+def test_choice_state_tool_chaining(logged_in):
+    class MyTool(GladierBaseTool):
+        flow_transition_states = ['1b']
+        flow_definition = {
+            'StartAt': '1a',
+            'States': {
+                '1a': {
+                    'Type': 'Choice',
+                    'Default': '2a',
+                    'Choices': [{
+                        'Next': '1b',
+                        'Variable': '$.foo',
+                        'IsPresent': True,
+                    }]
+                },
+                '2a': {
+                    'Type': 'Pass',
+                    'End': True
+                },
+                '1b': {
+                    'Type': 'Pass',
+                    'End': True
+                }
+            }
+        }
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """Example Docs"""
+        gladier_tools = [
+            MyTool,
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+        ]
+
+    mc = MyClient()
+    flow_def = mc.flow_definition
+    validate_flow_definition(flow_def)
+    assert len(flow_def['States']) == 4
+    assert flow_def['States']['MockFunc'].get('Next') is None
+    # Chain should add 'next' in transition state 1b
+    assert 'Next' in flow_def['States']['1b']
+    assert flow_def['States']['1b']['Next'] == 'MockFunc'

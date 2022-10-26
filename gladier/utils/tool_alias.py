@@ -1,4 +1,5 @@
 import abc
+import copy
 import logging
 import gladier.utils.name_generation
 
@@ -27,20 +28,21 @@ class ToolAlias(abc.ABC):
             return input_name
 
     def rename_input_variables(self, state_data, tool_inputs, tool):
-        if not state_data:
+        sdata = copy.deepcopy(state_data)
+        if not sdata:
             return
-        for k in state_data.keys():
-            if isinstance(state_data[k], str):
-                input_var = self.get_input_variable(state_data[k], tool_inputs)
+        for k in sdata.keys():
+            if isinstance(sdata[k], str):
+                input_var = self.get_input_variable(sdata[k], tool_inputs)
                 if input_var:
                     new_var = f'$.{self.input_location}.{self.rename_variable(input_var, tool)}'
-                    state_data[k] = new_var
-            elif isinstance(state_data[k], dict):
-                state_data[k] = self.rename_input_variables(state_data[k], tool_inputs, tool)
-            elif isinstance(state_data[k], list):
-                state_data[k] = [self.rename_input_variables(substate_data, tool_inputs, tool)
-                                 for substate_data in state_data[k]]
-        return state_data
+                    sdata[k] = new_var
+            elif isinstance(sdata[k], dict):
+                sdata[k] = self.rename_input_variables(sdata[k], tool_inputs, tool)
+            elif isinstance(sdata[k], list):
+                sdata[k] = [self.rename_input_variables(subsdata, tool_inputs, tool)
+                            for subsdata in sdata[k]]
+        return sdata
 
 
 class NoAlias(ToolAlias):
