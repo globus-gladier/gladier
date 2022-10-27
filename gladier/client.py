@@ -82,13 +82,13 @@ class GladierBaseClient(object):
         self.storage.update()
 
         if auto_login is False:
-            warnings.warn('Auto-Login in Gladier clients is deprecated and will be removed in '
-                          'v0.8. Instead, use'
-                          'login_manager=CallbackLoginManager(authorizers=authorizers)',
+            warnings.warn('auto_login=False in Gladier clients is deprecated and will '
+                          'be removed in v0.8. See '
+                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
                           category=DeprecationWarning)
         if authorizers:
-            warnings.warn('Calling Gladier clients with "authorizers" is deprecated. Instead, '
-                          'use login_manager=CallbackLoginManager(authorizers=authorizers)',
+            warnings.warn('Calling Gladier clients with "authorizers" is deprecated. Instead, see '
+                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
                           category=DeprecationWarning)
             self.login_manager = CallbackLoginManager(authorizers=authorizers)
         elif not login_manager:
