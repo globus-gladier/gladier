@@ -82,7 +82,7 @@ def test_dependent_scope_change_run_flow(logged_in, mock_flows_client,
     with pytest.raises(gladier.exc.AuthException):
         cli.run_flow()
     assert cli.login_manager.scope_changes == {
-        'https://auth.globus.org/scopes/mock_tool_flow_scope/flow_mock_tool_flow_scope_user'
+        'https://auth.globus.org/scopes/mock_flow_id/flow_mock_flow_id_user'
     }
     assert cli.login_manager.login.call_count == 1
 

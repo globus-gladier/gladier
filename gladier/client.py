@@ -56,6 +56,8 @@ class GladierBaseClient(object):
                               previously registered or obsolete.
     :param login_manager: Class defining login behavior. Defaults to AutoLoginManager, and
                           will auto-login when additional scopes are needed.
+    :param flows_manager: A flows manager class with customized behavior. Attrs like group
+                          and login_manager will automatically be set if None
     :raises gladier.exc.AuthException: if authorizers given are insufficient
 
     """
@@ -72,6 +74,7 @@ class GladierBaseClient(object):
         auto_login: bool = True,
         auto_registration: bool = True,
         login_manager: BaseLoginManager = None,
+        flows_manager: FlowsManager = None,
             ):
 
         self._tools = None
@@ -98,12 +101,18 @@ class GladierBaseClient(object):
                                                   auto_login=auto_login)
         else:
             self.login_manager = login_manager
-        self.flows_manager = FlowsManager(login_manager=self.login_manager,
-                                          storage=self.storage,
-                                          auto_registration=auto_registration)
-        self.funcx_manager = FuncXManager(login_manager=self.login_manager,
-                                          storage=self.storage,
-                                          auto_registration=auto_registration)
+
+        self.flows_manager = flows_manager or FlowsManager(auto_registration=auto_registration)
+        if self.globus_group:
+            self.flows_manager.globus_group = self.globus_group
+        if self.subscription_id:
+            self.flows_manager.subscription_id = self.subscription_id
+
+        self.funcx_manager = FuncXManager(auto_registration=auto_registration)
+
+        for man in (self.flows_manager, self.funcx_manager):
+            man.set_storage(self.storage, replace=False)
+            man.set_login_manager(self.login_manager, replace=False)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref, alias_class=None):

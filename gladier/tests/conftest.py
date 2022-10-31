@@ -68,6 +68,7 @@ def mock_flows_client(monkeypatch, globus_response):
         'run_id': 'mock_flow_id',
         'status': 'ACTIVE',
     })
+    mock_flows_cli.scope_for_flow = lambda sc: f'https://auth.globus.org/scopes/{sc}/flow_{sc}_user'
     monkeypatch.setattr(globus_automate_client.FlowsClient, 'new_client',
                         Mock(return_value=mock_flows_cli))
     return mock_flows_cli

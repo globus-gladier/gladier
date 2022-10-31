@@ -1,28 +1,24 @@
 import logging
 import hashlib
-from typing import Any
 
 from gladier.base import GladierBaseTool
+from gladier.managers.service_manager import ServiceManager
 from funcx import FuncXClient
 from funcx.serialize import FuncXSerializer
 
-from gladier.managers import BaseLoginManager
 import gladier.utils.funcx_login_manager
 
 log = logging.getLogger(__name__)
 
 
-class FuncXManager:
+class FuncXManager(ServiceManager):
 
-    def __init__(self, login_manager: BaseLoginManager = None, storage: Any = None,
-                 auto_registration: bool = True):
-        self.storage = storage
-
-        self.login_manager = login_manager
-        self.login_manager.add_requirements(
-            gladier.utils.funcx_login_manager.FuncXLoginManager.SCOPES
-        )
+    def __init__(self, auto_registration: bool = True, **kwargs):
+        super().__init__(**kwargs)
         self.auto_registration = auto_registration
+
+    def get_scopes(self):
+        return gladier.utils.funcx_login_manager.FuncXLoginManager.SCOPES
 
     @property
     def funcx_client(self):
