@@ -216,8 +216,9 @@ class GladierBaseClient(object):
                                           'to a sub-class of type '
                                           '"gladier.GladierBaseTool"')
 
-    def validate_flow(self):
-        self.flows_manager.validate_flow(self.get_flow_definition())
+    def sync_flow(self):
+        self.flows_manager.flow_definition = self.get_flow_definition()
+        self.flows_manager.sync_flow()
 
     def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
         combine_flow_input = self.get_input() if use_defaults else dict()
@@ -230,7 +231,7 @@ class GladierBaseClient(object):
         for tool in self.tools:
             self.check_input(tool, combine_flow_input)
 
-        self.validate_flow()
+        self.sync_flow()
         return self.flows_manager.run_flow(flow_input=combine_flow_input, **flow_kwargs)
 
     def get_funcx_function_ids(self):
