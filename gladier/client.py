@@ -113,6 +113,7 @@ class GladierBaseClient(object):
         for man in (self.flows_manager, self.funcx_manager):
             man.set_storage(self.storage, replace=False)
             man.set_login_manager(self.login_manager, replace=False)
+            man.register_scopes()
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref, alias_class=None):

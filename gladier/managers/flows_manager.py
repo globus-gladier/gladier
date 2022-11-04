@@ -78,7 +78,6 @@ class FlowsManager(ServiceManager):
                  on_change: Callable = ensure_flow_registered,
                  redeploy_on_404: bool = True,
                  **kwargs):
-        super().__init__(**kwargs)
         self.flow_id = flow_id
         self.globus_group = globus_group
         self.subscription_id = subscription_id
@@ -91,6 +90,8 @@ class FlowsManager(ServiceManager):
             self.redeploy_on_404 = False
             log.info('Custom Flow ID set, redeploy_on_404 disabled.')
 
+        super().__init__(**kwargs)
+
     def get_scopes(self):
         scopes = self.AVAILABLE_SCOPES.copy()
         flow_scope = self.flow_scope
@@ -102,7 +103,12 @@ class FlowsManager(ServiceManager):
     def flow_scope(self):
         """Get the scope for a flow
         :returns: None if no flow id exists"""
-        flow_id = self.get_flow_id()
+        try:
+            flow_id = self.get_flow_id()
+        except AttributeError:
+            # It's possible storage wasn't set yet, and get_flow_id() raises
+            # an error here. Simply ignore it for the time being.
+            flow_id = None
         if flow_id:
             # In the future, this should be gettable via
             # globus_sdk.SpecificFlowClient(flow_id).scopes.url_scope_string('flow_id'))
@@ -216,7 +222,7 @@ class FlowsManager(ServiceManager):
         :raises: Nothing
         """
         try:
-            self.check_flow(self.flow_definition)
+            self.check_flow()
         except gladier.exc.RegistrationException:
             return True
         return False
@@ -288,7 +294,7 @@ class FlowsManager(ServiceManager):
                 self.storage.set_value('flow_checksum',
                                        self.get_flow_checksum(self.flow_definition))
             except globus_sdk.exc.GlobusAPIError as gapie:
-                if gapie.code == 'Not Found' and self.redeploy_on_404:
+                if gapie.http_status == 404 and self.redeploy_on_404:
                     flow_id = None
                 else:
                     raise
@@ -399,13 +405,9 @@ class FlowsManager(ServiceManager):
         :raises: Globus Automate exceptions from self.flows_client.flow_action_status
         :returns: a Globus Automate status object (with varying state structures)
         """
-        try:
-            status = self.flows_client.flow_action_status(
-                self.get_flow_id(), self.storage.get_value('flow_scope'), run_id
+        status = self.flows_client.flow_action_status(
+                self.get_flow_id(), self.flow_scope, run_id
             ).data
-        except KeyError:
-            raise gladier.exc.ConfigException('No Flow defined, register a flow')
-
         try:
             return gladier.utils.automate.get_details(status)
         except (KeyError, AttributeError):
