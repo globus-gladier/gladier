@@ -35,6 +35,31 @@ def ensure_flow_registered(flows_manager_instance, exc: gladier.exc.Registration
 
 
 class FlowsManager(ServiceManager):
+    """
+    The flows manager tracks an externally defined flow_definition and ensures it stays
+    up-to-date with a deployment in the flows service. It can be run without a flow_id
+    in which case it will deploy its own flow if a stored flow_id does not exist.
+
+    The flow checksum is evaluated inside ``run_flow()``, and any updates to the flow
+    will take place before the flow is started. The registration behavior can be customized
+    by passing in a function for ``on_change``. Default behavior will call ``register_flow()``,
+    None will disable changing the flow before starting it. The ``on_change`` signature is below:
+
+    .. code-block::
+
+        def on_change_callback(flows_manager_instance: FlowsManager,
+                               exc: gladier.exc.RegistrationException) -> None:
+
+    :param flow_id: Explicit flow id to use. None will result in Gladier deploying a new flow
+    :param flow_definition: Flow definiton that should be used.
+    :param flow_schema: The schema to be used alongside the flow definition
+    :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
+    :param subscription_id: Subscription id to be used when deploying flow
+    :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
+                      flow, ``None`` takes no action and attempts to run "obselete" flows.
+    :redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
+                      Behavior is disabled if an explicit flow_id is specified.
+    """
 
     AVAILABLE_SCOPES = [
         MANAGE_FLOWS_SCOPE,
@@ -282,12 +307,15 @@ class FlowsManager(ServiceManager):
 
     def run_flow(self, **kwargs):
         r"""
-        Start a Globus Automate flow. Flows and Functions must be registered prior or
-        self.auto_registration must be True.
+        Start a Globus Automate flow. By default, the flow definiton is checked and synced if it
+        has changed locally or deployed if it does not exist.
 
-        If auto-registering a flow and self.auto_login is True, this may result in two logins.
-        The first is for authorizing basic tooling, and the second is to autorize the newly
-        registered automate flow.
+        If a group is set, run permissions are updated and applied to the run (includes
+        'run_managers', 'run_monitors').
+
+        Any scope changes required post-deployment/update are propogated through the login_manager
+        and may require an additional login. A new flow checksum/id may be tracked in storage if
+        the flow changed or was newly deployed.
 
         :param flow_input: A dict of input to be passed to the automate flow. self.check_input()
                            is called on each tool to ensure basic needs are met for each.
@@ -357,19 +385,19 @@ class FlowsManager(ServiceManager):
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
         return flow
 
-    def get_status(self, action_id):
+    def get_status(self, run_id):
         """
         Get the current status of the automate flow. Attempts to do additional work on funcx
         functions to deserialize any exception output.
 
-        :param action_id: The globus action UUID used for this flow. The Automate flow id is
+        :param run_id: The globus action UUID used for this flow. The Automate flow id is
                           always the flow_id configured for this tool.
         :raises: Globus Automate exceptions from self.flows_client.flow_action_status
         :returns: a Globus Automate status object (with varying state structures)
         """
         try:
             status = self.flows_client.flow_action_status(
-                self.get_flow_id(), self.storage.get_value('flow_scope'), action_id
+                self.get_flow_id(), self.storage.get_value('flow_scope'), run_id
             ).data
         except KeyError:
             raise gladier.exc.ConfigException('No Flow defined, register a flow')
@@ -384,31 +412,31 @@ class FlowsManager(ServiceManager):
         if response['status'] == 'ACTIVE':
             print(f'[{response["status"]}]: {response["details"]["description"]}')
 
-    def progress(self, action_id, callback=None):
+    def progress(self, run_id, callback=None):
         """
         Continuously call self.get_status() until the flow completes. Each status response is
         used as a parameter to the provided callback, by default will use the builtin callback
         to print the current state to stdout.
 
-        :param action_id: The action id for a running flow. The flow is automatically pulled
+        :param run_id: The action id for a running flow. The flow is automatically pulled
                           based on the current tool's flow_definition.
         :param callback: The function to call with the result from self.get_status. Must take
                          a single parameter: mycallback(self.get_status())
         """
         callback = callback or self._default_progress_callback
-        status = self.get_status(action_id)
+        status = self.get_status(run_id)
         while status['status'] not in ['SUCCEEDED', 'FAILED']:
-            status = self.get_status(action_id)
+            status = self.get_status(run_id)
             callback(status)
 
-    def get_details(self, action_id, state_name):
+    def get_details(self, run_id, state_name):
         """
         Attempt to extrapolate details from get_status() for a given state_name define in the flow
         definition. Note: This is usually only possible when a flow completes.
 
-        :param action_id: The action_id for this flow. Flow id is automatically determined based
+        :param run_id: The run_id for this flow. Flow id is automatically determined based
                           on the current tool being run.
         :param state_name: The state in the automate definition to fetch
         :returns: sub-dict of get_status() describing the :state_name:.
         """
-        return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
+        return gladier.utils.automate.get_details(self.get_status(run_id), state_name)
