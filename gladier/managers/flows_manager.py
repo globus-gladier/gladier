@@ -73,18 +73,20 @@ class FlowsManager(ServiceManager):
                  flow_id: str = None,
                  flow_definition: dict = None,
                  flow_schema: dict = None,
+                 flow_title: str = None,
                  globus_group: str = None,
                  subscription_id: str = None,
                  on_change: Callable = ensure_flow_registered,
                  redeploy_on_404: bool = True,
                  **kwargs):
         self.flow_id = flow_id
+        self.flow_definition = flow_definition
+        self.flow_schema = flow_schema
+        self.flow_title = flow_title
         self.globus_group = globus_group
         self.subscription_id = subscription_id
         self.on_change = on_change or (lambda self, exc: None)
         self.redeploy_on_404 = redeploy_on_404
-        self.flow_definition = flow_definition
-        self.flow_schema = flow_schema
 
         if self.flow_id is not None:
             self.redeploy_on_404 = False
@@ -300,9 +302,7 @@ class FlowsManager(ServiceManager):
                     raise
         if flow_id is None:
             log.info('No flow detected, deploying new flow...')
-            title = f'{self.__class__.__name__} Flow'
-
-            flow = self.flows_client.deploy_flow(self.flow_definition, title=title,
+            flow = self.flows_client.deploy_flow(self.flow_definition, title=self.flow_title,
                                                  **flow_kwargs).data
             self.storage.set_value('flow_id', flow['id'])
             self.storage.set_value('flow_checksum', self.get_flow_checksum(self.flow_definition))

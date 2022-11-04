@@ -107,6 +107,8 @@ class GladierBaseClient(object):
             self.flows_manager.globus_group = self.globus_group
         if self.subscription_id:
             self.flows_manager.subscription_id = self.subscription_id
+        if not self.flows_manager.flow_title:
+            self.flows_manager.flow_title = f'{self.__class__.__name__} flow'
 
         self.funcx_manager = FuncXManager(auto_registration=auto_registration)
 
