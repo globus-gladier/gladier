@@ -50,15 +50,29 @@ class FlowsManager(ServiceManager):
         def on_change_callback(flows_manager_instance: FlowsManager,
                                exc: gladier.exc.RegistrationException) -> None:
 
-    :param flow_id: Explicit flow id to use. None will result in Gladier deploying a new flow
-    :param flow_definition: Flow definiton that should be used.
+    :param flow_id: Explicit flow id to use. None will result in deploying a new flow
+    :param flow_definition: Flow definiton that should be used. Usually set dynamically
+                            at runtime when used with a Gladier Client
     :param flow_schema: The schema to be used alongside the flow definition
+    :param flow_title: The title for the Globus Flow
     :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
     :param subscription_id: Subscription id to be used when deploying flow
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
     :redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
                       Behavior is disabled if an explicit flow_id is specified.
+
+    When used with a Gladier Client, following items will be auto-configured and should not be
+    set explicitly in the constructor:
+
+     * flow_definition
+     * flow_schema
+
+
+    .. note::
+
+        The FlowsManager class cannot be used to run flows outside of Gladier Clients due to
+        internal class storage requirements. Doing so will result in an exception.
     """
 
     AVAILABLE_SCOPES = [
@@ -142,7 +156,9 @@ class FlowsManager(ServiceManager):
     @property
     def flows_client(self):
         """
-        :return: an authorized Gloubs Automate Client
+        :return: an authorized Gloubs Automate Client. If a flow has been deployed,
+        the client returned will be authorized to run the flow. Stale clients pre-flow-deployment
+        will need to call this again in order to run flows.
         """
         if getattr(self, '_flows_client', None) is not None:
             return self._flows_client

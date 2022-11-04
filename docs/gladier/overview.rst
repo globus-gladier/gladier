@@ -28,4 +28,4 @@ Globus Flow with flow generation modifiers.
    custom_tools
    flow_generation
    passing_payloads
-   sdk_reference
+   sdk_reference/index
