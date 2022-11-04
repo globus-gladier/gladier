@@ -59,7 +59,7 @@ class FlowsManager(ServiceManager):
     :param subscription_id: Subscription id to be used when deploying flow
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
-    :redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
+    :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
                       Behavior is disabled if an explicit flow_id is specified.
 
     When used with a Gladier Client, following items will be auto-configured and should not be
