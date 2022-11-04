@@ -41,3 +41,8 @@ class GladierConfig(configparser.ConfigParser):
         self.load()
         self.set(self.section, name, value)
         self.save()
+
+    def del_value(self, name: str) -> None:
+        self.load()
+        self.remove_option(self.section, name)
+        self.save()

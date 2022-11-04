@@ -305,6 +305,13 @@ class FlowsManager(ServiceManager):
 
         return flow_id
 
+    def purge_flow(self):
+        """
+        Remove the stored flow_id and flow_checksum.
+        """
+        self.storage.del_value('flow_id')
+        self.storage.del_value('flow_checksum')
+
     def run_flow(self, **kwargs):
         r"""
         Start a Globus Automate flow. By default, the flow definiton is checked and synced if it
@@ -362,19 +369,16 @@ class FlowsManager(ServiceManager):
                 self.refresh_flows_client()
                 log.info('Initiating new login for dependent scope change')
                 flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
-            elif gapie.http_status == 404:
+            elif gapie.http_status == 404 and self.redeploy_on_404:
                 log.warning(f'Flow {flow_id} returned 404 and is either deleted or unavailable. '
                             f'Purging flow_id from config file...')
                 # On a 404, Gladier can't do anything since it cannot access the old flow.
-                # Therefore, purge the old flow and deploy a new one by calling get_flow_id()
-                cfg = self.get_cfg()
-                del cfg[self.section]['flow_id']
-                cfg.save()
+                # Therefore, purge the old flow and deploy a new one.
+                self.purge_flow()
                 # Ensure the new flow is deployed
-                self.validate_flow(self.flow_definition)
-                # Ensure the new flow scope is added to login so it can be run
-                self.refresh_flows_client()
-                # Run the flow
+                self.sync_flow()
+                # Fetch the new flow id
+                flow_id = self.get_flow_id()
                 flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
             else:
                 raise
