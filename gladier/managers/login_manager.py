@@ -1,5 +1,5 @@
 import logging
-from typing import List, Set, Iterable, Union, Any, Mapping
+from typing import Callable, List, Set, Iterable, Union, Any, Mapping
 import abc
 
 import fair_research_login
@@ -128,8 +128,23 @@ class AutoLoginManager(BaseLoginManager):
 
 
 class CallbackLoginManager(BaseLoginManager):
+    """
+    The Callback Login Manager allows for finer grained control of auth within Gladier. Logins
+    are lazy up until Gladier attempts to make a call to the FuncX service, Flows service, or
+    tries to run a flow. Scopes for a deployed flow may be modified at any time, requiring
+    a re-login with that flow scope.
 
-    def __init__(self, authorizers, callback=None):
+    :param authorizers: A dict of autorizers by scope. If these satisfy the login requirements
+                        then the callback will not be triggered.
+    :param callback: A Callable which will be invoked if additional scopes are needed.
+
+    """
+
+    def __init__(
+        self,
+        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]],
+        callback: Callable = None
+    ):
         super().__init__()
         self.authorizers = authorizers
         self.callback = callback
