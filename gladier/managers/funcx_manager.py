@@ -33,7 +33,7 @@ class FuncXManager:
             return self.__funcx_client
 
         funcx_login_manager = gladier.utils.funcx_login_manager.FuncXLoginManager(
-            authorizers=self.login_manager.get_authorizers()
+            authorizers=self.login_manager.get_manager_authorizers()
         )
 
         self.__funcx_client = FuncXClient(login_manager=funcx_login_manager)
