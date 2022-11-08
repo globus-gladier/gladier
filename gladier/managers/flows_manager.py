@@ -1,12 +1,13 @@
 import logging
 import hashlib
 import json
-from typing import Any
+from typing import Callable
 
 import globus_sdk
 import globus_automate_client
 
 import gladier
+from gladier.managers.service_manager import ServiceManager
 import gladier.storage.config
 import gladier.utils.dynamic_imports
 import gladier.utils.automate
@@ -16,10 +17,6 @@ import gladier.utils.tool_alias
 import gladier.utils.funcx_login_manager
 import gladier.exc
 import gladier.version
-
-from gladier.exc import GladierException
-
-from gladier.managers import BaseLoginManager
 
 from globus_automate_client.flows_client import (
     MANAGE_FLOWS_SCOPE,
@@ -32,7 +29,51 @@ from globus_automate_client.flows_client import (
 log = logging.getLogger(__name__)
 
 
-class FlowsManager:
+def ensure_flow_registered(flows_manager_instance, exc: gladier.exc.RegistrationException):
+    log.info(f'Deploying/Updating flow due to: {str(exc)}')
+    flows_manager_instance.register_flow()
+
+
+class FlowsManager(ServiceManager):
+    """
+    The flows manager tracks an externally defined flow_definition and ensures it stays
+    up-to-date with a deployment in the flows service. It can be run without a flow_id
+    in which case it will deploy its own flow if a stored flow_id does not exist.
+
+    The flow checksum is evaluated inside ``run_flow()``, and any updates to the flow
+    will take place before the flow is started. The registration behavior can be customized
+    by passing in a function for ``on_change``. Default behavior will call ``register_flow()``,
+    None will disable changing the flow before starting it. The ``on_change`` signature is below:
+
+    .. code-block::
+
+        def on_change_callback(flows_manager_instance: FlowsManager,
+                               exc: gladier.exc.RegistrationException) -> None:
+
+    :param flow_id: Explicit flow id to use. None will result in deploying a new flow
+    :param flow_definition: Flow definiton that should be used. Usually set dynamically
+                            at runtime when used with a Gladier Client
+    :param flow_schema: The schema to be used alongside the flow definition
+    :param flow_title: The title for the Globus Flow
+    :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
+    :param subscription_id: Subscription id to be used when deploying flow
+    :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
+                      flow, ``None`` takes no action and attempts to run "obselete" flows.
+    :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
+                      Behavior is disabled if an explicit flow_id is specified.
+
+    When used with a Gladier Client, following items will be auto-configured and should not be
+    set explicitly in the constructor:
+
+     * flow_definition
+     * flow_schema
+
+
+    .. note::
+
+        The FlowsManager class cannot be used to run flows outside of Gladier Clients due to
+        internal class storage requirements. Doing so will result in an exception.
+    """
 
     AVAILABLE_SCOPES = [
         MANAGE_FLOWS_SCOPE,
@@ -43,36 +84,55 @@ class FlowsManager:
     ]
 
     def __init__(self,
-                 login_manager: BaseLoginManager = None,
-                 storage: Any = None,
-                 auto_registration: bool = True,
+                 flow_id: str = None,
+                 flow_definition: dict = None,
+                 flow_schema: dict = None,
+                 flow_title: str = None,
                  globus_group: str = None,
                  subscription_id: str = None,
-                 flow_id: str = None):
-        self.login_manager = login_manager
-        self.storage = storage
-        self.auto_registration = auto_registration
+                 on_change: Callable = ensure_flow_registered,
+                 redeploy_on_404: bool = True,
+                 **kwargs):
+        self.flow_id = flow_id
+        self.flow_definition = flow_definition
+        self.flow_schema = flow_schema
+        self.flow_title = flow_title
         self.globus_group = globus_group
         self.subscription_id = subscription_id
-        self._flow_definition = None
-        self._flow_schema = None
+        self.on_change = on_change or (lambda self, exc: None)
+        self.redeploy_on_404 = redeploy_on_404
 
-        if flow_id is not None:
-            self.storage.set_value('flow_id', flow_id)
+        if self.flow_id is not None:
+            self.redeploy_on_404 = False
+            log.info('Custom Flow ID set, redeploy_on_404 disabled.')
 
-        self.add_scope_requirements()
+        super().__init__(**kwargs)
 
-    def add_scope_requirements(self):
-        required_scopes = self.AVAILABLE_SCOPES.copy()
-        flow_scope = self.storage.get_value('flow_scope')
+    def get_scopes(self):
+        scopes = self.AVAILABLE_SCOPES.copy()
+        flow_scope = self.flow_scope
         if flow_scope:
-            required_scopes.append(flow_scope)
-        self.login_manager.add_requirements(required_scopes)
+            scopes.append(flow_scope)
+        return scopes
+
+    @property
+    def flow_scope(self):
+        """Get the scope for a flow
+        :returns: None if no flow id exists"""
+        try:
+            flow_id = self.get_flow_id()
+        except AttributeError:
+            # It's possible storage wasn't set yet, and get_flow_id() raises
+            # an error here. Simply ignore it for the time being.
+            flow_id = None
+        if flow_id:
+            # In the future, this should be gettable via
+            # globus_sdk.SpecificFlowClient(flow_id).scopes.url_scope_string('flow_id'))
+            scope_name = f'flow_{flow_id.replace("-", "_")}_user'
+            return f'https://auth.globus.org/scopes/{flow_id}/{scope_name}'
 
     @property
     def flow_definition(self) -> dict:
-        if self._flow_definition is None:
-            raise GladierException('No Flow definition provided to flows manager.')
         return self._flow_definition
 
     @flow_definition.setter
@@ -91,12 +151,14 @@ class FlowsManager:
 
     @flow_schema.setter
     def flow_schema(self, value: dict):
-        self._flow_scema = value
+        self._flow_schema = value
 
     @property
     def flows_client(self):
         """
-        :return: an authorized Gloubs Automate Client
+        :return: an authorized Gloubs Automate Client. If a flow has been deployed,
+        the client returned will be authorized to run the flow. Stale clients pre-flow-deployment
+        will need to call this again in order to run flows.
         """
         if getattr(self, '_flows_client', None) is not None:
             return self._flows_client
@@ -105,7 +167,7 @@ class FlowsManager:
         automate_authorizer = authorizers[
             globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE
         ]
-        flow_authorizer = authorizers.get(self.storage.get_value('flow_scope'))
+        flow_authorizer = authorizers.get(self.flow_scope)
 
         def get_flow_authorizer(*args, **kwargs):
             return flow_authorizer
@@ -165,10 +227,42 @@ class FlowsManager:
                                                    f'{permission_types}')
         return identities
 
-    def get_flow_id(self):
-        return self.storage.get_value('flow_id')
+    def get_flow_id(self) -> str:
+        """Return flow id. If an ID was set on this class in the constructor, that is
+        used. Otherwise, a retrieve from storage is attempted with 'flow_id'.
+        :returns: flow_id uuid for deployed flow, or None if it does not exist"""
+        return self.flow_id or self.storage.get_value('flow_id')
 
-    def validate_flow(self, flow_definition: dict):
+    def flow_changed(self) -> bool:
+        """
+        Returns True if a flow id exists and the stored checksum matches the set
+        flow_definition. False otherwise.
+        :raises: Nothing
+        """
+        try:
+            self.check_flow()
+        except gladier.exc.RegistrationException:
+            return True
+        return False
+
+    def check_flow(self):
+        """
+        Check if the flow has changed by validating the current flow_definition agaist
+        the stored checksum. Raises an exception if the checksums do not match.
+
+        :raises: gladier.exc.NoFlowRegistered if no flow has been registered
+        :raises: gladier.exc.FlowObsolete if the stored flow checksums do not match
+        """
+        flow_id = self.get_flow_id()
+        flow_checksum = self.storage.get_value('flow_checksum')
+        if not flow_id:
+            raise gladier.exc.NoFlowRegistered(
+                'No flow_id set on flow manager and no id tracked in storage.')
+        elif flow_checksum != self.get_flow_checksum(self.flow_definition):
+            raise gladier.exc.FlowObsolete(
+                f'"flow_definition" on {self} has changed and needs to be re-registered.')
+
+    def sync_flow(self) -> str:
         """
         Get the current flow id for the current Gladier flow definition.
         If self.auto_register is True, it will automatically (re)register a flow if it
@@ -180,30 +274,25 @@ class FlowsManager:
         :raises: gladier.exc.FlowObsolete
         :raises: gladier.exc.NoFlowRegistered
         """
-        flow_id = self.get_flow_id()
-        flow_scope = self.storage.get_value('flow_scope')
-        flow_checksum = self.storage.get_value('flow_checksum')
-        if not flow_id or not flow_scope:
-            if self.auto_registration is False:
-                raise gladier.exc.NoFlowRegistered(
-                    f'No flow registered for {self.config_filename} under section {self.section}')
-            self.register_flow(flow_definition)
-        elif flow_checksum != self.get_flow_checksum(flow_definition):
-            if self.auto_registration is False:
-                raise gladier.exc.FlowObsolete(
-                    f'"flow_definition" on {self} has changed and needs to be re-registered.')
-            self.register_flow(flow_definition)
-        return flow_id
+        try:
+            self.check_flow()
+        except gladier.exc.RegistrationException as exc:
+            self.on_change(self, exc)
+        return self.get_flow_id()
 
-    def register_flow(self, flow_definition):
+    def register_flow(self) -> str:
         """
-        Register a flow with Globus Automate. If a flow has already been registered with automate,
-        the flow will attempt to update the flow instead. If not, it will deploy a new flow.
+        Deploy the current flow_definition. If a flow_id exists, the flow is updated
+        instead. If the flow does not exist (404) and redeploy_on_404 is set, the flow will
+        be automatically re-deployed with a new flow id.
 
-        :raises: Automate exceptions on flow deployment.
+
+
+        Note: If a new flow is deployed, or an existing scope adds unique Action Providers,
+        a new login will be needed before the flow can be run.
+        :raises: globus_sdk.exc.GlobusAPIError on error deploying flow
         :return: an automate flow UUID
         """
-        self.flow_definition = flow_definition
         flow_id = self.get_flow_id()
         flow_permissions = {
             p_type: self.get_flow_permission(p_type)
@@ -223,32 +312,39 @@ class FlowsManager:
                 self.storage.set_value('flow_checksum',
                                        self.get_flow_checksum(self.flow_definition))
             except globus_sdk.exc.GlobusAPIError as gapie:
-                if gapie.code == 'Not Found':
+                if gapie.http_status == 404 and self.redeploy_on_404:
                     flow_id = None
                 else:
                     raise
         if flow_id is None:
             log.info('No flow detected, deploying new flow...')
-            title = f'{self.__class__.__name__} Flow'
-
-            flow = self.flows_client.deploy_flow(self.flow_definition, title=title,
+            flow = self.flows_client.deploy_flow(self.flow_definition, title=self.flow_title,
                                                  **flow_kwargs).data
             self.storage.set_value('flow_id', flow['id'])
-            self.storage.set_value('flow_scope', flow['globus_auth_scope'])
             self.storage.set_value('flow_checksum', self.get_flow_checksum(self.flow_definition))
             self.login_manager.add_requirements([flow['globus_auth_scope']])
             self.refresh_flows_client()
 
         return flow_id
 
+    def purge_flow(self):
+        """
+        Remove the stored flow_id and flow_checksum.
+        """
+        self.storage.del_value('flow_id')
+        self.storage.del_value('flow_checksum')
+
     def run_flow(self, **kwargs):
         r"""
-        Start a Globus Automate flow. Flows and Functions must be registered prior or
-        self.auto_registration must be True.
+        Start a Globus Automate flow. By default, the flow definiton is checked and synced if it
+        has changed locally or deployed if it does not exist.
 
-        If auto-registering a flow and self.auto_login is True, this may result in two logins.
-        The first is for authorizing basic tooling, and the second is to autorize the newly
-        registered automate flow.
+        If a group is set, run permissions are updated and applied to the run (includes
+        'run_managers', 'run_monitors').
+
+        Any scope changes required post-deployment/update are propogated through the login_manager
+        and may require an additional login. A new flow checksum/id may be tracked in storage if
+        the flow changed or was newly deployed.
 
         :param flow_input: A dict of input to be passed to the automate flow. self.check_input()
                            is called on each tool to ensure basic needs are met for each.
@@ -269,21 +365,8 @@ class FlowsManager:
         :raises: gladier.exc.AuthException
         :raises: Any globus_sdk.exc.BaseException
         """
-        # if not self.login_manager.is_logged_in():
-        #     raise gladier.exc.AuthException(f'Not Logged in, missing scopes '
-        #                                     f'{self.missing_authorizers}')
-        # When registering a flow for the first time, a special flow scope needs to be authorized
-        # before the flow can begin. On first time runs, this requires an additional login.
         flow_id = self.get_flow_id()
-        flow_scope = self.storage.get_value('flow_scope')
-        # if not self.is_logged_in():
-        #     log.info(f'Missing authorizers: {self.missing_authorizers}, need additional login '
-        #              f'to run flow.')
-        #     if self.auto_login is True:
-        #         self.login()
-        #     else:
-        #         raise gladier.exc.AuthException(
-        #             f'Need {self.missing_authorizers} to run flow!', self.missing_authorizers)
+
         permissions = {
             p_type: self.get_flow_permission(p_type)
             for p_type in ['run_managers', 'run_monitors']
@@ -291,7 +374,6 @@ class FlowsManager:
         }
         log.debug(f'Flow run permissions set to: {permissions or "Flows defaults"}')
         kwargs.update(permissions)
-        # cfg_sec = self.get_section(private=True)
 
         # Ensure the label is not longer than 64 chars
         if 'label' in kwargs:
@@ -299,32 +381,27 @@ class FlowsManager:
             kwargs['label'] = (label[:62] + '..') if len(label) > 64 else label
 
         try:
-            flow = self.flows_client.run_flow(flow_id, flow_scope, **kwargs).data
+            flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
             log.debug('Encountered error when running flow', exc_info=True)
             automate_error_message = json.loads(gapie.message)
             detail_message = automate_error_message['error']['detail']
             if 'unable to get tokens for scopes' in detail_message:
-                self.login_manager.add_scope_change([flow_scope])
+                self.login_manager.add_scope_change([self.flow_scope])
                 self.refresh_flows_client()
                 log.info('Initiating new login for dependent scope change')
-                flow = self.flows_client.run_flow(flow_id, flow_scope, **kwargs).data
-            elif gapie.http_status == 404:
+                flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
+            elif gapie.http_status == 404 and self.redeploy_on_404:
                 log.warning(f'Flow {flow_id} returned 404 and is either deleted or unavailable. '
                             f'Purging flow_id from config file...')
                 # On a 404, Gladier can't do anything since it cannot access the old flow.
-                # Therefore, purge the old flow and deploy a new one by calling get_flow_id()
-                cfg = self.get_cfg()
-                del cfg[self.section]['flow_id']
-                cfg.save()
-                log.info('Deploying new flow ')
+                # Therefore, purge the old flow and deploy a new one.
+                self.purge_flow()
+                # Ensure the new flow is deployed
+                self.sync_flow()
+                # Fetch the new flow id
                 flow_id = self.get_flow_id()
-                if self.auto_login:
-                    self.login(requested_scopes=[flow_scope], force=True)
-                    flow = self.flows_client.run_flow(flow_id, flow_scope, **kwargs).data
-                else:
-                    raise gladier.exc.AuthException('Scope change for flow, re-auth required',
-                                                    missing_scopes=(flow_scope,))
+                flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
             else:
                 raise
         log.info(f'Started flow {kwargs.get("label")} flow id '
@@ -334,23 +411,19 @@ class FlowsManager:
             raise gladier.exc.ConfigException(f'Flow Failed: {flow["details"]["description"]}')
         return flow
 
-    def get_status(self, action_id):
+    def get_status(self, run_id):
         """
         Get the current status of the automate flow. Attempts to do additional work on funcx
         functions to deserialize any exception output.
 
-        :param action_id: The globus action UUID used for this flow. The Automate flow id is
+        :param run_id: The globus action UUID used for this flow. The Automate flow id is
                           always the flow_id configured for this tool.
         :raises: Globus Automate exceptions from self.flows_client.flow_action_status
         :returns: a Globus Automate status object (with varying state structures)
         """
-        try:
-            status = self.flows_client.flow_action_status(
-                self.get_flow_id(), self.storage.get_value('flow_scope'), action_id
+        status = self.flows_client.flow_action_status(
+                self.get_flow_id(), self.flow_scope, run_id
             ).data
-        except KeyError:
-            raise gladier.exc.ConfigException('No Flow defined, register a flow')
-
         try:
             return gladier.utils.automate.get_details(status)
         except (KeyError, AttributeError):
@@ -361,31 +434,31 @@ class FlowsManager:
         if response['status'] == 'ACTIVE':
             print(f'[{response["status"]}]: {response["details"]["description"]}')
 
-    def progress(self, action_id, callback=None):
+    def progress(self, run_id, callback=None):
         """
         Continuously call self.get_status() until the flow completes. Each status response is
         used as a parameter to the provided callback, by default will use the builtin callback
         to print the current state to stdout.
 
-        :param action_id: The action id for a running flow. The flow is automatically pulled
+        :param run_id: The action id for a running flow. The flow is automatically pulled
                           based on the current tool's flow_definition.
         :param callback: The function to call with the result from self.get_status. Must take
                          a single parameter: mycallback(self.get_status())
         """
         callback = callback or self._default_progress_callback
-        status = self.get_status(action_id)
+        status = self.get_status(run_id)
         while status['status'] not in ['SUCCEEDED', 'FAILED']:
-            status = self.get_status(action_id)
+            status = self.get_status(run_id)
             callback(status)
 
-    def get_details(self, action_id, state_name):
+    def get_details(self, run_id, state_name):
         """
         Attempt to extrapolate details from get_status() for a given state_name define in the flow
         definition. Note: This is usually only possible when a flow completes.
 
-        :param action_id: The action_id for this flow. Flow id is automatically determined based
+        :param run_id: The run_id for this flow. Flow id is automatically determined based
                           on the current tool being run.
         :param state_name: The state in the automate definition to fetch
         :returns: sub-dict of get_status() describing the :state_name:.
         """
-        return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
+        return gladier.utils.automate.get_details(self.get_status(run_id), state_name)

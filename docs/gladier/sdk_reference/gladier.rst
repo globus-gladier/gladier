@@ -1,7 +1,7 @@
-.. _sdk_reference:
+.. _sdk_reference_gladier_base_client:
 
-SDK Reference
-=============
+Gladier Base Client
+===================
 
 
 .. autoclass:: gladier.client.GladierBaseClient
