@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0b2](https://github.com/globus-gladier/gladier/compare/v0.8.0b1...v0.8.0b2) (2022-11-08)
+
+
+### Features
+
+* Add login customization for use within larger apps ([39c0a0c](https://github.com/globus-gladier/gladier/commit/39c0a0ceea9e471ee35042ca2534bedc2c0b5c42))
+* Allow passing custom flow managers to Gladier Clients ([a2fdead](https://github.com/globus-gladier/gladier/commit/a2fdeadbe8e81e95d62d3b5365f8fd3268b0930a))
+* Make the flows manager available for public usage ([b905e7c](https://github.com/globus-gladier/gladier/commit/b905e7c3f1eca559d4a2c8cb62f545c01bdf7c19))
+
+
 ## [0.8.0b1](https://github.com/globus-gladier/gladier/compare/v0.7.1...v0.8.0b1) (2022-10-26)
 
 
