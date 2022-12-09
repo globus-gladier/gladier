@@ -27,11 +27,13 @@ log = logging.getLogger(__name__)
 
 
 class GladierBaseClient(object):
-    """The Gladier Client ties together commonly used funcx functions
+    """
+    The Gladier Client ties together commonly used funcx functions
     and basic flows with auto-registration tools to make complex tasks
     easy to automate.
 
     Default options are intended for CLI usage and maximum user convenience.
+
     :param auto_registration: Automatically register functions or flows if they are not
                               previously registered or obsolete.
     :param login_manager: Class defining login behavior. Defaults to AutoLoginManager, and

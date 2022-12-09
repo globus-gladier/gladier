@@ -29,4 +29,3 @@ Globus Flow with flow generation modifiers.
    flow_generation
    passing_payloads
    custom_auth
-   sdk_reference
