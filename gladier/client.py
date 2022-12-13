@@ -32,6 +32,49 @@ class GladierBaseClient(object):
     and basic flows with auto-registration tools to make complex tasks
     easy to automate.
 
+    This class is intended to be subclassed as follows:
+
+    .. code-block:: python
+
+        @generate_flow_definition
+        class MyGladierClient(GladierBaseClient):
+            gladier_tools = [MyTool]
+
+    And used like the following:
+
+    .. code-block:: python
+
+        my_gc = MyGladierClient()
+        flow = my_gc.run_flow(flow_input={"flow_input": {"my_field": "foo"}})
+        run_id = flow["run_id"]
+        my_gc.progress(run_id)
+        pprint(tar_and_transfer.get_status(run_id))
+
+    The following class variables can be set on clients to change their behavior when
+    deploying and running flows.
+
+    * glaider_tools (default: [])
+       * A list of Gladier Tools to build a working flow_defitinion. Each tool's minimum input
+         must be satisfied prior to running the flow. Can be used with the
+         @generate_flow_definition decorator to automatically chain together flow definitions
+         present on each tool in linear order.
+    * flow_definition (default: {})
+       * An explicit flow definition to use for this client. Cannot be used with
+         @generate_flow_definition
+    * secret_config_filename (default: ``~/.gladier-secrets.cfg``)
+       * Storage are for Globus Tokens and general storage
+    * app_name (default: 'Gladier Client')
+       * The app name used during a login flow
+    * client_id
+       * The Globus Client ID used for native logins
+    * globus_group (default: None)
+       * A Globus Group to be applied to all flow/run permissions. Group will automatically be
+         added to flow_viewers, flow_starters, flow_administrators, run_managers, run_monitors
+    * subscription_id (default: None)
+       * The subscription id associated with this flow
+    * alias_class (default: gladier.utils.tool_alias.StateSuffixVariablePrefix)
+       * The default class used to for applying aliases to Tools
+
     Default options are intended for CLI usage and maximum user convenience.
 
     :param auto_registration: Automatically register functions or flows if they are not

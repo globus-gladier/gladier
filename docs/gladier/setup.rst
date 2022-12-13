@@ -11,15 +11,15 @@ comprises two steps:
 * Transfer: Copy data to the analysis computer.
 * Compute: Run the analysis function on the data copied in the first step.
 
+.. figure:: static/002-Setup-Transfer-Compute.jpeg
+   :scale: 25 %
+   :alt: Globus Automation Services
+
 The first step involves a Globus Transfer action, and the second a FuncX Compute action. 
 In order for your computer to be accessible by Globus, it needs to be running a Globus collection.
 See the Globus Connect Personal section below. For the second part, you  need to set up a FuncX
 endpoint to tell FuncX where it should execute functions. See the funcX Endpoint section below
 for details.
-
-.. figure:: Globus-Automation-Services-001.png
-   :scale: 50 %
-   :alt: Globus Automation Services
 
 Globus Connect Personal
 #######################
@@ -31,7 +31,9 @@ endpoint and configure a collection, then navigate to
 `Globus Web App <https://app.globus.org/collections>`_ collections to see details about the
 collections to which you have access.
 
-**Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.**
+.. note::
+
+   Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.
 
 FuncX Endpoint
 ##############

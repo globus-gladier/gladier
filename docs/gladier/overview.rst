@@ -25,7 +25,7 @@ You can read more about Gladier, including example applications, in a
 `technical report <https://arxiv.org/pdf/2204.05128.pdf>`_; here we
 focus on how to install and use it, and provide pointers to sample code.
 
-.. figure:: Globus-Automation-Services-001.png
+.. figure:: static/001-Overview-Globus-Automation-Services.png
    :scale: 50 %
    :alt: Globus Automation Services
 
@@ -35,10 +35,8 @@ focus on how to install and use it, and provide pointers to sample code.
 
    installation
    setup
-   getting_started
-   client
+   running_flows
    tools
-   custom_tools
    flow_generation
    passing_payloads
    custom_auth

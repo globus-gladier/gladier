@@ -88,4 +88,7 @@ see the full flow definition at any time, it can be queried in an instantiated c
 Next Steps
 ----------
 
-Running examples in the :ref:`examples` section is highly recommended.
+* See the :ref:`examples` section for full code snippets and interactive demos
+* See :ref:`gladier_tools_package` for a list of pre-made tools
+* :ref:`tools` for creating your own tools
+* :ref:`sdk_reference` for detailed information about Gladier SDK components
