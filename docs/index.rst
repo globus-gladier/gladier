@@ -26,6 +26,7 @@ Binder notebooks listed below with all requirements pre-installed.
    gladier/overview
    gladier_tools/index
    examples
+   gladier/sdk_reference/index
    migration
    glossary
    CHANGELOG
