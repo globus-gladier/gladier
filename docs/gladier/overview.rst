@@ -1,20 +1,33 @@
 Gladier
 =======
 
-Gladier is a development tool that sits on top of the `Globus Automate Client <https://globus-automate-client.readthedocs.io/en/latest/>`_
-and `FuncX <https://funcx.org/>`_. This allows a scientist to write arbitrary
-python code for any purpose, deploy it to an HPC, and tie the
-workflow together into a complete Globus Flow for execution on demand.
+Gladier (the "GLobus Architecture for Data-Intensive Experimental Research") is a Python toolkit
+for developing data collection, analysis, and publication pipelines ("flows") for experimental
+facilities. A flow might, for example:
 
-The documentation below will cover the following:
+* Retrieve data from an instrument, verify its quality, extract metadata, and publish
+  data+metadata to a catalog, or:
+* Collect data from a series of experiments, train a machine learning model, and deploy the model
+  to an instrument.
 
-* Installing Gladier
-* Setting up your environment (FuncX and GCP)
-* Running Gladier Clients
+In these and many other applications, Gladier makes it easy to specify what actions to perform,
+and where, and then to execute those actions reliably and securely.
 
-When you are familiar with running Gladier Clients, you should browse the
-reference documentation on Gladier Clients, Tools, and how to tweak the final
-Globus Flow with flow generation modifiers.
+Gladier builds on the powerful cloud-hosted `Globus platform <https://docs.globus.org/>`_, including
+`Globus automation services <https://docs.globus.org/globus-automation-services/>`_
+for reliable and scalable flow execution; `Globus Auth <https://docs.globus.org/api/auth/>`_ for
+secure distributed operation; and services like
+`Globus Transfer <https://docs.globus.org/api/transfer/>`_, `funcX <https://funcx.org/>`_, and
+`Globus Search <https://docs.globus.org/api/search/>`_ to implement data transfer, compute,
+cataloging, and other actions.
+
+You can read more about Gladier, including example applications, in a
+`technical report <https://arxiv.org/pdf/2204.05128.pdf>`_; here we
+focus on how to install and use it, and provide pointers to sample code.
+
+.. figure:: static/001-Overview-Globus-Automation-Services.png
+   :scale: 50 %
+   :alt: Globus Automation Services
 
 .. toctree::
    :maxdepth: 2
@@ -22,10 +35,8 @@ Globus Flow with flow generation modifiers.
 
    installation
    setup
-   getting_started
-   client
+   running_flows
    tools
-   custom_tools
    flow_generation
    passing_payloads
    custom_auth

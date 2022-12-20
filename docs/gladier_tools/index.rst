@@ -1,3 +1,5 @@
+.. _gladier_tools_package:
+
 Gladier Tools
 =============
 
@@ -43,3 +45,8 @@ See the sections below for detailed information about each tool.
    globus/index
    publish/index
    posix/index
+
+See Also
+--------
+
+* :ref:`tools`

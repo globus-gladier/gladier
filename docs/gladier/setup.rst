@@ -3,34 +3,45 @@
 Setup
 =====
 
-The typical Gladier Flow is composed of two major parts
 
-   * Transfer data into a location where execution can be performed (usually a super computer)
-   * Perform the execution
+We first consider a simple Gladier Flow that transfers data from an instrument computer to an
+analysis computer, and then runs an analysis function on the analyasis computer. The flow thus
+comprises two steps:
 
-The first part is solved by Globus Transfer, and the second by FuncX Endpoints.
-In order for your computer to be accessible by Globus, it needs to be running a Globus Endpoint.
-See the Globus Connect Personal section below. For the second part, you will need to setup a
-FuncX Endpoint to tell FuncX where it should execute functions.
-See the FuncX Endpoint section below for details.
+* Transfer: Copy data to the analysis computer.
+* Compute: Run the analysis function on the data copied in the first step.
+
+.. figure:: static/002-Setup-Transfer-Compute.jpeg
+   :scale: 25 %
+   :alt: Globus Automation Services
+
+The first step involves a Globus Transfer action, and the second a FuncX Compute action. 
+In order for your computer to be accessible by Globus, it needs to be running a Globus collection.
+See the Globus Connect Personal section below. For the second part, you  need to set up a FuncX
+endpoint to tell FuncX where it should execute functions. See the funcX Endpoint section below
+for details.
 
 Globus Connect Personal
 #######################
 
-To run tools like ``gladier_tools.globus.Transfer``, we need access to Globus endpoints.
-One can use `Globus Tutorial Endpoint 1 <https://app.globus.org/file-manager/collections/ddb59aef-6d04-11e5-ba46-22000b92c6ec/overview>`_
-and `Globus Tutorial Endpoint 2 <https://app.globus.org/file-manager/collections/ddb59af0-6d04-11e5-ba46-22000b92c6ec/overview?back=collections>`_.
-However, setting up your own endpoint gives you more control over the data you transfer,
-which brings us to Globus Connect Personal. Follow the
-`Globus Connect Personal <https://www.globus.org/globus-connect-personal>`_
-instructions to set up your own GCP endpoint, then navigate to
-`Globus Web App endpoints <https://app.globus.org/endpoints>`_ to see details about the endpoint.
+To run tools like ``gladier_tools.globus.Transfer``, we need access to a Globus collection.
+Follow the `Globus Connect Personal <https://www.globus.org/globus-connect-personal>`_ instructions
+to set up your own Globus Connect Personal
+endpoint and configure a collection, then navigate to
+`Globus Web App <https://app.globus.org/collections>`_ collections to see details about the
+collections to which you have access.
 
-**Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.**
+.. note::
+
+   Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.
 
 FuncX Endpoint
 ##############
 
-Another thing we need to run flows are an endpoint to run the funcx-functions on. There is a tutorial endpoint that can be used but it is generally preferred to set up a funcx-endpoint.
-Follow the `FuncX Endpoint instructions <https://funcx.readthedocs.io/en/latest/endpoints.html>`_ to set up your own endpoint. Once an endpoint has been configured, you can list all the endpoints you have using
-``funcx-endpoint list``. To start an endpoint, use ``funcx-endpoint start <endpoint-name>``.
+FuncX Endpoint
+We also need a funcX endpoint on which to run funcx functions. Follow the
+`FuncX Endpoint instructions <https://funcx.readthedocs.io/en/latest/endpoints.html>`_
+to set up your own endpoint. Once an endpoint has been configured, you can:
+
+* run ``funcx-endpoint`` to list all  endpoints to which you have access
+* run ``funcx-endpoint start <endpoint-name>`` to start an endpoint
