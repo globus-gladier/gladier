@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/globus-gladier/gladier/compare/v0.7.1...v0.8.0) (2023-01-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Requires a new login after upgrading
+* Passing Authorizers to Gladier Clients has been deprecated in favor of using the new Login Manager system
+* Passing `auto_login` is deprecated and will be removed
+    * Disabling automatic login can be replicated by using a login manager with `CallbackLoginManager(..., callback=None)`. See [Cusomizing Auth](https://gladier.readthedocs.io/en/latest/gladier/custom_auth.html#customizing-auth) for more details.
+* Gladier "public" configs have been removed
+    * public configs were undocumented and shouldn't affect any normal Gladier users
+
+### Features
+
+* Add "flow_transition_states" to BaseTools for determining Choice state ([7053e75](https://github.com/globus-gladier/gladier/commit/7053e751d931ab933e4e5983a0a42290eeb6cbd0))
+* Add login customization for use within larger apps ([39c0a0c](https://github.com/globus-gladier/gladier/commit/39c0a0ceea9e471ee35042ca2534bedc2c0b5c42))
+* Add support for python 3.10 ([eaf3fec](https://github.com/globus-gladier/gladier/commit/eaf3fecaac218eda87fcd4dc24f04e3adc5e2008))
+* Allow passing custom flow managers to Gladier Clients ([a2fdead](https://github.com/globus-gladier/gladier/commit/a2fdeadbe8e81e95d62d3b5365f8fd3268b0930a))
+* Make the flows manager available for public usage ([b905e7c](https://github.com/globus-gladier/gladier/commit/b905e7c3f1eca559d4a2c8cb62f545c01bdf7c19))
+
+
+* Login Manager and config overhauls ([6016abc](https://github.com/globus-gladier/gladier/commit/6016abc44093ba3e0901a33b5cf38e4871317a2b))
+* Update Client ID from an older version ([8b4393c](https://github.com/globus-gladier/gladier/commit/8b4393c3f78766729c82e52c4bd1e7ed2c9bd8ad))
+
 ## [0.8.0b2](https://github.com/globus-gladier/gladier/compare/v0.8.0b1...v0.8.0b2) (2022-11-08)
 
 
