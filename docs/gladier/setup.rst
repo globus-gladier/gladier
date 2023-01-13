@@ -11,7 +11,7 @@ comprises two steps:
 * Transfer: Copy data to the analysis computer.
 * Compute: Run the analysis function on the data copied in the first step.
 
-.. figure:: static/002-Setup-Transfer-Compute.jpeg
+.. figure:: https://media.githubusercontent.com/media/globus-gladier/gladier/main/docs/gladier/static/002-Setup-Transfer-Compute.jpeg
    :scale: 25 %
    :alt: Globus Automation Services
 
