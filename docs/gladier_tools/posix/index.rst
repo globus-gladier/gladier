@@ -9,6 +9,7 @@ Below are Gladier Tools for common operations on posix filesystems.
 
    tar
    untar
+   shell_cmd
    https_download_file
    encrypt
    decrypt
