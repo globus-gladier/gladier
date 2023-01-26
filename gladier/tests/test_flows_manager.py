@@ -30,17 +30,6 @@ def test_bad_flow_permission():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason='py37 missing key test feature')
-def test_flow_subscription_id(auto_login, storage, mock_flows_client):
-    fm = FlowsManager(flow_id='myflow', subscription_id='my_sub')
-    fm.storage = storage
-    fm.flow_definition = {'hello': 'world'}
-    fm._flows_client = mock_flows_client
-    fm.register_flow()
-    assert mock_flows_client.update_flow.called
-    assert mock_flows_client.update_flow.call_args.kwargs['subscription_id'] == 'my_sub'
-
-
-@pytest.mark.skipif(sys.version_info < (3, 8), reason='py37 missing key test feature')
 def test_run_flow_with_label(logged_in, mock_flows_client):
     cli = MockGladierClient()
     cli.run_flow(label='my flow')

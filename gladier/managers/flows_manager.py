@@ -1,4 +1,5 @@
 import logging
+import warnings
 import hashlib
 import json
 from typing import Callable
@@ -56,7 +57,8 @@ class FlowsManager(ServiceManager):
     :param flow_schema: The schema to be used alongside the flow definition
     :param flow_title: The title for the Globus Flow
     :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
-    :param subscription_id: Subscription id to be used when deploying flow
+    :param subscription_id: (deprecated) Subscription ID has no effect and will be removed in a
+                            future version.
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
     :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
@@ -98,9 +100,12 @@ class FlowsManager(ServiceManager):
         self.flow_schema = flow_schema
         self.flow_title = flow_title
         self.globus_group = globus_group
-        self.subscription_id = subscription_id
         self.on_change = on_change or (lambda self, exc: None)
         self.redeploy_on_404 = redeploy_on_404
+
+        if subscription_id:
+            warnings.warn(f'{self.flow_title}: subscription_id is no longer used and '
+                          'should not be set on flows.', category=DeprecationWarning)
 
         if self.flow_id is not None:
             self.redeploy_on_404 = False
@@ -303,8 +308,6 @@ class FlowsManager(ServiceManager):
         flow_kwargs = flow_permissions
         # Input schema is a required field and must be part of all flows.
         flow_kwargs['input_schema'] = self.flow_schema
-        if self.subscription_id:
-            flow_kwargs['subscription_id'] = self.subscription_id
         if flow_id:
             try:
                 log.info(f'Flow checksum failed, updating flow {flow_id}...')
