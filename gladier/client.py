@@ -211,9 +211,19 @@ class GladierBaseClient(object):
         """
         return self.login_manager.missing_authorizers
 
+    def login(self):
+        """
+        Call ``login()`` on the configured login manager. Attepmts to prepare the user to run flows,
+        but may require being called twice if a flow is not yet deployed. Automatically called
+        internally by ``run_flow()`` if required.
+        """
+        if self.login_manager.missing_authorizers:
+            self.login_manager.login(self.login_manager.missing_authorizers)
+
     def logout(self):
-        """Log out and revoke this client's tokens. This object will no longer
-        be usable until a new login is called.
+        """Call ``logout()`` on the login manager, to revoke saved tokens and deactivate the
+        current flow. The flow_id and function ids/checksums are unaffected, and can be re-used
+        after another invocation of ``login()``.
         """
         return self.login_manager.logout()
 
