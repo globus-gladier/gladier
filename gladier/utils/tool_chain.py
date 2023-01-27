@@ -68,7 +68,7 @@ class ToolChain:
             self._flow_definition['StartAt'] = new_flow['StartAt']
             return
 
-        self._flow_definition['States'].update(new_flow['States'])
+        self._flow_definition['States'].update(copy.deepcopy(new_flow['States']))
         for t_state in transition_states:
             self.add_transition(t_state, new_flow['StartAt'])
 
