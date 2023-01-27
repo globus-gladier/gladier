@@ -228,3 +228,38 @@ def test_choice_state_tool_chaining(logged_in):
     # Chain should add 'next' in transition state 1b
     assert 'Next' in flow_def['States']['1b']
     assert flow_def['States']['1b']['Next'] == 'MockFunc'
+
+
+def test_flow_generation_edge_case(logged_in):
+
+    class MyTool(GladierBaseTool):
+        flow_definition = {
+            'StartAt': '1',
+            'States': {
+                '1': {'Type': 'Action', 'End': True},
+            }
+        }
+
+    class MyTool2(GladierBaseTool):
+        flow_definition = {
+            'StartAt': '2',
+            'States': {
+                '2': {'Type': 'Action', 'End': True},
+            }
+        }
+
+    @generate_flow_definition
+    class MyFuncXState(GladierBaseTool):
+        funcx_functions = [lambda x: x]
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        gladier_tools = [
+            MyTool,
+            MyTool2,
+            MyFuncXState,
+        ]
+    MyClient()
+    assert 'End' in MyTool.flow_definition['States']["1"].keys()
+    assert 'End' in MyTool2.flow_definition['States']["2"].keys()
+    MyClient()
