@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.1](https://github.com/globus-gladier/gladier/compare/v0.8.0...v0.8.1) (2023-01-30)
+
+
+### Bug Fixes
+
+* Add missing client ``login`` method ([74bdfa4](https://github.com/globus-gladier/gladier/commit/74bdfa4279b48e7433fcc029042a57b1bae3502f))
+* Deprecate subscription_id on Gladier Clients and flows ([e75ab38](https://github.com/globus-gladier/gladier/commit/e75ab38248242395f0ff5cf613d834c95f763350))
+* Multiple instantiations of a Gladier Client raising errors ([2dfd747](https://github.com/globus-gladier/gladier/commit/2dfd74771a6b44e055bd160df1309c10c34390bd))
+
 ## [0.8.0](https://github.com/globus-gladier/gladier/compare/v0.7.1...v0.8.0) (2023-01-05)
 
 
