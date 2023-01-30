@@ -1,4 +1,4 @@
-funcx<2.0.0>=1.0.2
-globus-automate-client<0.17>=0.13
+funcx>=1.0.2,<2.0.0
+globus-automate-client>=0.13,<0.17
 packaging>=21.3
 fair-research-login>=0.2.6
