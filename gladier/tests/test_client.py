@@ -1,4 +1,5 @@
 from gladier.tests.test_data.gladier_mocks import MockGladierClient
+from gladier.managers import FlowsManager
 
 
 def test_get_input(logged_in):
@@ -6,6 +7,10 @@ def test_get_input(logged_in):
         'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
         'mock_func_funcx_id': 'mock_funcx_id',
     }}
+
+
+def test_get_flow_id(logged_in):
+    assert MockGladierClient().get_flow_id() is None
 
 
 def test_get_input_from_aliased_tool(logged_in):

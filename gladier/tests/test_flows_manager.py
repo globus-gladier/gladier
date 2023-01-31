@@ -65,6 +65,15 @@ def test_custom_scope_id(logged_out):
     assert scope in cli.login_manager.missing_authorizers
 
 
+def test_custom_scope_id():
+    fm = FlowsManager(flow_id='foo')
+    cli = MockGladierClient(flows_manager=fm)
+    assert cli.flows_manager == fm
+    assert fm.flow_id == 'foo'
+    assert fm.get_flow_id() == 'foo'
+    assert cli.get_flow_id() == 'foo'
+
+
 def test_dependent_scope_change_run_flow(auto_login, mock_flows_client,
                                          mock_dependent_token_change_error,
                                          monkeypatch):

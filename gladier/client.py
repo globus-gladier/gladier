@@ -298,6 +298,12 @@ class GladierBaseClient(object):
                 funcx_ids[name] = val
         return funcx_ids
 
+    def get_flow_id(self) -> str:
+        """
+        Get the flow id from the flows manager class.
+        """
+        return self.flows_manager.get_flow_id()
+
     def get_input(self) -> dict:
         """
         Get funcx function ids, funcx endpoints, and each tool's default input. Default
