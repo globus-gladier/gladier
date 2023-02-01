@@ -29,48 +29,66 @@ class ToolChain:
         return flow_def
 
     def chain(self, tools: List[GladierBaseTool]):
+        """
+        Given a list of tools, chain each one to the existing flow definition
+        stored on this class. If there is no current flow definition, the first
+        flow in the first tool will be used as the starting point.
+        :raises FlowGenException: if there was a problem chaining together flows
+        :returns self: a reference to this class.
+        """
         self.check_tools(tools)
         for tool in tools:
             log.debug(f'Chaining tool {tool.__class__.__name__} to existing flow '
                       f'({len(self._flow_definition["States"])} states)')
 
             flow_definition = tool.get_flow_definition()
-            self._chain_flow(flow_definition, self.transition_states)
-            # Use the tool-defined states if they are defined, otherwise there is only one
-            # End state on the flow and therefore can be assumed.
-            t_states = list(get_end_states(flow_definition))
-            tool_t_states = tool.get_flow_transition_states()
-            if len(t_states) > 1 and not tool_t_states:
-                raise FlowGenException(f'Tool {tool} has multiple branching end states and must '
-                                       'define which states a flow may continue by setting '
-                                       '"flow_transition_states" containing one or more of '
-                                       f'{", ".join(t_states)} ')
-            elif not t_states:
-                raise FlowGenException(f'{tool}: Could not find any end states in flow.')
+            self._chain_flow(flow_definition, tool)
 
-            self.transition_states = tool_t_states if tool_t_states else t_states
         return self
 
     def chain_state(self, name: str, definition: Mapping[str, Any]):
+        """Chain a single flow state to the existing flow definition. If there
+        is no existing flow definition, a new flow definition will be created."""
         log.debug(f'Chaining state {name} with definition {definition.keys()}')
         temp_flow = {
             'StartAt': name,
             'States': {name: definition},
         }
         temp_flow['States'][name]['End'] = True
-        self._chain_flow(temp_flow, [name])
+        self._chain_flow(temp_flow)
         return self
 
-    def _chain_flow(self, new_flow: Mapping[str, dict], transition_states: List[str]):
+    def _chain_flow(self, new_flow: Mapping[str, dict], tool: GladierBaseTool = None):
         # Base case, if this is the first 'chain' and no states exist yet.
         if not self._flow_definition['States']:
             self._flow_definition['States'] = copy.deepcopy(new_flow['States'])
             self._flow_definition['StartAt'] = new_flow['StartAt']
-            return
+        else:
+            self._flow_definition['States'].update(copy.deepcopy(new_flow['States']))
+            for t_state in self.transition_states:
+                self.add_transition(t_state, new_flow['StartAt'])
 
-        self._flow_definition['States'].update(copy.deepcopy(new_flow['States']))
-        for t_state in transition_states:
-            self.add_transition(t_state, new_flow['StartAt'])
+        self._set_new_transition_states(new_flow, tool)
+
+    def _set_new_transition_states(self, new_flow: Mapping[str, dict],
+                                   tool: GladierBaseTool = None):
+        # Use the tool-defined states if they are defined, otherwise there is only one
+        # End state on the flow and therefore can be assumed.
+        t_states = list(get_end_states(new_flow))
+        if tool:
+            tool_t_states = tool.get_flow_transition_states()
+        else:
+            tool_t_states = []
+        entity = tool or f'Flow with states: {tuple(new_flow["States"].keys())}'
+        if len(t_states) > 1 and not tool_t_states:
+            raise FlowGenException(f'{entity} has multiple branching end states and must '
+                                   'define which states a flow may continue by setting '
+                                   '"flow_transition_states" containing one or more of '
+                                   f'{", ".join(t_states)} ')
+        elif not t_states:
+            raise FlowGenException(f'{tool}: Could not find any end states in flow.')
+
+        self.transition_states = tool_t_states if tool_t_states else t_states
 
     def add_transition(self, cur_flow_term: str, new_chain_start: str):
         if self._flow_definition['States'][cur_flow_term].get('End'):
