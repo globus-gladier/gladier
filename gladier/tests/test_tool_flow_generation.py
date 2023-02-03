@@ -49,6 +49,16 @@ def test_tool_generate_multiple_states():
     assert fd['States']['MockFunc2']['End'] is True
 
 
+def test_tool_duplicate_funcx_functions():
+
+    @generate_flow_definition
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func, mock_func]
+
+    with pytest.raises(FlowGenException):
+        MockTool()
+
+
 def test_tool_generate_no_states():
 
     @generate_flow_definition
