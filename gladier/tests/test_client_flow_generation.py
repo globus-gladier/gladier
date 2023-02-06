@@ -230,6 +230,35 @@ def test_choice_state_tool_chaining(logged_in):
     assert flow_def['States']['1b']['Next'] == 'MockFunc'
 
 
+def test_chaining_cycle_flow_raises_error(logged_in):
+
+    class MyTool(GladierBaseTool):
+        flow_definition = {
+            'StartAt': '1A',
+            'States': {
+                '1A': {
+                    'Type': 'Pass',
+                    'Next': '2A',
+                },
+                '2A': {
+                    'Type': 'Pass',
+                    'Next': '1A',
+                },
+            }
+        }
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        """Example Docs"""
+        gladier_tools = [
+            MyTool,
+            'gladier.tests.test_data.gladier_mocks.MockTool',
+        ]
+
+    with pytest.raises(exc.FlowGenException):
+        MyClient()
+
+
 def test_flow_generation_edge_case(logged_in):
 
     class MyTool(GladierBaseTool):

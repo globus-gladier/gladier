@@ -1,4 +1,5 @@
 import logging
+import typing
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
 from gladier.exc import FlowGenException
@@ -25,9 +26,19 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
     return flow_moder.apply_modifiers(chain.flow_definition)
 
 
+def _get_duplicate_functions(funcx_functions: typing.List[callable]):
+    tracked_set = set()
+    func_names = [get_funcx_flow_state_name(f) for f in funcx_functions]
+    return [f for f in func_names if f in tracked_set or tracked_set.add(f)]
+
+
 def generate_tool_flow(tool: GladierBaseTool, modifiers):
     """Generate a flow definition for a Gladier Tool based on the defined ``funcx_functions``.
     Accepts modifiers for funcx functions"""
+    duplicate_functions = _get_duplicate_functions(tool.funcx_functions)
+    if duplicate_functions:
+        raise FlowGenException(f'Tool {tool} contains duplicate function names: '
+                               f'{duplicate_functions}')
 
     flow_moder = FlowModifiers([tool], modifiers, cls=tool)
 

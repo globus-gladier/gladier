@@ -45,6 +45,18 @@ def test_tool_generate_multiple_states():
     assert fd['StartAt'] == 'MockFunc'
     assert len(fd['States']) == 2
     assert set(fd['States']) == {'MockFunc', 'MockFunc2'}
+    assert fd['States']['MockFunc']['Next'] == 'MockFunc2'
+    assert fd['States']['MockFunc2']['End'] is True
+
+
+def test_tool_duplicate_funcx_functions():
+
+    @generate_flow_definition
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func, mock_func]
+
+    with pytest.raises(FlowGenException):
+        MockTool()
 
 
 def test_tool_generate_no_states():

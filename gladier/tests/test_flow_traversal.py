@@ -170,3 +170,20 @@ def test_state_does_not_exist():
     }
     with pytest.raises(FlowGenException):
         list(get_end_states(flow))
+
+
+def test_flow_with_cycle():
+    flow = {
+        'StartAt': '1A',
+        'States': {
+            '1A': {
+                'Type': 'Pass',
+                'Next': '2A',
+            },
+            '2A': {
+                'Type': 'Pass',
+                'Next': '1A',
+            },
+        }
+    }
+    assert list(get_end_states(flow)) == []
