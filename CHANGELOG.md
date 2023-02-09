@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.2](https://github.com/globus-gladier/gladier/compare/v0.8.1...v0.8.2) (2023-02-09)
+
+
+### Bug Fixes
+
+* CallbackLoginManager not being a top-level import ([d5a28d5](https://github.com/globus-gladier/gladier/commit/d5a28d552432b905ee29631c429def0152ec9b22))
+* erroneously removed `get_flow_id()` method on Gladier Clients ([ea2232b](https://github.com/globus-gladier/gladier/commit/ea2232b7ebe731bfe7312ec9d68de02ec78ed04e))
+* flow generation bug when using multiple funcx functions on a tool ([dde6389](https://github.com/globus-gladier/gladier/commit/dde638987d43483cdf657789c26ae866a0e40c26))
+* Unexpected flow generation when duplicate funcx functions used ([49c07d0](https://github.com/globus-gladier/gladier/commit/49c07d02fa93acf2a7aa16e690d80a6ece6b4248))
+
 ### [0.8.1](https://github.com/globus-gladier/gladier/compare/v0.8.0...v0.8.1) (2023-01-30)
 
 
