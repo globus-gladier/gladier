@@ -19,10 +19,14 @@ Gladier: The Globus Architecture for Data-Intensive Experimental Research.
     :alt: License
     :target: https://opensource.org/licenses/Apache-2.0
 
-Gladier is a programmable data capture, storage, and analysis architecture for experimental facilities.
-The architecture leverages a data/computing substrate based on 
-data and compute agents deployed across computer and storage 
-systems at APS, ALCF, and elsewhere, all managed by cloud-hosted Globus services.
+Gladier provides a simple software interface to enable researchers to rapidly create, manage, and deploy complex automation flows. It has been used as a programmable data capture, storage, and analysis architecture at experimental facilities including the Argonne Leadership Computing Facility and the Advanced Photon Source. Gladier makes it easy to connect heterogeneous data and computing substrates deployed across distributed compute and storage 
+systems and manage using Globus Flows.
+
+Whether you're working in materials science, X-ray science, automated laboratores, genomics, or any other research field, 
+Gladier can help you streamline your data management and analysis workflows, so you can focus on your scientific discoveries.
+Try Gladier today and see how it can enhance your research capabilities!
+
+
 
 Installation
 ============
