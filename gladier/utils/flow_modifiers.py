@@ -102,7 +102,7 @@ class FlowModifiers:
                 mod_value = self.get_state_result_path(sn)
             elif mod_value in self.state_names:
                 mod_value = self.get_state_result_path(mod_value)
-            else:
+            elif mod_name not in state_modifiers:
                 mod_value = f'$.input.{mod_value}'
 
         # Remove duplicate keys
@@ -112,7 +112,7 @@ class FlowModifiers:
 
         # Note: Top level State types don't end with '.$', all others must end with
         # '.$' to indicate the value should be replaced. '.=' is not supported or possible yet
-        if isinstance(mod_value, str) and mod_value.startswith('$.') and mod_name not in state_modifiers:
+        if isinstance(mod_value, str) and mod_value.startswith('$.'):
             mod_name = f'{mod_name}.$'
         item[mod_name] = mod_value
         log.debug(f'Set modifier {mod_name} to {mod_value}')
