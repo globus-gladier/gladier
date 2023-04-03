@@ -157,3 +157,17 @@ def test_tool_modifier_custom_name_payloads():
     fd = tool.flow_definition
     fx_task = fd['States']['MockFunc2']['Parameters']['tasks'][0]
     assert fx_task['payload.$'] == '$.MyStuff.details.results'
+
+
+def test_tool_custom_action_url():
+    @generate_flow_definition(modifiers={
+        'mock_func': {
+            'ActionUrl': 'https://myap.example.com',
+        }
+    })
+    class MockTool(GladierBaseTool):
+        funcx_functions = [mock_func]
+
+    tool = MockTool()
+    assert tool.flow_definition['States']['MockFunc']['ActionUrl'] == \
+        'https://myap.example.com'
