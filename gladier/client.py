@@ -259,6 +259,57 @@ class GladierBaseClient(object):
         self.flows_manager.sync_flow()
 
     def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
+        r"""
+        Start a Globus Automate flow. By default, the flow definiton is checked and synced if it
+        has changed locally or deployed if it does not exist.
+
+        If a group is set, run permissions are updated and applied to the run (includes
+        'run_managers', 'run_monitors').
+
+        Any scope changes required post-deployment/update are propogated through the login_manager
+        and may require an additional login. A new flow checksum/id may be tracked in storage if
+        the flow changed or was newly deployed.
+
+        The run_flow method shadows the globus-automate-client method for running flows documented
+        here: https://globus-automate-client.readthedocs.io/en/latest/python_sdk_reference.html#globus_automate_client.flows_client.FlowsClient.run_flow  # noqa
+        Additional arguments matching the method signature may be added. Common ones include the
+        following:
+
+        * **label** (Optional[str]) An optional label which can be used to identify this run
+        * **tags** (Optional[List[str]]) Tags that will be associated with this Run.
+
+        Example:
+
+        .. code-block:: python
+
+            myinput = {
+                "input": {
+                    "args": "cat /proc/version",
+                    "capture_output": True,
+                    "funcx_endpoint_compute": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+                }
+            }
+            my_client.run_flow(myinput, label='Check Version', tags=['version', 'POSIX'])
+
+        :param flow_input: A dict of input to be passed to the automate flow. self.check_input()
+                           is called on each tool to ensure basic needs are met for each.
+                           Input MUST be wrapped inside an 'input' dict,
+                           for example {'input': {'foo': 'bar'}}.
+
+        :param use_defaults: Use the result of self.get_input() to populate base input for the
+                             flow. All conflicting input provided by flow_input overrides
+                             values set in use_defaults.
+        :param \**flow_kwargs: Set several keyed arguments that include the label to be used
+                               in the automate app. If no label is passed the standard automate
+                               label is used. Also ensure label <= 64 chars long.
+        :raise: gladier.exc.ConfigException by self.check_input()
+        :raises: gladier.exc.FlowObsolete
+        :raises: gladier.exc.NoFlowRegistered
+        :raises: gladier.exc.RegistrationException
+        :raises: gladier.exc.FunctionObsolete
+        :raises: gladier.exc.AuthException
+        :raises: Any globus_sdk.exc.BaseException
+        """
         combine_flow_input = self.get_input() if use_defaults else dict()
         if flow_input is not None:
             if not flow_input.get('input') or len(flow_input.keys()) != 1:

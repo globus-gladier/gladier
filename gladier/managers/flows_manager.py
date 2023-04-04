@@ -338,36 +338,6 @@ class FlowsManager(ServiceManager):
         self.storage.del_value('flow_checksum')
 
     def run_flow(self, **kwargs):
-        r"""
-        Start a Globus Automate flow. By default, the flow definiton is checked and synced if it
-        has changed locally or deployed if it does not exist.
-
-        If a group is set, run permissions are updated and applied to the run (includes
-        'run_managers', 'run_monitors').
-
-        Any scope changes required post-deployment/update are propogated through the login_manager
-        and may require an additional login. A new flow checksum/id may be tracked in storage if
-        the flow changed or was newly deployed.
-
-        :param flow_input: A dict of input to be passed to the automate flow. self.check_input()
-                           is called on each tool to ensure basic needs are met for each.
-                           Input MUST be wrapped inside an 'input' dict,
-                           for example {'input': {'foo': 'bar'}}.
-
-        :param use_defaults: Use the result of self.get_input() to populate base input for the
-                             flow. All conflicting input provided by flow_input overrides
-                             values set in use_defaults.
-        :param \**flow_kwargs: Set several keyed arguments that include the label to be used
-                               in the automate app. If no label is passed the standard automate
-                               label is used. Also ensure label <= 64 chars long.
-        :raise: gladier.exc.ConfigException by self.check_input()
-        :raises: gladier.exc.FlowObsolete
-        :raises: gladier.exc.NoFlowRegistered
-        :raises: gladier.exc.RegistrationException
-        :raises: gladier.exc.FunctionObsolete
-        :raises: gladier.exc.AuthException
-        :raises: Any globus_sdk.exc.BaseException
-        """
         flow_id = self.get_flow_id()
 
         permissions = {
