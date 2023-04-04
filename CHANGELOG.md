@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.4b1](https://github.com/globus-gladier/gladier/compare/v0.8.3...v0.8.4b1) (2023-04-04)
+
+
+### Features
+
+* Upgrade to new Globus Compute Action Provider ([4d08df5](https://github.com/globus-gladier/gladier/commit/4d08df5353eb70d3f1fc479122459400927883e3))
+
 
 ### [0.8.3](https://github.com/globus-gladier/gladier/compare/v0.8.2...v0.8.3) (2023-04-04)
 

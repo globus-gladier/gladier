@@ -60,9 +60,7 @@ def generate_funcx_flow_state(funcx_function):
     return state_name, {
         'Comment': funcx_function.__doc__,
         'Type': 'Action',
-        'ActionUrl': 'https://automate.funcx.org',
-        'ActionScope': 'https://auth.globus.org/scopes/'
-                       'b3db7e59-a6f1-4947-95c2-59d6b7a70f8c/action_all',
+        'ActionUrl': 'https://compute2.dev.funcx.org/fxap',
         'ExceptionOnActionFailure': False,
         'Parameters': {
             'tasks': [{
