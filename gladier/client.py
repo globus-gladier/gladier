@@ -1,7 +1,7 @@
 import os
 import logging
 import warnings
-from typing import Union, Mapping
+from typing import Union, Mapping, Optional, List, Iterable as typingIterable
 from collections.abc import Iterable
 
 from gladier.base import GladierBaseTool
@@ -258,7 +258,46 @@ class GladierBaseClient(object):
         self.flows_manager.flow_definition = self.get_flow_definition()
         self.flows_manager.sync_flow()
 
-    def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):
+    def run_flow(self, flow_input=None, use_defaults=True,
+                 run_managers: Optional[typingIterable[str]] = None,
+                 run_monitors: Optional[typingIterable[str]] = None,
+                 dry_run: bool = False,
+                 label: Optional[str] = None,
+                 tags: Optional[List[str]] = None,
+                 **flow_kwargs):
+        r"""Start a Globus Automate flow. By default, the flow definiton is
+        checked and synced if it has changed locally or deployed if it does not
+        exist.
+
+        If a group is set, run permissions are updated and applied to the run
+        (includes 'run_managers', 'run_monitors').
+
+        Any scope changes required post-deployment/update are propogated through
+        the login_manager and may require an additional login. A new flow
+        checksum/id may be tracked in storage if the flow changed or was newly
+        deployed.
+
+        :param flow_input: A dict of input to be passed to the automate
+                           flow. self.check_input() is called on each tool to
+                           ensure basic needs are met for each.  Input MUST be
+                           wrapped inside an 'input' dict, for example {'input':
+                           {'foo': 'bar'}}.
+
+
+        :param \**flow_kwargs: Set several keyed arguments that include the
+                               label to be used in the automate app. If no label
+                               is passed the standard automate label is
+                               used. Also ensure label <= 64 chars long.
+
+        :raise: gladier.exc.ConfigException by self.check_input()
+        :raises: gladier.exc.FlowObsolete
+        :raises: gladier.exc.NoFlowRegistered
+        :raises: gladier.exc.RegistrationException
+        :raises: gladier.exc.FunctionObsolete
+        :raises: gladier.exc.AuthException
+        :raises: Any globus_sdk.exc.BaseException
+
+        """
         combine_flow_input = self.get_input() if use_defaults else dict()
         if flow_input is not None:
             if not flow_input.get('input') or len(flow_input.keys()) != 1:
@@ -270,7 +309,13 @@ class GladierBaseClient(object):
             self.check_input(tool, combine_flow_input)
 
         self.sync_flow()
-        return self.flows_manager.run_flow(flow_input=combine_flow_input, **flow_kwargs)
+        return self.flows_manager.run_flow(flow_input=combine_flow_input,
+                                           run_managers=run_managers,
+                                           run_monitors=run_monitors,
+                                           dry_run=dry_run,
+                                           label=label,
+                                           tags=tags,
+                                           **flow_kwargs)
 
     def get_funcx_function_ids(self):
         """Get all funcx function ids for this run, registering them if there are no ids
