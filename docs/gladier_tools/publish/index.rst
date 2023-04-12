@@ -10,3 +10,4 @@ for viewing in a portal.
    :caption: Publication Tools:
 
    publish
+   publishv2
