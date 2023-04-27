@@ -26,19 +26,7 @@ Whether you're working in materials science, X-ray science, automated laboratore
 Gladier can help you streamline your data management and analysis workflows, so you can focus on your scientific discoveries.
 Try Gladier today and see how it can enhance your research capabilities!
 
-
-
-Installation
-============
-
-Gladier requires Python 3.6 and higher. For a modern version of python,
-see the official `Python Installation Guide <https://docs.python-guide.org/starting/installation/>`_.
-
-The easiest way to get Gladier is through Pip on PyPi. Gladier is built with two
-main packages, the core Gladier client and Gladier Tools. Gladier Tools include
-a set of reusable, common operations. Installing it is highly recommended.
-
-With pip installed, you can do the following:
+You can install Gladier and Gladier Tools with the following:
 
 
 .. code-block:: bash
