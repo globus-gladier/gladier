@@ -1,18 +1,16 @@
 import os
+import pathlib
 import logging
-import warnings
-from typing import Union, Mapping
 from collections.abc import Iterable
 
 from gladier.base import GladierBaseTool
 from gladier.managers.login_manager import (
-    BaseLoginManager, CallbackLoginManager, AutoLoginManager
+    BaseLoginManager, AutoLoginManager, ConfidentialClientLoginManager
 )
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
 from gladier.managers import FlowsManager, ComputeManager
 
 from gladier.storage.tokens import GladierSecretsConfig
-from gladier.storage.config import GladierConfig
 import gladier
 import gladier.storage.config
 import gladier.utils.dynamic_imports
@@ -95,37 +93,36 @@ class GladierBaseClient(object):
 
     def __init__(
         self,
-        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]] = None,
-        auto_login: bool = True,
         auto_registration: bool = True,
         login_manager: BaseLoginManager = None,
         flows_manager: FlowsManager = None,
             ):
 
         self._tools = None
+        self.storage = None
 
-        # Setup storage
-        section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
-        self.storage = GladierConfig(self.secret_config_filename, section)
-        self.storage.update()
+        CLI_ID, CLI_SEC = os.getenv('GLADIER_CLIENT_ID'), os.getenv('GLADIER_CLIENT_SECRET')
+        storage_section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
+        storage_tokens_section = f'tokens_{self.client_id}'
 
-        if auto_login is False:
-            warnings.warn('auto_login=False in Gladier clients is deprecated and will '
-                          'be removed in v0.8. See '
-                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
-                          category=DeprecationWarning)
-        if authorizers:
-            warnings.warn('Calling Gladier clients with "authorizers" is deprecated. Instead, see '
-                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
-                          category=DeprecationWarning)
-            self.login_manager = CallbackLoginManager(authorizers=authorizers)
-        elif not login_manager:
+        if CLI_ID and CLI_SEC and not login_manager:
+            log.info('Client Credentials detected, using custom internal storage for '
+                     'storing tokens.')
+            filename = pathlib.Path(f"~/.gladier/{CLI_ID}.cfg").expanduser()
+            filename.parent.mkdir(exist_ok=True)
+            self.storage = GladierSecretsConfig(filename, storage_section)
+            login_manager = ConfidentialClientLoginManager(CLI_ID, CLI_SEC, storage=self.storage)
+
+        if not login_manager:
             section_name = f'tokens_{self.client_id}'
-            token_storage = GladierSecretsConfig(self.secret_config_filename, section_name)
-            self.login_manager = AutoLoginManager(self.client_id, token_storage, self.app_name,
-                                                  auto_login=auto_login)
+            self.storage = GladierSecretsConfig(self.secret_config_filename, section_name)
+            self.login_manager = AutoLoginManager(self.client_id, self.storage, self.app_name)
         else:
             self.login_manager = login_manager
+
+        if not self.storage:
+            self.storage = GladierSecretsConfig(self.secret_config_filename, storage_section,
+                                                tokens_section=storage_tokens_section)
 
         self.flows_manager = flows_manager or FlowsManager(auto_registration=auto_registration)
         if self.globus_group:

@@ -1,10 +1,12 @@
 import logging
+import time
 from typing import Callable, List, Set, Iterable, Union, Any, Mapping
 import abc
 
 import fair_research_login
-from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
+from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer, ConfidentialAppAuthClient
 from gladier.exc import AuthException
+from gladier.storage.tokens import GladierSecretsConfig
 
 log = logging.getLogger(__name__)
 
@@ -110,7 +112,7 @@ class AutoLoginManager(BaseLoginManager):
                                                 app_name=self.app_name,
                                                 token_storage=self.storage)
 
-    def get_authorizers(self) -> List[Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+    def get_authorizers(self) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
         try:
             return self.native_client.get_authorizers_by_scope()
         except fair_research_login.LoadError:
@@ -149,7 +151,7 @@ class CallbackLoginManager(BaseLoginManager):
         self.authorizers = authorizers
         self.callback = callback
 
-    def get_authorizers(self) -> List[Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+    def get_authorizers(self) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
         return self.authorizers
 
     def login(self, scopes):
@@ -159,3 +161,51 @@ class CallbackLoginManager(BaseLoginManager):
         new_authorizers = self.callback(scopes)
         self.authorizers.update(new_authorizers)
         log.info('New authorizers have been cached for re-use.')
+
+
+class ConfidentialClientLoginManager(BaseLoginManager):
+    refresh_tokens = True
+
+    def __init__(self, client_id: str, client_secret: str, storage: GladierSecretsConfig):
+        super().__init__()
+        self.storage: GladierSecretsConfig = storage
+        self.client_id = client_id
+        self.app = ConfidentialAppAuthClient(client_id, client_secret)
+
+    def login(self, scopes: List[str]) -> None:
+        log.info('Initiating client credentials grant using client_id and secret')
+        response = self.app.oauth2_client_credentials_tokens(requested_scopes=scopes)
+        self.storage.write_tokens(response.by_resource_server)
+
+    def by_scopes(self, tokens):
+        # Get a flat list of scopes
+        scopes = [tset['scope'].split() for tset in tokens.values()]
+        scopes = [item for sublist in scopes for item in sublist]
+
+        token_group = {}
+        for scope in scopes:
+            for tgroup in tokens.values():
+                if scope in tgroup['scope'].split():
+                    token_group[scope] = tgroup
+        return token_group
+
+    def get_authorizers(self) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+        tokens = self.storage.read_tokens()
+        print(tokens.keys())
+        if not tokens:
+            log.info('Tokens failed to load, no tokens in storage.')
+            return dict()
+
+        expired = any(t['expires_at_seconds'] < time.time() for t in tokens.values())
+        if expired:
+            log.info('Tokens Expired, clearing cache')
+            self.storage.clear_tokens()
+            return dict()
+
+        return {
+            scope: RefreshTokenAuthorizer(refresh_token=tdata['refresh_token'],
+                                          auth_client=self.app,
+                                          access_token=tdata['access_token'],
+                                          expires_at=tdata['expires_at_seconds'])
+            for scope, tdata in self.by_scopes(tokens).items()
+        }
