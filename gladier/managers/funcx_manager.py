@@ -3,8 +3,7 @@ import hashlib
 
 from gladier.base import GladierBaseTool
 from gladier.managers.service_manager import ServiceManager
-from funcx import FuncXClient
-from funcx.serialize import FuncXSerializer
+from globus_compute_sdk import serialize, Client
 
 import gladier.utils.funcx_login_manager
 
@@ -32,7 +31,7 @@ class FuncXManager(ServiceManager):
             authorizers=self.login_manager.get_manager_authorizers()
         )
 
-        self.__funcx_client = FuncXClient(login_manager=funcx_login_manager)
+        self.__funcx_client = Client(login_manager=funcx_login_manager)
         return self.__funcx_client
 
     @staticmethod
@@ -52,7 +51,7 @@ class FuncXManager(ServiceManager):
         Get the SHA256 checksum of a funcx function
         :return: sha256 hex string of a given funcx function
         """
-        fxs = FuncXSerializer()
+        fxs = serialize.ComputeSerializer()
         serialized_func = fxs.serialize(funcx_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
 

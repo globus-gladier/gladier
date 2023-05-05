@@ -1,5 +1,5 @@
 
-from funcx.sdk.login_manager.protocol import LoginManagerProtocol
+from globus_compute_sdk.sdk.login_manager.protocol import LoginManagerProtocol
 from gladier.utils.funcx_login_manager import FuncXLoginManager
 
 

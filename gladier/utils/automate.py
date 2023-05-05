@@ -1,6 +1,6 @@
 import traceback
 import logging
-from funcx.serialize import FuncXSerializer
+from globus_compute_sdk import serialize
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +44,6 @@ def get_details(response, state_name=None):
 
 def deserialize_exception(encoded_exc):
     try:
-        FuncXSerializer().deserialize(encoded_exc).reraise()
+        serialize.ComputeSerializer().deserialize(encoded_exc).reraise()
     except Exception:
         return traceback.format_exc()
