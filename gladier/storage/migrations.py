@@ -36,11 +36,6 @@ class AddVersionToConfig(ConfigMigration):
         return self.config_version is None
 
     def migrate(self):
-        # We can't be certain which version of Gladier the user was using previously.
-        # It's possible they simply upgraded from 3 to 4 and are using incompatible
-        # funcx functions. Run the migration here just in case.
-        migrate_delete_all_funcx_functions(self.config)
-
         # Set the version
         self.config['general']['version'] = str(self.version)
         log.info(f'Setting Version {self.version}')
@@ -78,13 +73,3 @@ def migrate_gladier(config):
 def panic_print(message):
     """Print a message to console for the user to see. The message must be URGENT."""
     print(message)
-
-
-def migrate_delete_all_funcx_functions(config):
-    """FuncX changed servers from v0.0.5 to v0.2.4/v0.3.0. Simply delete all functions
-    to upgrade to the latest version. The new version of funcx will re-register them."""
-    for section in config.sections():
-        for option in config[section]:
-            if option.endswith('_funcx_id') or option.endswith('_funcx_id_checksum'):
-                log.debug(f'Deleting {option}')
-                del config[section][option]

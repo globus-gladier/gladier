@@ -1,5 +1,4 @@
 from gladier.tests.test_data.gladier_mocks import MockGladierClient
-from gladier.managers import FlowsManager
 
 
 def test_get_input(logged_in):

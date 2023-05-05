@@ -15,7 +15,7 @@ import gladier.utils.automate
 import gladier.utils.name_generation
 import gladier.storage.migrations
 import gladier.utils.tool_alias
-import gladier.utils.funcx_login_manager
+import gladier.managers.compute_login_manager
 import gladier.exc
 import gladier.version
 
@@ -61,8 +61,8 @@ class FlowsManager(ServiceManager):
                             future version.
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
-    :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results in 404.
-                            Behavior is disabled if an explicit flow_id is specified.
+    :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results
+                            in 404. Behavior is disabled if an explicit flow_id is specified.
 
     When used with a Gladier Client, following items will be auto-configured and should not be
     set explicitly in the constructor:
@@ -386,7 +386,7 @@ class FlowsManager(ServiceManager):
 
     def get_status(self, run_id):
         """
-        Get the current status of the automate flow. Attempts to do additional work on funcx
+        Get the current status of the automate flow. Attempts to do additional work on compute
         functions to deserialize any exception output.
 
         :param run_id: The globus action UUID used for this flow. The Automate flow id is

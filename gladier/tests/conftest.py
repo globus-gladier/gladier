@@ -10,8 +10,7 @@ import globus_automate_client
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
-from gladier import version
-from gladier.managers import FuncXManager
+from gladier.managers import ComputeManager
 from gladier.storage.config import GladierConfig
 from gladier.managers.login_manager import CallbackLoginManager
 
@@ -31,18 +30,6 @@ def mock_login(monkeypatch):
 def two_step_flow():
     with open(os.path.join(data_dir, 'two_step_flow.json')) as f:
         return json.loads(f.read())
-
-
-@pytest.fixture
-def mock_version_030(monkeypatch):
-    monkeypatch.setattr(version, '__version__', '0.3.0')
-    return version.__version__
-
-
-@pytest.fixture
-def mock_version_040(monkeypatch):
-    monkeypatch.setattr(version, '__version__', '0.4.0a1')
-    return version.__version__
 
 
 @pytest.fixture(autouse=True)
@@ -78,13 +65,13 @@ def mock_flows_client(monkeypatch, globus_response):
 
 
 @pytest.fixture(autouse=True)
-def mock_funcx_client(monkeypatch):
-    """Ensure there are no calls out to the Funcx Client"""
-    mock_fx_cli = Mock()
-    mock_fx_cli.register_function.return_value = 'mock_funcx_id'
-    monkeypatch.setattr(FuncXManager, 'funcx_client',
-                        PropertyMock(return_value=mock_fx_cli))
-    return mock_fx_cli
+def mock_compute_client(monkeypatch):
+    """Ensure there are no calls out to the Compute Client"""
+    mock_compute_cli = Mock()
+    mock_compute_cli.register_function.return_value = 'mock_funcx_id'
+    monkeypatch.setattr(ComputeManager, 'compute_client',
+                        PropertyMock(return_value=mock_compute_cli))
+    return mock_compute_cli
 
 
 @pytest.fixture

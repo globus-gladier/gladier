@@ -8,7 +8,7 @@ from gladier.utils.flow_generation import generate_tool_flow, combine_tool_flows
 def generate_flow_definition(_cls=None, *, modifiers=None):
     """Class decorators for automatically generating flows on either
     GladierBaseTools or GladierClients. For GladierBaseTools, this generates
-    a simple flow containing all attached funcx_functions, applying any modifiers
+    a simple flow containing all attached compute_functions, applying any modifiers
     for custom values the GladierBaseTool needs to run. For GladierClients, this
     instead stitches together all flows defined on GladierBaseTools, in the order
     they are defined for each BaseTool. ``modifiers`` are only allowed on
@@ -16,8 +16,8 @@ def generate_flow_definition(_cls=None, *, modifiers=None):
 
     Example:
     @generate_flow_definition(modifiers={
-        my_funcx_function: {
-            'payload': '$.MyFuncxFunction.details.result',
+        my_compute_function: {
+            'payload': '$.MycomputeFunction.details.result',
             'endpoint': 'funcx_endpoint_non_compute'
         }
     })

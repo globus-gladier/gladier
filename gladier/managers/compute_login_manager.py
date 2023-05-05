@@ -9,11 +9,11 @@ from globus_compute_sdk import Client
 log = logging.getLogger(__name__)
 
 
-class FuncXLoginManager:
+class ComputeLoginManager:
     """
-    Implements the funcx.sdk.login_manager.protocol.LoginManagerProtocol class.
+    Implements the globus_compute_sdk.sdk.login_manager.protocol.LoginManagerProtocol class.
 
-    https://github.com/funcx-faas/funcX/blob/main/funcx_sdk/funcx/sdk/login_manager/protocol.py#L18
+    https://github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/sdk/login_manager/protocol.py  # noqa
     """
     SCOPES = [
         Client.FUNCX_SCOPE,

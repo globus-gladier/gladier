@@ -34,7 +34,7 @@ class NoFlowRegistered(RegistrationException):
 
 
 class ObsoleteException(RegistrationException):
-    """A funcx function or flow has local changes not reflected
+    """A compute function or flow has local changes not reflected
     in the currently registered id"""
     pass
 
@@ -45,7 +45,7 @@ class FlowObsolete(ObsoleteException):
 
 
 class FunctionObsolete(ObsoleteException):
-    """A local funcx function definition has changed and needs to be updated"""
+    """A local compute function definition has changed and needs to be updated"""
     pass
 
 

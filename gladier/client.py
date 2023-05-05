@@ -9,7 +9,7 @@ from gladier.managers.login_manager import (
     BaseLoginManager, CallbackLoginManager, AutoLoginManager
 )
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
-from gladier.managers import FlowsManager, FuncXManager
+from gladier.managers import FlowsManager, ComputeManager
 
 from gladier.storage.tokens import GladierSecretsConfig
 from gladier.storage.config import GladierConfig
@@ -20,7 +20,7 @@ import gladier.utils.automate
 import gladier.utils.name_generation
 import gladier.storage.migrations
 import gladier.utils.tool_alias
-import gladier.utils.funcx_login_manager
+import gladier.managers.compute_login_manager
 import gladier.exc
 import gladier.version
 log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 
 class GladierBaseClient(object):
     """
-    The Gladier Client ties together commonly used funcx functions
+    The Gladier Client ties together commonly used compute functions
     and basic flows with auto-registration tools to make complex tasks
     easy to automate.
 
@@ -135,9 +135,9 @@ class GladierBaseClient(object):
         if not self.flows_manager.flow_title:
             self.flows_manager.flow_title = f'{self.__class__.__name__} flow'
 
-        self.funcx_manager = FuncXManager(auto_registration=auto_registration)
+        self.compute_manager = ComputeManager(auto_registration=auto_registration)
 
-        for man in (self.flows_manager, self.funcx_manager):
+        for man in (self.flows_manager, self.compute_manager):
             man.set_storage(self.storage, replace=False)
             man.set_login_manager(self.login_manager, replace=False)
             man.register_scopes()
@@ -198,7 +198,7 @@ class GladierBaseClient(object):
         """
         The current list of scopes required by this class. This changes if there
         is a flow configured in the local Gladier config file, otherwise it will
-        only consist of basic scopes for running the funcx client/flows client/etc
+        only consist of basic scopes for running the compute client/flows client/etc
 
         :return: list of globus scopes required by this client
         """
@@ -323,31 +323,31 @@ class GladierBaseClient(object):
         self.sync_flow()
         return self.flows_manager.run_flow(flow_input=combine_flow_input, **flow_kwargs)
 
-    def get_funcx_function_ids(self):
-        """Get all funcx function ids for this run, registering them if there are no ids
+    def get_compute_function_ids(self):
+        """Get all compute function ids for this run, registering them if there are no ids
         stored in the local Gladier config file OR the stored function id checksums do
         not match the actual functions provided on each of the Gladier tools. If register
         is False, no changes to the config will be made and exceptions will be raised instead.
 
         :raises: gladier.exc.RegistrationException
         :raises: gladier.exc.FunctionObsolete
-        :returns: a dict of function ids where keys are names and values are funcX function ids.
+        :returns: a dict of function ids where keys are names and values are compute function ids.
         """
-        funcx_ids = dict()
+        compute_ids = dict()
         for tool in self.tools:
             log.debug(f'Checking functions for {tool}')
-            funcx_funcs = getattr(tool, 'funcx_functions', [])
-            if not funcx_funcs:
-                log.warning(f'Tool {tool} did not define any funcX functions!')
-            if not funcx_funcs and not isinstance(funcx_funcs, Iterable):
+            compute_funcs = getattr(tool, 'funcx_functions', [])
+            if not compute_funcs:
+                log.warning(f'Tool {tool} did not define any compute functions!')
+            if not compute_funcs and not isinstance(compute_funcs, Iterable):
                 raise gladier.exc.DeveloperException(
                     f'Attribute "funcx_functions" on {tool} needs to be an iterable! Found '
-                    f'{type(funcx_funcs)}')
+                    f'{type(compute_funcs)}')
 
-            for func in funcx_funcs:
-                name, val = self.funcx_manager.validate_function(tool, func)
-                funcx_ids[name] = val
-        return funcx_ids
+            for func in compute_funcs:
+                name, val = self.compute_manager.validate_function(tool, func)
+                compute_ids[name] = val
+        return compute_ids
 
     def get_flow_id(self) -> str:
         """
@@ -357,7 +357,7 @@ class GladierBaseClient(object):
 
     def get_input(self) -> dict:
         """
-        Get funcx function ids, funcx endpoints, and each tool's default input. Default
+        Get compute function ids, compute endpoints, and each tool's default input. Default
         input may not be enough to run the flow. For example if a tool does processing on a
         local filesystem, the file will always need to be provided by the user when calling
         run_flow().
@@ -367,7 +367,7 @@ class GladierBaseClient(object):
         :return: input for a flow wrapped in an 'input' dict. For example:
                  {'input': {'foo': 'bar'}}
         """
-        flow_input = self.get_funcx_function_ids()
+        flow_input = self.get_compute_function_ids()
         for tool in self.tools:
             # conflicts = set(flow_input.keys()).intersection(set(tool.flow_input))
             # if conflicts:
@@ -404,7 +404,7 @@ class GladierBaseClient(object):
 
     def get_status(self, action_id: str):
         """
-        Get the current status of the automate flow. Attempts to do additional work on funcx
+        Get the current status of the automate flow. Attempts to do additional work on compute
         functions to deserialize any exception output.
 
         :param action_id: The globus action UUID used for this flow. The Automate flow id is

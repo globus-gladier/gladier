@@ -5,65 +5,65 @@ from gladier.base import GladierBaseTool
 from gladier.managers.service_manager import ServiceManager
 from globus_compute_sdk import serialize, Client
 
-import gladier.utils.funcx_login_manager
+import gladier.managers.compute_login_manager
 
 log = logging.getLogger(__name__)
 
 
-class FuncXManager(ServiceManager):
+class ComputeManager(ServiceManager):
 
     def __init__(self, auto_registration: bool = True, **kwargs):
         super().__init__(**kwargs)
         self.auto_registration = auto_registration
 
     def get_scopes(self):
-        return gladier.utils.funcx_login_manager.FuncXLoginManager.SCOPES
+        return gladier.managers.compute_login_manager.ComputeLoginManager.SCOPES
 
     @property
-    def funcx_client(self):
+    def compute_client(self):
         """
-        :return: an authorized funcx client
+        :return: an authorized compute client
         """
-        if getattr(self, '__funcx_client', None) is not None:
-            return self.__funcx_client
+        if getattr(self, '__compute_client', None) is not None:
+            return self.__compute_client
 
-        funcx_login_manager = gladier.utils.funcx_login_manager.FuncXLoginManager(
+        compute_login_manager = gladier.managers.compute_login_manager.ComputeLoginManager(
             authorizers=self.login_manager.get_manager_authorizers()
         )
 
-        self.__funcx_client = Client(login_manager=funcx_login_manager)
-        return self.__funcx_client
+        self.__compute_client = Client(login_manager=compute_login_manager)
+        return self.__compute_client
 
     @staticmethod
-    def get_funcx_function_name(funcx_function):
+    def get_compute_function_name(compute_function):
         """
-        Generate a function name given a funcx function. These function namse are used to refer
-        to funcx functions within the config. There is no guarantee of uniqueness for function
+        Generate a function name given a compute function. These function namse are used to refer
+        to compute functions within the config. There is no guarantee of uniqueness for function
         names.
 
         :return: human readable string identifier for a function (intended for a gladier.cfg file)
         """
-        return f'{funcx_function.__name__}_funcx_id'
+        return f'{compute_function.__name__}_function_id'
 
     @staticmethod
-    def get_funcx_function_checksum(funcx_function):
+    def get_compute_function_checksum(compute_function):
         """
-        Get the SHA256 checksum of a funcx function
-        :return: sha256 hex string of a given funcx function
+        Get the SHA256 checksum of a compute function
+        :return: sha256 hex string of a given compute function
         """
         fxs = serialize.ComputeSerializer()
-        serialized_func = fxs.serialize(funcx_function).encode()
+        serialized_func = fxs.serialize(compute_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
 
     def validate_function(self, tool: GladierBaseTool, function):
-        fid_name = gladier.utils.name_generation.get_funcx_function_name(function)
+        fid_name = gladier.utils.name_generation.get_compute_function_name(function)
         fid = self.storage.get_value(fid_name)
-        checksum = self.get_funcx_function_checksum(function)
-        checksum_name = gladier.utils.name_generation.get_funcx_function_checksum_name(function)
+        checksum = self.get_compute_function_checksum(function)
+        checksum_name = gladier.utils.name_generation.get_compute_function_checksum_name(function)
         try:
             if not fid_name:
                 raise gladier.exc.RegistrationException(
-                    f'Tool {tool.__class__.__name__} missing funcx registration for {fid_name}')
+                    f'Tool {tool.__class__.__name__} missing compute registration for {fid_name}')
             if not self.storage.get_value(checksum_name):
                 raise gladier.exc.RegistrationException(
                     f'Tool {tool.__class__.__name__} with function {fid_name} '
@@ -76,7 +76,7 @@ class FuncXManager(ServiceManager):
             if self.auto_registration is True:
                 log.info(f'{tool.__class__.__name__}: function {function.__name__} is out of date')
                 fid = self.register_function(tool, function)
-                fx_name = gladier.utils.name_generation.get_funcx_function_name(function)
+                fx_name = gladier.utils.name_generation.get_compute_function_name(function)
                 self.storage.set_value(fx_name, fid)
                 self.storage.set_value(checksum_name, checksum)
             else:
@@ -85,6 +85,6 @@ class FuncXManager(ServiceManager):
             return fid_name, fid
 
     def register_function(self, tool: GladierBaseTool, function):
-        """Register the functions with funcx. Ids are saved in the local gladier.cfg"""
+        """Register the functions with Globus Compute."""
         log.info(f'{tool.__class__.__name__}: registering function {function.__name__}')
-        return self.funcx_client.register_function(function)
+        return self.compute_client.register_function(function)

@@ -103,8 +103,9 @@ class ToolChain:
             flow_def = tool.get_flow_definition()
             if flow_def is None:
                 raise FlowGenException(f'Tool {tool} did not set .flow_definition attribute or set '
-                                       f'@generate_flow_definition (funcx functions only). Please '
-                                       f'set a flow definition for {tool.__class__.__name__}.')
+                                       '@generate_flow_definition (comptue functions only).'
+                                       'Please set a flow definition for'
+                                       f'{tool.__class__.__name__}.')
 
             new_states = set(flow_def.get('States'))
             conflicts = states & new_states
