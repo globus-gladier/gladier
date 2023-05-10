@@ -1,28 +1,30 @@
+import logging
 import os
 import pathlib
-import logging
+import typing as t
 from collections.abc import Iterable
 
+from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
+
+import gladier
+import gladier.exc
+import gladier.managers.compute_login_manager
+import gladier.storage.config
+import gladier.storage.migrations
+import gladier.utils.automate
+import gladier.utils.dynamic_imports
+import gladier.utils.name_generation
+import gladier.utils.tool_alias
+import gladier.version
 from gladier.base import GladierBaseTool
+from gladier.managers import ComputeManager, FlowsManager
 from gladier.managers.login_manager import (
-    BaseLoginManager,
     AutoLoginManager,
+    BaseLoginManager,
     ConfidentialClientLoginManager,
 )
-from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
-from gladier.managers import FlowsManager, ComputeManager
-
+from gladier.state_models import GladierBaseState
 from gladier.storage.tokens import GladierSecretsConfig
-import gladier
-import gladier.storage.config
-import gladier.utils.dynamic_imports
-import gladier.utils.automate
-import gladier.utils.name_generation
-import gladier.storage.migrations
-import gladier.utils.tool_alias
-import gladier.managers.compute_login_manager
-import gladier.exc
-import gladier.version
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ class GladierBaseClient(object):
     deploying and running flows.
 
     * glaider_tools (default: [])
-       * A list of Gladier Tools to build a working flow_defitinion. Each tool's minimum input
+       * A list of Gladier Tools to build a working flow_definition. Each tool's minimum input
          must be satisfied prior to running the flow. Can be used with the
          @generate_flow_definition decorator to automatically chain together flow definitions
          present on each tool in linear order.
@@ -112,8 +114,12 @@ class GladierBaseClient(object):
         auto_registration: bool = True,
         login_manager: BaseLoginManager = None,
         flows_manager: FlowsManager = None,
+        start_at: t.Optional[GladierBaseState] = None,
     ):
+
+        self.start_at = start_at
         self._tools = None
+        self.flow_definition: t.Optional[t.Union[t.Dict, str]] = None
         self.storage = self._determine_storage()
         self.login_manager = login_manager or self._determine_login_manager(
             self.storage
@@ -203,7 +209,10 @@ class GladierBaseClient(object):
             raise gladier.exc.ConfigException(
                 f"{default_inst} is not of type " f"{gladier.base.GladierBaseTool}"
             )
-        elif isinstance(tool_ref, gladier.base.GladierBaseTool):
+        elif isinstance(
+            tool_ref,
+            (gladier.base.GladierBaseTool, gladier.state_models.GladierBaseState),
+        ):
             return tool_ref
         else:
             cls_inst = tool_ref()
@@ -289,7 +298,11 @@ class GladierBaseClient(object):
 
         :return: A dict of the Automate Flow definition
         """
-        if not getattr(self, "flow_definition", None):
+
+        if self.flow_definition is None and self.start_at is not None:
+            self.flow_definition = self.start_at.get_flow_definition()
+
+        if self.flow_definition is None:
             raise gladier.exc.ConfigException(
                 f'"flow_definition" was not set on ' f"{self.__class__.__name__}"
             )

@@ -1,11 +1,10 @@
-import logging
 import hashlib
-
-from gladier.base import GladierBaseTool
-from gladier.managers.service_manager import ServiceManager
-from globus_compute_sdk import serialize, Client
+import logging
 
 import gladier.managers.compute_login_manager
+from gladier.base import GladierBaseTool
+from gladier.managers.service_manager import ServiceManager
+from globus_compute_sdk import Client, serialize
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class ComputeManager(ServiceManager):
     @staticmethod
     def get_compute_function_name(compute_function):
         """
-        Generate a function name given a compute function. These function namse are used to refer
+        Generate a function name given a compute function. These function names are used to refer
         to compute functions within the config. There is no guarantee of uniqueness for function
         names.
 
