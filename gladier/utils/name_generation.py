@@ -27,7 +27,7 @@ def get_compute_function_name(compute_function):
 
     :return: human readable string identifier for a function (intended for a gladier.cfg file)
     """
-    return f'{compute_function.__name__}_funcx_id'
+    return f'{compute_function.__name__}_function_id'
 
 
 def get_compute_function_checksum_name(compute_function):

@@ -30,7 +30,7 @@ class FlowModifiers:
     def __init__(self, tools, modifiers, cls=None):
         self.cls = cls
         self.tools = tools
-        self.functions = [func for tool in tools for func in tool.funcx_functions]
+        self.functions = [func for tool in tools for func in tool.compute_functions]
         self.function_names = [f.__name__ for f in self.functions]
         self.state_names = [get_compute_flow_state_name(f) for f in self.functions]
         self.modifiers = modifiers

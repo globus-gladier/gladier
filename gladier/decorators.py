@@ -18,14 +18,14 @@ def generate_flow_definition(_cls=None, *, modifiers=None):
     @generate_flow_definition(modifiers={
         my_compute_function: {
             'payload': '$.MycomputeFunction.details.result',
-            'endpoint': 'funcx_endpoint_non_compute'
+            'endpoint': 'compute_endpoint'
         }
     })
 
     Any modifier values without a preceding '$.' will be replaced with
     a path to general input. The above would result in the following
-    for ``funcx_endpoint_non_compute`` above:
-        '$.input.funcx_endpoint_non_compute'
+    for ``compute_endpoint`` above:
+        '$.input.compute_endpoint'
 
     :raises FlowGenException: For a variety of invalid inputs"""
     modifiers = modifiers or dict()

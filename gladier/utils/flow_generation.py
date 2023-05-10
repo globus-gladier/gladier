@@ -35,7 +35,7 @@ def _get_duplicate_functions(compute_functions: typing.List[callable]):
 def generate_tool_flow(tool: GladierBaseTool, modifiers):
     """Generate a flow definition for a Gladier Tool based on the defined ``compute_functions``.
     Accepts modifiers for compute functions"""
-    duplicate_functions = _get_duplicate_functions(tool.funcx_functions)
+    duplicate_functions = _get_duplicate_functions(tool.compute_functions)
     if duplicate_functions:
         raise FlowGenException(f'Tool {tool} contains duplicate function names: '
                                f'{duplicate_functions}')
@@ -43,7 +43,7 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
     flow_moder = FlowModifiers([tool], modifiers, cls=tool)
 
     tools = ToolChain()
-    for fx_func in tool.funcx_functions:
+    for fx_func in tool.compute_functions:
         tools.chain_state(*generate_compute_flow_state(fx_func))
 
     flow = tools.flow_definition
@@ -64,7 +64,7 @@ def generate_compute_flow_state(compute_function):
         'ExceptionOnActionFailure': False,
         'Parameters': {
             'tasks': [{
-                'endpoint.$': '$.input.funcx_endpoint_compute',
+                'endpoint.$': '$.input.compute_endpoint',
                 'function.$': f'$.input.{get_compute_function_name(compute_function)}',
                 'payload.$': '$.input',
             }]

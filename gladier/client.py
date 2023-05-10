@@ -286,7 +286,7 @@ class GladierBaseClient(object):
                 "input": {
                     "args": "cat /proc/version",
                     "capture_output": True,
-                    "funcx_endpoint_compute": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+                    "compute_endpoint": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
                 }
             }
             my_client.run_flow(myinput, label='Check Version', tags=['version', 'POSIX'])
@@ -336,12 +336,12 @@ class GladierBaseClient(object):
         compute_ids = dict()
         for tool in self.tools:
             log.debug(f'Checking functions for {tool}')
-            compute_funcs = getattr(tool, 'funcx_functions', [])
+            compute_funcs = getattr(tool, 'compute_functions', [])
             if not compute_funcs:
                 log.warning(f'Tool {tool} did not define any compute functions!')
             if not compute_funcs and not isinstance(compute_funcs, Iterable):
                 raise gladier.exc.DeveloperException(
-                    f'Attribute "funcx_functions" on {tool} needs to be an iterable! Found '
+                    f'Attribute "compute_functions" on {tool} needs to be an iterable! Found '
                     f'{type(compute_funcs)}')
 
             for func in compute_funcs:
