@@ -47,6 +47,14 @@ def insure_parameter_values(
 ) -> JSONObject:
     ret_obj: JSONObject = {}
     for k, v in params.items():
+        # If the value is a pydantic model (or anything else supporting a dict() method)
+        # unmarshall it into a dict to be used in the parameters
+        if v is not None:
+            try:
+                v = v.dict()
+            except AttributeError:
+                pass
+
         if isinstance(v, str):
             if k.endswith(".$") and not v.startswith("$."):
                 v = "$." + v

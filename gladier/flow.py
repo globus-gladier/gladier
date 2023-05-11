@@ -29,18 +29,37 @@ class GladierFlowRun:
         self._flows_client = create_flows_client()
         return self._flows_client
 
-    def is_complete(self, refresh_status=True):
+    def is_complete(self, refresh_status=True) -> bool:
         if refresh_status:
             self.poll_status()
         if self.last_status is not None:
             return self.last_status.get("status") in {"SUCCEEDED", "FAILED"}
 
-    def poll_status(self):
+    def poll_status(self) -> JSONObject:
         if not self.is_complete(refresh_status=False):
             self.last_status = self.flows_client.flow_action_status(
                 self.flow_manager.flow_id, None, self.run_id
             )
         return self.last_status
+
+    def wait_for_completion(
+        self,
+        max_wait_time: t.Optional[int] = None,
+        poll_interval: int = 5,
+        poll_callback: t.Optional[t.Callable[[JSONObject], bool]] = None,
+    ) -> JSONObject:
+        start_time = time.time()
+        while not self.is_complete() and (
+            max_wait_time is None or start_time + max_wait_time < time.time()
+        ):
+            if poll_callback is not None:
+                if poll_callback(self.last_status):
+                    break
+            time.sleep(poll_interval)
+        return self.last_status
+
+    def globus_web_app_url(self):
+        return f"https://app.globus.org/runs/{self.run_id}"
 
 
 class GladierFlow:
