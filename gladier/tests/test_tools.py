@@ -6,27 +6,27 @@ def test_get_flow_input():
     tool = MockToolWithRequirements()
     assert tool.get_flow_input() == {
         'default_var': 'is a thing!',
-        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
+        'compute_endpoint': 'my_compute_endpoint',
     }
 
 
 def test_get_required_input():
     tool = MockToolWithRequirements()
     assert tool.get_required_input() == [
-        'funcx_endpoint_non_compute', 'required_var',
+        'compute_endpoint', 'required_var',
     ]
 
 
 def test_alias_get_required_input():
     tool = MockToolWithRequirements(alias='MyAlias', alias_class=StateSuffixVariablePrefix)
     assert tool.get_required_input() == [
-        'funcx_endpoint_non_compute', 'my_alias_required_var',
+        'compute_endpoint', 'my_alias_required_var',
     ]
 
 
 def test_alias_get_flow_input():
     tool = MockToolWithRequirements(alias='MyAlias', alias_class=StateSuffixVariablePrefix)
     assert tool.get_flow_input() == {
-        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
+        'compute_endpoint': 'my_compute_endpoint',
         'my_alias_default_var': 'is a thing!'
     }

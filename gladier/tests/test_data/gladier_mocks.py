@@ -20,15 +20,15 @@ class MockTool(GladierBaseTool):
             'MockFunc': {
                 'Comment': 'This func says the thing!',
                 'Type': 'Action',
-                'ActionUrl': 'https://api.funcx.org/automate',
+                'ActionUrl': 'https://compute.actions.globus.org',
                 'ActionScope': 'https://auth.globus.org/scopes/'
                                'facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2',
                 'ExceptionOnActionFailure': False,
                 'Parameters': {
                     'tasks': [
                         {
-                            'endpoint.$': '$.input.funcx_endpoint_non_compute',
-                            'func.$': '$.input.hello_world_funcx_id',
+                            'endpoint.$': '$.input.compute_endpoint',
+                            'func.$': '$.input.hello_world_function_id',
                             'payload.$': '$.input'
                         }
                     ]
@@ -41,33 +41,33 @@ class MockTool(GladierBaseTool):
     }
 
     required_input = [
-        'funcx_endpoint_non_compute'
+        'compute_endpoint'
     ]
 
     flow_input = {
-        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid'
+        'compute_endpoint': 'my_compute_endpoint'
     }
 
-    funcx_functions = [
+    compute_functions = [
         mock_func,
     ]
 
 
 @generate_flow_definition
 class GeneratedTool(GladierBaseTool):
-    funcx_functions = [mock_func]
+    compute_functions = [mock_func]
 
 
 class MockToolWithRequirements(GladierBaseTool):
     required_input = [
-        'funcx_endpoint_non_compute',
+        'compute_endpoint',
         'required_var'
     ]
     flow_input = {
-        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid',
+        'compute_endpoint': 'my_compute_endpoint',
         'default_var': 'is a thing!'
     }
-    funcx_functions = [
+    compute_functions = [
         mock_func,
     ]
 
@@ -81,13 +81,12 @@ class MockToolThreeStates(GladierBaseTool):
             'StateOne': {
                 'Comment': 'Do the first thing',
                 'Type': 'Action',
-                'ActionUrl': 'https://api.funcx.org/automate',
-                'ActionScope': 'https://auth.globus.org/scopes/funcx/automate2',
+                'ActionUrl': 'https://compute.actions.globus.org',
                 'ExceptionOnActionFailure': False,
                 'Parameters': {
                     'tasks': [{
-                        'endpoint.$': '$.input.funcx_endpoint_non_compute',
-                        'func.$': '$.input.hello_world_funcx_id',
+                        'endpoint.$': '$.input.compute_endpoint',
+                        'func.$': '$.input.hello_world_function_id',
                         'payload.$': '$.input.good_input',
                     }]
                 },
@@ -118,11 +117,11 @@ class MockToolThreeStates(GladierBaseTool):
     }
 
     required_input = [
-        'funcx_endpoint_non_compute'
+        'compute_endpoint'
     ]
 
     flow_input = {
-        'funcx_endpoint_non_compute': 'my_non_compute_endpoint_uuid'
+        'compute_endpoint': 'my_compute_endpoint'
     }
 
 
