@@ -10,18 +10,26 @@ from gladier.managers import CallbackLoginManager, FlowsManager
 
 from .flow import GladierFlow, GladierFlowRun
 from .helpers import JSONList, JSONObject, JSONValue
+from .iterators import (
+    glob_iterator,
+    globus_collection_iterator,
+    templated_flow_input_generator,
+)
 from .state_models import GladierActionState, GladierBaseState, GladierPassState
 
 _nameables = (
     x.__name__
     for x in (
-        GladierBaseClient,
         GladierBaseTool,
+        GladierBaseClient,
         generate_flow_definition,
+        CallbackLoginManager,
         FlowsManager,
         GladierFlow,
         GladierFlowRun,
-        CallbackLoginManager,
+        glob_iterator,
+        globus_collection_iterator,
+        templated_flow_input_generator,
         GladierActionState,
         GladierBaseState,
         GladierPassState,

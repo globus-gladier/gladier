@@ -30,11 +30,12 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-funcx = ">=1.0.2, <2.0.0"
 globus-automate-client = ">=0.13,<0.17"
 packaging = ">=21.3"
 fair-research-login = ">=0.2.6"
 pydantic = "^1"
+globus-compute-sdk = "^2"
+funcx = "^2.0.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7"
