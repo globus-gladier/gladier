@@ -73,3 +73,15 @@ class GlobusComputeStep(GladierActionState):
         flow_definition = super().get_flow_definition()
 
         return flow_definition
+
+    def set_call_params_from_self_model(
+        self,
+        model_prop_names: t.Union[t.Container[str], t.Iterable[str]],
+        omit_Nones=False,
+    ) -> JSONObject:
+        self.function_parameters = {
+            k: v
+            for k, v in self.dict().items()
+            if (k in model_prop_names and (not omit_Nones or v is not None))
+        }
+        return self.function_parameters
