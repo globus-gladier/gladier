@@ -137,15 +137,6 @@ class GladierStateWithResultPath(GladierBaseState, ABC):
         return flow_definition
 
 
-class GladierPassState(
-    GladierStateWithNextOrEnd,
-    GladierStateWithParametersOrInputPath,
-    GladierStateWithResultPath,
-):
-    state_type: str = "Pass"
-
-    def get_flow_definition(self) -> JSONObject:
-        return super().get_flow_definition()
 
 
 class GladierActionState(

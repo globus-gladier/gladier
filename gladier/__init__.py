@@ -15,7 +15,13 @@ from .iterators import (
     globus_collection_iterator,
     templated_flow_input_generator,
 )
-from .state_models import GladierActionState, GladierBaseState, GladierPassState
+from .state_models import (
+    GladierActionState,
+    GladierBaseState,
+    GladierStateWithNextOrEnd,
+    GladierStateWithParametersOrInputPath,
+    GladierStateWithResultPath,
+)
 
 _nameables = (
     x.__name__
@@ -32,7 +38,9 @@ _nameables = (
         templated_flow_input_generator,
         GladierActionState,
         GladierBaseState,
-        GladierPassState,
+        GladierStateWithNextOrEnd,
+        GladierStateWithParametersOrInputPath,
+        GladierStateWithResultPath,
     )
     if hasattr(x, "__name__")
 )
