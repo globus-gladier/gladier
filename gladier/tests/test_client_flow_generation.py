@@ -292,3 +292,12 @@ def test_flow_generation_edge_case(logged_in):
     assert 'End' in MyTool.flow_definition['States']["1"].keys()
     assert 'End' in MyTool2.flow_definition['States']["2"].keys()
     MyClient()
+
+
+def test_flow_generation_legacy_funcx_tools(logged_in):
+
+    @generate_flow_definition
+    class LegacyFuncXTool(GladierBaseTool):
+        funcx_functions = [lambda x: x]
+
+    assert LegacyFuncXTool().compute_functions

@@ -32,9 +32,22 @@ def _get_duplicate_functions(compute_functions: typing.List[callable]):
     return [f for f in func_names if f in tracked_set or tracked_set.add(f)]
 
 
+def _fix_old_tools(tool):
+    funcx_functions = getattr(tool, 'funcx_functions', None)
+    compute_functions = getattr(tool, 'compute_functions', None)
+
+    if funcx_functions and not compute_functions:
+        log.warning(f'Tool {tool} defines attributue "funcx_functions" which has now been '
+                    'changed to "compute_functions". Automatically configuring compute_functions '
+                    f'for new tool. Please update the old tool {tool}')
+        setattr(tool, 'compute_functions', funcx_functions)
+
+
 def generate_tool_flow(tool: GladierBaseTool, modifiers):
     """Generate a flow definition for a Gladier Tool based on the defined ``compute_functions``.
     Accepts modifiers for compute functions"""
+    _fix_old_tools(tool)
+
     duplicate_functions = _get_duplicate_functions(tool.compute_functions)
     if duplicate_functions:
         raise FlowGenException(f'Tool {tool} contains duplicate function names: '
