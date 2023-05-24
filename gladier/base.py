@@ -12,7 +12,7 @@ class GladierBaseTool(object):
     flow_input = dict()
     flow_transition_states = []
     required_input = []
-    alias_exempt = ['compute_endpoint',]
+    alias_exempt = ['compute_endpoint']
     compute_endpoints = dict()
     compute_functions = []
 

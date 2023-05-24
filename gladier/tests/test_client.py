@@ -34,7 +34,7 @@ def test_get_input_from_priv_config(logged_in, mock_secrets_config):
     }
 
 
-def test_pub_config_overrides_priv(logged_in, mock_config, mock_secrets_config):
+def test_pub_config_overrides_priv(logged_in, storage, mock_secrets_config):
     cli = MockGladierClient()
     cli.storage.set_value('compute_endpoint', 'my_ep_uuid')
     assert cli.get_input() == {'input': {

@@ -1,6 +1,7 @@
 import os
 import copy
 import json
+import configparser
 from unittest.mock import Mock, PropertyMock
 import pytest
 import fair_research_login
@@ -11,7 +12,6 @@ import globus_automate_client
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
 from gladier.managers import ComputeManager
-from gladier.storage.config import GladierConfig
 from gladier.managers.login_manager import CallbackLoginManager
 
 data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
@@ -33,10 +33,30 @@ def two_step_flow():
 
 
 @pytest.fixture(autouse=True)
-def mock_config(monkeypatch):
-    monkeypatch.setattr(config.GladierConfig, 'write', Mock())
-    monkeypatch.setattr(config.GladierConfig, 'read', Mock())
+def storage(monkeypatch):
+
+    class MemStorage:
+
+        def __init__(self):
+            self.data = {}
+
+    storage = MemStorage()
+
+    def read(self, filename=None):
+        self.read_dict(storage.data)
+
+    def write(self, cfg=None):
+        storage.data = dict(self)
+
+    def save(self):
+        self.write()
+
+    monkeypatch.setattr(configparser.ConfigParser, 'write', write)
+    monkeypatch.setattr(configparser.ConfigParser, 'read', read)
+    monkeypatch.setattr(config.GladierConfig, 'save', save)
+    monkeypatch.setattr(tokens.GladierSecretsConfig, 'save', save)
     cfg = tokens.GladierSecretsConfig('mock_filename', 'tokens_client_id')
+
     return cfg
 
 
@@ -111,13 +131,6 @@ def auto_login(logged_in_tokens):
         lambda scopes: {scope: globus_sdk.AccessTokenAuthorizer(scope) for scope in scopes}
     )
     return clm
-
-
-@pytest.fixture
-def storage():
-    storage = GladierConfig('TestStorage', 'test_section')
-    storage.update()
-    return storage
 
 
 @pytest.fixture
