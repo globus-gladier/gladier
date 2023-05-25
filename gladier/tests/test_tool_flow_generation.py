@@ -19,7 +19,7 @@ def test_tool_generate_basic_flow_no_mods():
     @generate_flow_definition
     class MockTool(GladierBaseTool):
         """Mock Tool"""
-        funcx_functions = [mock_func]
+        compute_functions = [mock_func]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -35,7 +35,7 @@ def test_tool_generate_multiple_states():
 
     @generate_flow_definition
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func2]
+        compute_functions = [mock_func, mock_func2]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -49,11 +49,11 @@ def test_tool_generate_multiple_states():
     assert fd['States']['MockFunc2']['End'] is True
 
 
-def test_tool_duplicate_funcx_functions():
+def test_tool_duplicate_compute_functions():
 
     @generate_flow_definition
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func]
+        compute_functions = [mock_func, mock_func]
 
     with pytest.raises(FlowGenException):
         MockTool()
@@ -71,15 +71,15 @@ def test_tool_generate_no_states():
 
 def test_tool_endpoint_mods():
     @generate_flow_definition(modifiers={
-        mock_func: {'endpoint': 'my_weirdly_named_funcx_endpoint'}
+        mock_func: {'endpoint': 'my_weirdly_named_compute_endpoint'}
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func]
+        compute_functions = [mock_func]
 
     tool = MockTool()
     fd = tool.flow_definition
     fx_ep = fd['States']['MockFunc']['Parameters']['tasks'][0]['endpoint.$']
-    assert fx_ep == '$.input.my_weirdly_named_funcx_endpoint'
+    assert fx_ep == '$.input.my_weirdly_named_compute_endpoint'
 
 
 def test_tool_custom_payload():
@@ -90,7 +90,7 @@ def test_tool_custom_payload():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func]
+        compute_functions = [mock_func]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -106,7 +106,7 @@ def test_tool_modifier_dependent_payloads():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func2]
+        compute_functions = [mock_func, mock_func2]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -121,7 +121,7 @@ def test_tool_modifier_by_func_name_payloads():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func2]
+        compute_functions = [mock_func, mock_func2]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -136,7 +136,7 @@ def test_tool_modifier_by_state_name_payloads():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func2]
+        compute_functions = [mock_func, mock_func2]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -151,7 +151,7 @@ def test_tool_modifier_custom_name_payloads():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func, mock_func2]
+        compute_functions = [mock_func, mock_func2]
 
     tool = MockTool()
     fd = tool.flow_definition
@@ -166,7 +166,7 @@ def test_tool_custom_action_url():
         }
     })
     class MockTool(GladierBaseTool):
-        funcx_functions = [mock_func]
+        compute_functions = [mock_func]
 
     tool = MockTool()
     assert tool.flow_definition['States']['MockFunc']['ActionUrl'] == \

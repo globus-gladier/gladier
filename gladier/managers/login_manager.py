@@ -130,7 +130,7 @@ class AutoLoginManager(BaseLoginManager):
 class CallbackLoginManager(BaseLoginManager):
     """
     The Callback Login Manager allows for finer grained control of auth within Gladier. Logins
-    are lazy up until Gladier attempts to make a call to the FuncX service, Flows service, or
+    are lazy up until Gladier attempts to make a call to the Compute service, Flows service, or
     tries to run a flow. Scopes for a deployed flow may be modified at any time, requiring
     a re-login with that flow scope.
 

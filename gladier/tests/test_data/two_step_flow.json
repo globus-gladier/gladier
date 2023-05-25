@@ -5,14 +5,14 @@
     "MockFunc": {
       "Comment": "Test mock function",
       "Type": "Action",
-      "ActionUrl": "https://api.funcx.org/automate",
+      "ActionUrl": "https://compute.actions.globus.org",
       "ActionScope": "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2",
       "ExceptionOnActionFailure": false,
       "Parameters": {
         "tasks": [
           {
-            "endpoint.$": "$.input.funcx_endpoint_compute",
-            "func.$": "$.input.mock_func_funcx_id",
+            "endpoint.$": "$.input.compute_endpoint",
+            "func.$": "$.input.mock_func_function_id",
             "payload.$": "$.input"
           }
         ]
@@ -24,14 +24,14 @@
     "MockFunc2": {
       "Comment": null,
       "Type": "Action",
-      "ActionUrl": "https://api.funcx.org/automate",
+      "ActionUrl": "https://compute.actions.globus.org",
       "ActionScope": "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/automate2",
       "ExceptionOnActionFailure": false,
       "Parameters": {
         "tasks": [
           {
-            "endpoint.$": "$.input.funcx_endpoint_compute",
-            "func.$": "$.input.mock_func2_funcx_id",
+            "endpoint.$": "$.input.compute_endpoint",
+            "func.$": "$.input.mock_func2_function_id",
             "payload.$": "$.input"
           }
         ]

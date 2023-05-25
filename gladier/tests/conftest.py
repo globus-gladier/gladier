@@ -1,6 +1,7 @@
 import os
 import copy
 import json
+import configparser
 from unittest.mock import Mock, PropertyMock
 import pytest
 import fair_research_login
@@ -10,9 +11,7 @@ import globus_automate_client
 
 from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
-from gladier import version
-from gladier.managers import FuncXManager
-from gladier.storage.config import GladierConfig
+from gladier.managers import ComputeManager
 from gladier.managers.login_manager import CallbackLoginManager
 
 data_dir = os.path.join(os.path.dirname(__file__), 'test_data')
@@ -33,23 +32,31 @@ def two_step_flow():
         return json.loads(f.read())
 
 
-@pytest.fixture
-def mock_version_030(monkeypatch):
-    monkeypatch.setattr(version, '__version__', '0.3.0')
-    return version.__version__
-
-
-@pytest.fixture
-def mock_version_040(monkeypatch):
-    monkeypatch.setattr(version, '__version__', '0.4.0a1')
-    return version.__version__
-
-
 @pytest.fixture(autouse=True)
-def mock_config(monkeypatch):
-    monkeypatch.setattr(config.GladierConfig, 'write', Mock())
-    monkeypatch.setattr(config.GladierConfig, 'read', Mock())
+def storage(monkeypatch):
+
+    class MemStorage:
+
+        def __init__(self):
+            self.data = {}
+
+    storage = MemStorage()
+
+    def read(self, filename=None):
+        self.read_dict(storage.data)
+
+    def write(self, cfg=None):
+        storage.data = dict(self)
+
+    def save(self):
+        self.write()
+
+    monkeypatch.setattr(configparser.ConfigParser, 'write', write)
+    monkeypatch.setattr(configparser.ConfigParser, 'read', read)
+    monkeypatch.setattr(config.GladierConfig, 'save', save)
+    monkeypatch.setattr(tokens.GladierSecretsConfig, 'save', save)
     cfg = tokens.GladierSecretsConfig('mock_filename', 'tokens_client_id')
+
     return cfg
 
 
@@ -78,13 +85,13 @@ def mock_flows_client(monkeypatch, globus_response):
 
 
 @pytest.fixture(autouse=True)
-def mock_funcx_client(monkeypatch):
-    """Ensure there are no calls out to the Funcx Client"""
-    mock_fx_cli = Mock()
-    mock_fx_cli.register_function.return_value = 'mock_funcx_id'
-    monkeypatch.setattr(FuncXManager, 'funcx_client',
-                        PropertyMock(return_value=mock_fx_cli))
-    return mock_fx_cli
+def mock_compute_client(monkeypatch):
+    """Ensure there are no calls out to the Compute Client"""
+    mock_compute_cli = Mock()
+    mock_compute_cli.register_function.return_value = 'mock_compute_function'
+    monkeypatch.setattr(ComputeManager, 'compute_client',
+                        PropertyMock(return_value=mock_compute_cli))
+    return mock_compute_cli
 
 
 @pytest.fixture
@@ -97,10 +104,10 @@ def logged_out(monkeypatch):
 @pytest.fixture
 def logged_in_tokens():
     scopes = list(flows_client.ALL_FLOW_SCOPES) + [
-        # Funcx Scope
+        # Compute Scope
         'https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all',
-        # Required by FuncX
-        'urn:globus:auth:scope:search.api.globus.org:all', 'openid',
+        # Required by Compute
+        'openid',
         # The scope we got back from 'deploying' a flow with automate (of course, this is a mock)
         mock_automate_flow_scope,
     ]
@@ -124,13 +131,6 @@ def auto_login(logged_in_tokens):
         lambda scopes: {scope: globus_sdk.AccessTokenAuthorizer(scope) for scope in scopes}
     )
     return clm
-
-
-@pytest.fixture
-def storage():
-    storage = GladierConfig('TestStorage', 'test_section')
-    storage.update()
-    return storage
 
 
 @pytest.fixture
@@ -180,8 +180,8 @@ def mock_flow_status_active():
                             'input': {
                                 'args': "echo 'Hello Custom Storage!'",
                                 'capture_output': True,
-                                'funcx_endpoint_compute': '4b116d3c-1703-4f8f-9f6f-39921e5864df',
-                                'shell_cmd_funcx_id': '60e8a10f-524b-4fe0-b125-87b243cee189'}}}},
+                                'compute_endpoint': '4b116d3c-1703-4f8f-9f6f-39921e5864df',
+                                'shell_cmd_compute_id': '60e8a10f-524b-4fe0-b125-87b243cee189'}}}},
         'display_status': 'ACTIVE',
         'flow_id': '7f324d68-3c50-4c14-b117-1aa0b30aea84',
         'flow_title': 'FlowsManager Flow',
@@ -210,8 +210,8 @@ def mock_flow_status_succeeded(mock_flow_status_active):
                                 'status': 'SUCCEEDED'},
                    'input': {'args': "echo 'Hello Custom Storage!'",
                              'capture_output': True,
-                             'funcx_endpoint_compute': '4b116d3c-1703-4f8f-9f6f-39921e5864df',
-                             'shell_cmd_funcx_id': '60e8a10f-524b-4fe0-b125-87b243cee189'}}}
+                             'compute_endpoint': '4b116d3c-1703-4f8f-9f6f-39921e5864df',
+                             'shell_cmd_function_id': '60e8a10f-524b-4fe0-b125-87b243cee189'}}}
     for item in ['status', 'display_status']:
         status[item] = 'SUCCEEDED'
     return status

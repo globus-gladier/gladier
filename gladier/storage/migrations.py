@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from packaging import version
 import logging
 import gladier.version
+import traceback
 
 log = logging.getLogger(__name__)
 
@@ -36,11 +37,6 @@ class AddVersionToConfig(ConfigMigration):
         return self.config_version is None
 
     def migrate(self):
-        # We can't be certain which version of Gladier the user was using previously.
-        # It's possible they simply upgraded from 3 to 4 and are using incompatible
-        # funcx functions. Run the migration here just in case.
-        migrate_delete_all_funcx_functions(self.config)
-
         # Set the version
         self.config['general']['version'] = str(self.version)
         log.info(f'Setting Version {self.version}')
@@ -56,9 +52,52 @@ class UpdateConfigVersion(ConfigMigration):
         self.config['general']['version'] = str(self.version)
 
 
+class UpdateFuncXFunctions(ConfigMigration):
+    """Updates from old functions which were named: my_thing_funcx_id to
+    the newer compute function names named my_thing_function_id"""
+    def is_applicable(self):
+        for section in self.config.sections():
+            for key in self.config[section].keys():
+                if key.endswith('funcx_id') and not key.count('funcx_id') > 1:
+                    return True
+
+    def migrate(self):
+        for section in self.config.sections():
+            try:
+                todelete = []
+                for key, value in self.config[section].items():
+                    if key.endswith('funcx_id') and not key.count('funcx_id') > 1:
+                        oldkey_checksum = f'{key}_checksum'
+                        newkey = key.replace('funcx_id', 'function_id')
+                        newkey_checksum = f'{newkey}_checksum'
+                        if not self.config[section].get(newkey):
+                            log.info(f'Migrating new function name {section}.{key} to '
+                                     f'{section}.{newkey}')
+                            self.config[section][newkey] = value
+                            log.info('Migrating new function checksum name '
+                                     f'{section}.{oldkey_checksum} to {section}.{newkey_checksum}')
+                            self.config[section][newkey_checksum] = \
+                                self.config[section][oldkey_checksum]
+                        todelete.append(key)
+
+                # Delete old keys
+                for oldkey in todelete:
+                    log.info(f'Deleting {section}.{oldkey}')
+                    self.config.remove_option(section, oldkey)
+                    if self.config[section].get(oldkey_checksum):
+                        log.info(f'Deleting {section}.{oldkey_checksum}')
+                        self.config.remove_option(section, oldkey_checksum)
+
+            except Exception:
+                traceback.print_exc()
+                print('Failed to migrate Gladier config. Please send us the error above!')
+                print('If you see this error again, you can try deleting ~/.gladier-secrets.cfg')
+
+
 MIGRATIONS = [
     AddVersionToConfig,
     UpdateConfigVersion,
+    UpdateFuncXFunctions,
 ]
 
 
@@ -78,13 +117,3 @@ def migrate_gladier(config):
 def panic_print(message):
     """Print a message to console for the user to see. The message must be URGENT."""
     print(message)
-
-
-def migrate_delete_all_funcx_functions(config):
-    """FuncX changed servers from v0.0.5 to v0.2.4/v0.3.0. Simply delete all functions
-    to upgrade to the latest version. The new version of funcx will re-register them."""
-    for section in config.sections():
-        for option in config[section]:
-            if option.endswith('_funcx_id') or option.endswith('_funcx_id_checksum'):
-                log.debug(f'Deleting {option}')
-                del config[section][option]

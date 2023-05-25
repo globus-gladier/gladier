@@ -1,9 +1,9 @@
 import logging
 from gladier.exc import FlowModifierException
-from gladier.utils.name_generation import get_funcx_flow_state_name
+from gladier.utils.name_generation import get_compute_flow_state_name
 
 log = logging.getLogger(__name__)
-funcx_modifiers = {'endpoint', 'payload', 'tasks'}
+compute_modifiers = {'endpoint', 'payload', 'tasks'}
 # All top level states can be modified.
 # https://globus-automate-client.readthedocs.io/en/latest/authoring_flows.html#action-state-type
 state_modifiers = {
@@ -23,16 +23,16 @@ state_modifiers = {
 
 
 class FlowModifiers:
-    supported_modifiers = state_modifiers.union(funcx_modifiers)
-    funcx_modifiers = funcx_modifiers
+    supported_modifiers = state_modifiers.union(compute_modifiers)
+    compute_modifiers = compute_modifiers
     state_modifiers = state_modifiers
 
     def __init__(self, tools, modifiers, cls=None):
         self.cls = cls
         self.tools = tools
-        self.functions = [func for tool in tools for func in tool.funcx_functions]
+        self.functions = [func for tool in tools for func in tool.compute_functions]
         self.function_names = [f.__name__ for f in self.functions]
-        self.state_names = [get_funcx_flow_state_name(f) for f in self.functions]
+        self.state_names = [get_compute_flow_state_name(f) for f in self.functions]
         self.modifiers = modifiers
         self.check_modifiers()
 
@@ -44,7 +44,7 @@ class FlowModifiers:
 
     def get_flow_state_name(self, function_identifier):
         func = self.get_function(function_identifier)
-        return get_funcx_flow_state_name(func)
+        return get_compute_flow_state_name(func)
 
     def get_state_result_path(self, state_name):
         return f'$.{state_name}.details.results'
@@ -77,8 +77,8 @@ class FlowModifiers:
 
         for modifier_name, value in state_modifiers.items():
             log.debug(f'Applying modifier "{modifier_name}", value "{value}"')
-            # If this is for a funcx task
-            if modifier_name in self.funcx_modifiers:
+            # If this is for a compute task
+            if modifier_name in self.compute_modifiers:
                 if modifier_name == 'tasks':
                     flow_state['Parameters'] = self.generic_set_modifier(
                         flow_state['Parameters'], 'tasks', value)
@@ -94,7 +94,7 @@ class FlowModifiers:
     def generic_set_modifier(self, item, mod_name, mod_value):
         if not isinstance(mod_value, str):
             if mod_value in self.functions:
-                sn = get_funcx_flow_state_name(mod_value)
+                sn = get_compute_flow_state_name(mod_value)
                 mod_value = self.get_state_result_path(sn)
         elif isinstance(mod_value, str) and not mod_value.startswith('$.'):
             if mod_value in self.function_names:

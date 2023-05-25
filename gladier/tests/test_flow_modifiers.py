@@ -13,7 +13,7 @@ def mock_func2():
 
 
 class MyTool(GladierBaseTool):
-    funcx_functions = [mock_func, mock_func2]
+    compute_functions = [mock_func, mock_func2]
 
 
 def test_basic_modifiers():

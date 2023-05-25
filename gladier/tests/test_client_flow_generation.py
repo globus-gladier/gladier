@@ -11,7 +11,7 @@ def gen_tool_func():
 @generate_flow_definition
 class GeneratedTool(GladierBaseTool):
     """Mock Tool"""
-    funcx_functions = [gen_tool_func]
+    compute_functions = [gen_tool_func]
 
 
 def test_client_flow_generation_simple(logged_in):
@@ -116,7 +116,7 @@ def test_client_tool_duplication_with_generated_defs(logged_in):
 
     @generate_flow_definition
     class Sorted(GladierBaseTool):
-        funcx_functions = [sorted]
+        compute_functions = [sorted]
 
     @generate_flow_definition
     class MyClient(GladierBaseClient):
@@ -278,17 +278,26 @@ def test_flow_generation_edge_case(logged_in):
         }
 
     @generate_flow_definition
-    class MyFuncXState(GladierBaseTool):
-        funcx_functions = [lambda x: x]
+    class MyComputeState(GladierBaseTool):
+        compute_functions = [lambda x: x]
 
     @generate_flow_definition
     class MyClient(GladierBaseClient):
         gladier_tools = [
             MyTool,
             MyTool2,
-            MyFuncXState,
+            MyComputeState,
         ]
     MyClient()
     assert 'End' in MyTool.flow_definition['States']["1"].keys()
     assert 'End' in MyTool2.flow_definition['States']["2"].keys()
     MyClient()
+
+
+def test_flow_generation_legacy_funcx_tools(logged_in):
+
+    @generate_flow_definition
+    class LegacyFuncXTool(GladierBaseTool):
+        funcx_functions = [lambda x: x]
+
+    assert LegacyFuncXTool().compute_functions

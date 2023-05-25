@@ -1,11 +1,11 @@
 from .login_manager import BaseLoginManager, AutoLoginManager, CallbackLoginManager
 from .flows_manager import FlowsManager
-from .funcx_manager import FuncXManager
+from .compute_manager import ComputeManager
 
 __all__ = [
     "BaseLoginManager", "AutoLoginManager", "CallbackLoginManager",
 
     "FlowsManager",
 
-    "FuncXManager",
+    "ComputeManager",
 ]
