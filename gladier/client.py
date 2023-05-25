@@ -60,7 +60,12 @@ class GladierBaseClient(object):
          present on each tool in linear order.
     * flow_definition (default: {})
        * An explicit flow definition to use for this client. Cannot be used with
-         @generate_flow_definition
+         @generate_flow_definition. Changes are tracked on each run, and will result
+         in a flow re-deploy on any change.
+    * flow_schema (default: {})
+       * A flow schema to accompany the flow definition. Schema is checked on each
+         run and are re-deployed if it changes. Overrides any existing schema set
+         on a given flow_manager instance unless unset.
     * secret_config_filename (default: ``~/.gladier-secrets.cfg``)
        * Storage are for Globus Tokens and general storage
     * app_name (default: 'Gladier Client')
@@ -185,12 +190,14 @@ class GladierBaseClient(object):
         if getattr(self, '_tools', None):
             return self._tools
 
-        if not getattr(self, 'gladier_tools', None) or not isinstance(self.gladier_tools, Iterable):
-            raise gladier.exc.ConfigException(
-                '"gladier_tools" must be a defined list of Gladier Tools. '
-                'Ex: ["gladier.tools.hello_world.HelloWorld"]')
+        gtools = getattr(self, 'gladier_tools', [])
+        if not gtools or not isinstance(gtools, Iterable):
+            if not self.get_flow_definition():
+                raise gladier.exc.ConfigException(
+                    '"gladier_tools" must be a defined list of Gladier Tools. '
+                    'Ex: ["gladier.tools.hello_world.HelloWorld"]')
         self._tools = [self.get_gladier_defaults_cls(gt, self.alias_class)
-                       for gt in self.gladier_tools]
+                       for gt in gtools]
         return self._tools
 
     @property
@@ -254,8 +261,17 @@ class GladierBaseClient(object):
                                           'to a sub-class of type '
                                           '"gladier.GladierBaseTool"')
 
+    def get_flow_schema(self):
+        """
+        Get the flow schema attached to this class.
+        """
+        return getattr(self, 'flow_schema', None)
+
     def sync_flow(self):
         self.flows_manager.flow_definition = self.get_flow_definition()
+        schema = self.get_flow_schema()
+        if schema:
+            self.flows_manager.flow_schema = schema
         self.flows_manager.sync_flow()
 
     def run_flow(self, flow_input=None, use_defaults=True, **flow_kwargs):

@@ -124,6 +124,15 @@ def test_flow_definition_changed(auto_login, storage):
     assert fm.flow_changed() is True
 
 
+def test_schema_changed(auto_login, storage):
+    fm = FlowsManager(flow_id='foo', login_manager=auto_login, flow_definition={'foo': 'bar'})
+    fm.storage = storage
+    fm.sync_flow()
+    assert fm.flow_changed() is False
+    fm.flow_schema = {'bar': 'baz'}
+    assert fm.flow_changed() is True
+
+
 def test_run_flow_redeploy_on_404(auto_login, storage, mock_flows_client, mock_globus_api_error):
     fm = FlowsManager(flow_definition={'foo': 'bar'}, login_manager=auto_login)
     storage.set_value('flow_id', 'pre_configured_flow')
