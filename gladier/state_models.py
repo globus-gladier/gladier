@@ -40,6 +40,19 @@ class GladierBaseState(ABC, BaseModel):
             if self.comment is not None
             else f"Flow starting at state {self.valid_state_name}"
         )
+
+        # Now, add all the children into our flow
+        # TODO: This will recurse forever if there is a loop in the flow
+        #   but, so will pydantic printing or serializing any state, so this
+        #   probably needs to be thought about at a higher level.
+        for child_state in self.get_child_states():
+            if child_state.valid_state_name not in flow["States"]:
+                child_flow = child_state.get_flow_definition()
+                for child_flow_state_name, child_flow_state_def in child_flow[
+                    "States"
+                ].items():
+                    if child_flow_state_name not in flow["States"]:
+                        flow["States"][child_flow_state_name] = child_flow_state_def
         self._flow_definition = flow
         return flow
 
@@ -80,19 +93,18 @@ class GladierStateWithNextOrEnd(GladierBaseState):
         return next_state
 
     def get_child_states(self) -> t.List[GladierBaseState]:
+        super_children = super().get_child_states()
         try:
-            return [
-                self.next_state,
-            ]
+            super_children.append(self.next_state)
         except AttributeError:
-            return []
+            pass
+        return super_children
 
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
         state_def = self.get_flow_state_dict()
         try:
             state_def["Next"] = self.next_state.valid_state_name
-            self.add_state_to_flow_definition(self.next_state)
         except AttributeError:
             state_def["End"] = True
         return flow_definition

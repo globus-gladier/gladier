@@ -114,13 +114,8 @@ class GladierFlow:
             raise ValueError(
                 "A root state must be set on the flow prior to flow generation"
             )
-        root_state: GladierBaseState = self.start_at
-        
-        def add_state_to_flow(other_state: GladierBaseState) -> None:
-            root_state.add_state_to_flow_definition(other_state)
-
-        self.traverse_flow(add_state_to_flow)
-        return root_state.get_flow_definition()
+        else:
+            return self.start_at.get_flow_definition()
 
     def get_default_flow_title(self) -> str:
         flow_def = self.get_flow_definition()
