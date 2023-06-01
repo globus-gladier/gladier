@@ -47,6 +47,37 @@ def glob_iterator(
     )
 
 
+def float_range(
+    start: float,
+    stop: float,
+    step: float,
+):
+    if step == 0:
+        raise ValueError(f"Step cannot be 0")
+    if start > stop and step > 0:
+        start, stop = stop, start
+        if step > 0:
+            step = -step
+    elif start < stop and step < 0:
+        step = -step
+    gen_val = start
+    while (gen_val < stop and step > 0) or (gen_val > stop and step < 0):
+        yield gen_val
+        gen_val += step
+
+
+def float_range_iterator(
+    start: float,
+    stop: float,
+    step: float,
+    input_template: JSONObject,
+    value_json_path: str,
+) -> t.Iterator[JSONObject]:
+    return templated_flow_input_generator(
+        float_range(start, stop, step), input_template, value_json_path
+    )
+
+
 def globus_collection_iterator(
     endpoint_id: UUIDLike,
     path: str,

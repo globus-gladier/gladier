@@ -137,8 +137,6 @@ class GladierStateWithResultPath(GladierBaseState, ABC):
         return flow_definition
 
 
-
-
 class GladierActionState(
     GladierStateWithNextOrEnd,
     GladierStateWithParametersOrInputPath,

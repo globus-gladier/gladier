@@ -14,10 +14,14 @@ class GladierFlowRun:
     def __init__(
         self,
         run_id: str,
+        flow_input: t.Optional[JSONObject] = None,
+        run_label: t.Optional[str] = None,
         flow_manager: t.Optional[GladierFlow] = None,
         flows_client: t.Optional[FlowsClient] = None,
     ):
         self.run_id = run_id
+        self.flow_input = flow_input
+        self.run_label = run_label
         self._flows_client = flows_client
         self.flow_manager = flow_manager
         self.last_status: t.Optional[JSONObject] = None
@@ -28,6 +32,12 @@ class GladierFlowRun:
             return self._flows_client
         self._flows_client = create_flows_client()
         return self._flows_client
+
+    def __str__(self) -> str:
+        rval = f"Run id {self.run_id}"
+        if self.last_status is not None:
+            rval += f" status {self.last_status.get('status')}"
+        return rval
 
     def is_complete(self, refresh_status=True) -> bool:
         if refresh_status:
@@ -100,12 +110,17 @@ class GladierFlow:
             prev_state = state
 
     def get_flow_definition(self) -> JSONObject:
-        if self.start_at is not None:
-            return self.start_at.get_flow_definition()
-        else:
+        if self.start_at is None:
             raise ValueError(
                 "A root state must be set on the flow prior to flow generation"
             )
+        root_state: GladierBaseState = self.start_at
+        
+        def add_state_to_flow(other_state: GladierBaseState) -> None:
+            root_state.add_state_to_flow_definition(other_state)
+
+        self.traverse_flow(add_state_to_flow)
+        return root_state.get_flow_definition()
 
     def get_default_flow_title(self) -> str:
         flow_def = self.get_flow_definition()
@@ -186,7 +201,13 @@ class GladierFlow:
             tags=tags,
         )
         run_id = run_result["run_id"]
-        return GladierFlowRun(run_id, flow_manager=self, flows_client=self.flows_client)
+        return GladierFlowRun(
+            run_id,
+            flow_input=flow_input,
+            run_label=run_label,
+            flow_manager=self,
+            flows_client=self.flows_client,
+        )
 
     def update_running_flows(
         self,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 
-from gladier import templated_flow_input_generator
+from gladier import float_range_iterator, templated_flow_input_generator
 
 
 def test_templated_flow_input_generator():
@@ -17,3 +17,13 @@ def test_templated_flow_input_generator():
 
     for gen, expected in zip(generated_vals, expected_vals):
         assert gen == expected
+
+
+def test_float_range_iterator():
+    template = {}
+    value_json_path = "$.the_value"
+    start, stop, step = 0, 1, 0.1
+    generated_vals = float_range_iterator(start, stop, step, template, value_json_path)
+
+    vals_list = list(generated_vals)
+    assert len(vals_list) == int((stop - start) / step)
