@@ -79,3 +79,19 @@ def test_choice_state():
         "ChoiceTarget",
     }:
         assert state_name in flow_def["States"]
+
+
+def test_choice_rule_bad_jsonpath():
+    with pytest.raises(ValidationError):
+        cr1 = ComparisonRule(Variable="$.foo", StringLessThanPath="zzz")
+
+
+def test_choice_rule_good_jsonpath():
+    cr1 = ComparisonRule(Variable="$.foo", StringLessThanPath="$.zzz")
+
+
+def test_choice_rule_multiple_tests():
+    with pytest.raises(ValidationError):
+        cr1 = ComparisonRule(
+            Variable="$.foo", StringLessThan="zzz", BooleanEquals="False"
+        )

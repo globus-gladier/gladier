@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from pydantic.fields import ModelField
 
 from gladier import GladierBaseState, JSONObject
+from gladier.tools import exclusive_validator_generator, validate_path_property
 
 
 class ChoiceRule(BaseModel):
@@ -58,23 +60,23 @@ _Comparison_rule_operators = [
 class ComparisonRule(ChoiceRule):
     Variable: str
 
-    BooleanEquals: t.Optional[str] = None
+    BooleanEquals: t.Optional[bool] = None
     BooleanEqualsPath: t.Optional[str] = None
-    IsBoolean: t.Optional[str] = None
-    IsNull: t.Optional[str] = None
-    IsNumeric: t.Optional[str] = None
-    IsPresent: t.Optional[str] = None
-    IsString: t.Optional[str] = None
-    IsTimestamp: t.Optional[str] = None
-    NumericEquals: t.Optional[str] = None
+    IsBoolean: t.Optional[bool] = None
+    IsNull: t.Optional[bool] = None
+    IsNumeric: t.Optional[bool] = None
+    IsPresent: t.Optional[bool] = None
+    IsString: t.Optional[bool] = None
+    IsTimestamp: t.Optional[bool] = None
+    NumericEquals: t.Optional[float] = None
     NumericEqualsPath: t.Optional[str] = None
-    NumericGreaterThan: t.Optional[str] = None
+    NumericGreaterThan: t.Optional[float] = None
     NumericGreaterThanPath: t.Optional[str] = None
-    NumericGreaterThanEquals: t.Optional[str] = None
+    NumericGreaterThanEquals: t.Optional[float] = None
     NumericGreaterThanEqualsPath: t.Optional[str] = None
-    NumericLessThan: t.Optional[str] = None
+    NumericLessThan: t.Optional[float] = None
     NumericLessThanPath: t.Optional[str] = None
-    NumericLessThanEquals: t.Optional[str] = None
+    NumericLessThanEquals: t.Optional[float] = None
     NumericLessThanEqualsPath: t.Optional[str] = None
     StringEquals: t.Optional[str] = None
     StringEqualsPath: t.Optional[str] = None
@@ -97,6 +99,22 @@ class ComparisonRule(ChoiceRule):
     TimestampLessThanPath: t.Optional[str] = None
     TimestampLessThanEquals: t.Optional[str] = None
     TimestampLessThanEqualsPath: t.Optional[str] = None
+
+    exclusive_validator = exclusive_validator_generator(
+        _Comparison_rule_operators, require_one_set=True
+    )
+
+    @validator(*_Comparison_rule_operators)
+    def validate_exclusive_properties(
+        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
+    ):
+        return cls.exclusive_validator(cls, v, values, field, **kwargs)
+
+    @validator(*_Comparison_rule_operators)
+    def validate_path_properties(
+        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
+    ):
+        return validate_path_property(cls, v, values, field, **kwargs)
 
 
 class AndRule(ChoiceRule):
