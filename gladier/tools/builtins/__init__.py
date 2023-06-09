@@ -1,10 +1,31 @@
+from __future__ import annotations
+
 import typing as t
-from .wait import WaitState
+
+from .choice_state import (
+    AndRule,
+    ChoiceOption,
+    ChoiceState,
+    ComparisonRule,
+    NotRule,
+    OrRule,
+)
 from .pass_state import PassState
-from .choice_state import ChoiceState
+from .wait import WaitState
 
 _nameables = (
-    x.__name__ for x in (WaitState, PassState, ChoiceState) if hasattr(x, "__name__")
+    x.__name__
+    for x in (
+        AndRule,
+        ChoiceOption,
+        ChoiceState,
+        ComparisonRule,
+        NotRule,
+        OrRule,
+        PassState,
+        WaitState,
+    )
+    if hasattr(x, "__name__")
 )
 _unnameables: t.List[str] = ["JSONObject", "JSONList", "JSONValue"]
 
