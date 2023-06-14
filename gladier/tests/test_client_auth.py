@@ -4,7 +4,7 @@ from gladier.tests.test_data.gladier_mocks import MockGladierClient
 
 
 def test_logged_out(logged_out):
-    assert MockGladierClient(auto_login=False).is_logged_in() is False
+    assert MockGladierClient().is_logged_in() is False
 
 
 def test_logged_in(logged_in):
