@@ -191,7 +191,6 @@ class ConfidentialClientLoginManager(BaseLoginManager):
 
     def get_authorizers(self) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
         tokens = self.storage.read_tokens()
-        print(tokens.keys())
         if not tokens:
             log.info('Tokens failed to load, no tokens in storage.')
             return dict()
