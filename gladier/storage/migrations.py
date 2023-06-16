@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from packaging import version
+import pathlib
+import configparser
 import logging
 import gladier.version
 import traceback
@@ -52,6 +54,55 @@ class UpdateConfigVersion(ConfigMigration):
         self.config['general']['version'] = str(self.version)
 
 
+class MigrateOldConfigFile(ConfigMigration):
+    old_cfg = pathlib.Path("~/.gladier-secrets.cfg").expanduser()
+
+    def is_applicable(self):
+        if not self.old_cfg.exists():
+            return False
+        log.warning(f'Old config {self.old_cfg} exists and should be migrated or removed.')
+
+        # The new default section will have some stuff pre-populated, but it will be empty.
+        # Check for empty stuff, and then we can go ahead with migration.
+        fname = self.config.filename
+        sections = self.config.sections()
+
+        # Check for extra sections, abort if more sections than expected
+        if len(sections) > 3:
+            log.warning(f'Existing config {fname} contains section data, skipping migration..')
+            return False
+
+        # Of three sections, one will be generic, one will be tokens, and the third will have
+        # client-related info. Find the third one and check it for content, and abort if it
+        # contains any.
+        data_section = [x for x in sections if x != 'general' and not x.startswith('tokens_')]
+        if len(data_section) == 0 or len(list(self.config[data_section[0]].values())) > 0:
+            log.warning(f'Existing config {fname} contains values in {data_section}, skipping')
+            return False
+
+        return True
+
+    def migrate(self):
+        try:
+            # Read the old config file and copy values into it
+            log.info(f'Migrating old config {self.old_cfg} to {self.config.filename}')
+            old_cfg = configparser.ConfigParser()
+            old_cfg.read(self.old_cfg)
+            for section, section_values in old_cfg.items():
+                if section not in self.config.sections():
+                    self.config[section] = {}
+                for k, v in section_values.items():
+                    self.config.set(section, k, v)
+            log.info(f'Successfully migrated {self.old_cfg} to {self.config.filename}')
+            self.old_cfg.unlink()
+            log.info(f'Removed {self.old_cfg}')
+        except Exception:
+            traceback.print_exc()
+            print('Failed to migrate Gladier config. Please send us the error above!')
+            print(f'If you see this error again, you can try deleting ~/.gladier-secrets.cfg '
+                  'and config files under ~/.gladier/')
+
+
 class UpdateFuncXFunctions(ConfigMigration):
     """Updates from old functions which were named: my_thing_funcx_id to
     the newer compute function names named my_thing_function_id"""
@@ -95,6 +146,7 @@ class UpdateFuncXFunctions(ConfigMigration):
 
 
 MIGRATIONS = [
+    MigrateOldConfigFile,
     AddVersionToConfig,
     UpdateConfigVersion,
     UpdateFuncXFunctions,

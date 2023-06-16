@@ -98,7 +98,7 @@ def test_dependent_scope_change_run_flow(auto_login, mock_flows_client,
 
 def test_dependent_scope_change_no_login(logged_in, mock_flows_client,
                                          monkeypatch):
-    cli = MockGladierClient(auto_login=False)
+    cli = MockGladierClient()
     cli.login_manager.login = Mock()
     cli.login_manager.add_scope_change(['foo'])
 

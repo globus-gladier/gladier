@@ -1,18 +1,16 @@
 import os
+import pathlib
 import logging
-import warnings
-from typing import Union, Mapping
 from collections.abc import Iterable
 
 from gladier.base import GladierBaseTool
 from gladier.managers.login_manager import (
-    BaseLoginManager, CallbackLoginManager, AutoLoginManager
+    BaseLoginManager, AutoLoginManager, ConfidentialClientLoginManager
 )
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
 from gladier.managers import FlowsManager, ComputeManager
 
 from gladier.storage.tokens import GladierSecretsConfig
-from gladier.storage.config import GladierConfig
 import gladier
 import gladier.storage.config
 import gladier.utils.dynamic_imports
@@ -75,6 +73,13 @@ class GladierBaseClient(object):
     * alias_class (default: gladier.utils.tool_alias.StateSuffixVariablePrefix)
        * The default class used to for applying aliases to Tools
 
+    The following Environment variables can be set and are recognized by Gladier Clients:
+
+    * GLADIER_CLIENT_ID -- Used only for setting confidential client credentials instead of user
+        credentials. This is a convenience feature, as an alternative to using a
+        custom login_manager
+    * GLADIER_CLIENT_SECRET -- Secret used for confidential clients, using with GLADIER_CLIENT_ID
+
     Default options are intended for CLI usage and maximum user convenience.
 
     :param auto_registration: Automatically register functions or flows if they are not
@@ -86,46 +91,23 @@ class GladierBaseClient(object):
     :raises gladier.exc.AuthException: if authorizers given are insufficient
 
     """
-    secret_config_filename = os.path.expanduser("~/.gladier-secrets.cfg")
-    app_name = 'Gladier Client'
-    client_id = 'f1631610-d9e4-4db2-81ba-7f93ad4414e3'
-    globus_group = None
-    subscription_id = None
+    secret_config_filename: str = None
+    app_name: str = 'Gladier Client'
+    client_id: str = 'f1631610-d9e4-4db2-81ba-7f93ad4414e3'
+    globus_group: str = None
+    subscription_id: str = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
     def __init__(
         self,
-        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]] = None,
-        auto_login: bool = True,
         auto_registration: bool = True,
         login_manager: BaseLoginManager = None,
         flows_manager: FlowsManager = None,
             ):
 
         self._tools = None
-
-        # Setup storage
-        section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
-        self.storage = GladierConfig(self.secret_config_filename, section)
-        self.storage.update()
-
-        if auto_login is False:
-            warnings.warn('auto_login=False in Gladier clients is deprecated and will '
-                          'be removed in v0.8. See '
-                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
-                          category=DeprecationWarning)
-        if authorizers:
-            warnings.warn('Calling Gladier clients with "authorizers" is deprecated. Instead, see '
-                          'https://gladier.readthedocs.io/en/latest/gladier/customizing_auth.html',
-                          category=DeprecationWarning)
-            self.login_manager = CallbackLoginManager(authorizers=authorizers)
-        elif not login_manager:
-            section_name = f'tokens_{self.client_id}'
-            token_storage = GladierSecretsConfig(self.secret_config_filename, section_name)
-            self.login_manager = AutoLoginManager(self.client_id, token_storage, self.app_name,
-                                                  auto_login=auto_login)
-        else:
-            self.login_manager = login_manager
+        self.storage = self._determine_storage()
+        self.login_manager = login_manager or self._determine_login_manager(self.storage)
 
         self.flows_manager = flows_manager or FlowsManager(auto_registration=auto_registration)
         if self.globus_group:
@@ -136,11 +118,52 @@ class GladierBaseClient(object):
             self.flows_manager.flow_title = f'{self.__class__.__name__} flow'
 
         self.compute_manager = ComputeManager(auto_registration=auto_registration)
+        self.storage.update()
 
         for man in (self.flows_manager, self.compute_manager):
             man.set_storage(self.storage, replace=False)
             man.set_login_manager(self.login_manager, replace=False)
             man.register_scopes()
+
+    def _get_confidential_client_credentials(self):
+        return os.getenv('GLADIER_CLIENT_ID'), os.getenv('GLADIER_CLIENT_SECRET')
+
+    def _determine_storage(self):
+        """
+        Determine the storage location for Gladier. This is typically in the ~/.gladier directory,
+        but can be changed by setting the ``secret_config_filename`` on the class.
+
+        Setting GLADIER_CLIENT_ID will change the filename to the client id, so that config
+        items will not conflict with user details.
+        """
+        # Storage will automatically change if client credentials are detected.
+        CLI_ID, _ = self._get_confidential_client_credentials()
+        if self.secret_config_filename:
+            storage_filename = pathlib.Path(self.secret_config_filename)
+        else:
+            cid = CLI_ID or self.client_id
+            storage_filename = pathlib.Path(f"~/.gladier/{cid}.cfg").expanduser()
+            storage_filename.parent.mkdir(exist_ok=True)
+
+        storage_section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
+        storage_tokens_section = f'tokens_{self.client_id}'
+
+        return GladierSecretsConfig(storage_filename, storage_section,
+                                    tokens_section=storage_tokens_section)
+
+    def _determine_login_manager(self, storage):
+        """
+        Determine the login manager to use for Glaider. First searches for evnironment
+        variables for a confidential client, then defaults to an AutoLoginManager using
+        a native client id set as ``client_id`` on this class.
+        """
+        CLI_ID, CLI_SEC = self._get_confidential_client_credentials()
+        if CLI_ID and CLI_SEC:
+            log.info('Client Credentials detected, using custom internal storage for '
+                     'storing tokens.')
+            return ConfidentialClientLoginManager(CLI_ID, CLI_SEC, storage=storage)
+        else:
+            return AutoLoginManager(self.client_id, storage, self.app_name)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref, alias_class=None):
