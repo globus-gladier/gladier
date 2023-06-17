@@ -160,5 +160,5 @@ class ShellCmdStep(GlobusComputeStep):
                 "error_path",
             }
         )
-        self.function_parameters["args"] = (self.cmd_args,)
+        self.function_parameters["args"] = self.cmd_args
         return super().get_flow_definition()
