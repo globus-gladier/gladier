@@ -11,6 +11,7 @@ from gladier.managers import CallbackLoginManager, FlowsManager
 from .flow import GladierFlow, GladierFlowRun
 from .helpers import JSONList, JSONObject, JSONValue
 from .iterators import (
+    deep_update_dict,
     float_range_iterator,
     glob_iterator,
     globus_collection_iterator,
@@ -34,6 +35,7 @@ _nameables = (
         FlowsManager,
         GladierFlow,
         GladierFlowRun,
+        deep_update_dict,
         float_range_iterator,
         glob_iterator,
         globus_collection_iterator,

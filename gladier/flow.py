@@ -34,7 +34,10 @@ class GladierFlowRun:
         return self._flows_client
 
     def __str__(self) -> str:
-        rval = f"Run id {self.run_id}"
+        rval = "Run "
+        if self.run_label is not None:
+            rval += f"'{self.run_label}' "
+        rval += f"id {self.run_id}"
         if self.last_status is not None:
             rval += f" status {self.last_status.get('status')}"
         return rval
@@ -231,6 +234,7 @@ class GladierFlow:
         label_template: t.Optional[str] = None,
         label_template_values: t.Optional[t.List[str]] = None,
         wait_for_all_completions=False,
+        progress_monitor: t.Optional[t.Callable[[t.List[GladierFlowRun]], None]] = None,
     ):
         running_flows: t.List[GladierFlowRun] = []
         last_run_time = time.time()
@@ -247,6 +251,8 @@ class GladierFlow:
                 at_concurrency_limit = len(running_flows) >= max_concurrency
                 if at_concurrency_limit and not end_runs:
                     time.sleep(2)
+                if progress_monitor is not None:
+                    progress_monitor(running_flows)
 
             if end_runs:
                 break
@@ -268,6 +274,8 @@ class GladierFlow:
             flow_run = self.run_flow(run_input, run_label, tags)
             last_run_time = time.time()
             running_flows.append(flow_run)
+            if progress_monitor is not None:
+                progress_monitor(running_flows)
 
         while wait_for_all_completions and len(running_flows) > 0:
             wait_for_all_completions = not self.update_running_flows(
@@ -275,3 +283,5 @@ class GladierFlow:
             )
             if wait_for_all_completions and len(running_flows) > 0:
                 time.sleep(2)
+            if progress_monitor is not None:
+                progress_monitor(running_flows)
