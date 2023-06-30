@@ -323,6 +323,7 @@ class FlowsManager(ServiceManager):
             log.info('No flow detected, deploying new flow...')
             flow = self.flows_client.deploy_flow(self.flow_definition, title=self.flow_title,
                                                  **flow_kwargs).data
+            log.debug(f'Flow deployed with id {flow["id"]}')
             self.storage.set_value('flow_id', flow['id'])
             self.storage.set_value('flow_checksum', self.get_flow_checksum(self.flow_definition))
             self.login_manager.add_requirements([flow['globus_auth_scope']])
