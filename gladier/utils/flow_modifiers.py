@@ -30,10 +30,7 @@ class FlowModifiers:
     def __init__(self, tools, modifiers, cls=None):
         self.cls = cls
         self.tools = tools
-        self.functions = (
-            [func for tool in tools for func in tool.compute_functions] +
-            [func for tool in tools for func in getattr(tool, 'funcx_functions', [])]
-        )
+        self.functions = [func for tool in tools for func in tool.compute_functions]
         self.function_names = [f.__name__ for f in self.functions]
         self.state_names = [get_compute_flow_state_name(f) for f in self.functions]
         self.modifiers = modifiers
@@ -57,8 +54,18 @@ class FlowModifiers:
         if not isinstance(self.modifiers, dict):
             raise FlowModifierException(f'{self.cls}: Flow Modifiers must be a dict')
 
+        legacy_funcs = [func for tool in self.tools
+                        for func in getattr(tool, 'funcx_functions', [])]
+        legacy_func_names = [f.__name__ for f in legacy_funcs]
+
         # Check if modifiers were set correctly
         for name, mods in self.modifiers.items():
+            if name in legacy_func_names:
+                raise FlowModifierException(
+                    f'Class {self.cls} is a Legacy Gladier tool pre-v0.9.0. Please use a modern '
+                    'version or follow the migration guide here to make it compatible: \n\n'
+                    '\thttps://gladier.readthedocs.io/en/latest/migration.html\n')
+
             if not self.get_function(name):
                 raise FlowModifierException(f'Class {self.cls} included modifier which does not '
                                             f'exist: {name}. Allowed modifiers include '
