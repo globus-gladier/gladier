@@ -16,7 +16,7 @@ if __name__ == '__main__':
             # The directory below should exist with files. It will be archived by the Tar Tool.
             'tar_input': '~/myfiles',
             # Set this to your own funcx endpoint where you want to tar files
-            # 'funcx_endpoint_compute': '',
+            'compute_endpoint': '',
             # Set this to the globus endpoint where your tarred archive has been created
             # 'transfer_source_endpoint_id': '',
             # By default, this will transfer the tar file to Globus Tutorial Endpoint 1
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # pprint(tar_and_transfer.flow_definition)
 
     # Run the flow
-    flow = tar_and_transfer.run_flow(flow_input=flow_input)
+    flow = tar_and_transfer.run_flow(flow_input=flow_input, label='Tar and Transfer', tags=['tutorial'])
 
     # Track the progress
     action_id = flow['action_id']

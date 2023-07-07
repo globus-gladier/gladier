@@ -35,8 +35,8 @@ For example, here are the documentations for the `Tar <https://gladier.readthedo
       'input': {
          # Set this to the file/folder that has to be tarred 
          'tar_input': '',
-         # Set this to your own funcx endpoint where you want to tar files
-         'funcx_endpoint_compute': '',
+         # Set this to your own compute endpoint where you want to tar files
+         'compute_endpoint': '',
          # Set this to the globus endpoint where your tarred archive has been created
          'transfer_source_endpoint_id': '',
          # By default, this will transfer the tar file to Globus Tutorial Endpoint 1

@@ -15,10 +15,10 @@ comprises two steps:
    :scale: 25 %
    :alt: Globus Automation Services
 
-The first step involves a Globus Transfer action, and the second a FuncX Compute action. 
+The first step involves a Globus Transfer action, and the second a Globus Compute action. 
 In order for your computer to be accessible by Globus, it needs to be running a Globus collection.
-See the Globus Connect Personal section below. For the second part, you  need to set up a FuncX
-endpoint to tell FuncX where it should execute functions. See the funcX Endpoint section below
+See the Globus Connect Personal section below. For the second part, you  need to set up a Compute
+Endpoint to tell Globus where it should execute functions. See the Comptue Endpoint section below
 for details.
 
 Globus Connect Personal
@@ -35,13 +35,12 @@ collections to which you have access.
 
    Your Globus endpoint should be accessible on the same machine you install your FuncX endpoint.
 
-FuncX Endpoint
-##############
+Globus Compute Endpoint
+#######################
 
-FuncX Endpoint
-We also need a funcX endpoint on which to run funcx functions. Follow the
-`FuncX Endpoint instructions <https://funcx.readthedocs.io/en/latest/endpoints.html>`_
+We also need a Compute Endpoint to run remote functions. Follow the
+`Compute Endpoint instructions <https://funcx.readthedocs.io/en/latest/endpoints.html>`_
 to set up your own endpoint. Once an endpoint has been configured, you can:
 
-* run ``funcx-endpoint`` to list all  endpoints to which you have access
-* run ``funcx-endpoint start <endpoint-name>`` to start an endpoint
+* run ``globus-compute-endpoint list`` to list all endpoints to which you have access
+* run ``globus-compute-endpoint start <endpoint-name>`` to start an endpoint

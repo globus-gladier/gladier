@@ -10,17 +10,17 @@ This example highlights the usage of built in tools (Tar, Encrypt and Transfer) 
 Steps
 -----
 We start by writing our own custom tool. For the example, MakeFiles is a trivial tool that creates three files in a given folder.
-The funcx function that achieves this functionality is ``make_files``. We then define the tool using ``GladierBaseTool``. 
+The comptue function that achieves this functionality is ``make_files``. We then define the tool using ``GladierBaseTool``. 
 
 
 .. code-block:: python
     
     @generate_flow_definition
     class MakeFiles(GladierBaseTool):
-        funcx_functions = [make_files]
+        compute_functions = [make_files]
         required_input = [
             'make_input',
-            'funcx_endpoint_compute'
+            'compute_endpoint'
         ]
 
 Defining a workflow is similar to the previous case, where we override the ``GladierBaseClient`` class. In this case, we want to use the MakeFiles, Tar, Encrypt, and Transfer tools.
@@ -55,8 +55,8 @@ For example, here are the documentations for the `Tar <https://gladier.readthedo
             'encrypt_input': '',
             # Set this to the symmetric key you want to use to encrypt/decrypt the file
             'encrypt_key': '',
-            # Set this to your own funcx endpoint where you want to encrypt files
-            'funcx_endpoint_compute': '',
+            # Set this to your own compute endpoint where you want to encrypt files
+            'compute_endpoint': '',
             # Set this to the globus endpoint where your encrypted archive has been created
             'transfer_source_endpoint_id': '',
             # By default, this will transfer the encrypt file to Globus Tutorial Endpoint 1
