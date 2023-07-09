@@ -7,7 +7,7 @@ Pre Requisites
 ---------------
 
 If you want to run the examples below on your own computer, you need to follow the
-:ref:`setup` guide. The :ref:`setup` guide covers setting up FuncX and GCP on the
+:ref:`setup` guide. The :ref:`setup` guide covers setting up Globus Compute and GCP on the
 machine you are using.
 
 

@@ -2,10 +2,10 @@ from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition
 from pprint import pprint
 
 
-def parallel_workload_input_builder(funcx_endpoint_compute, parallel_workload_funcx_id, parallel_workloads, **data):
+def parallel_workload_input_builder(compute_endpoint, parallel_workload_function_id, parallel_workloads, **data):
     return [{
-        'endpoint': funcx_endpoint_compute,
-        'function': parallel_workload_funcx_id,
+        'endpoint': compute_endpoint,
+        'function': parallel_workload_function_id,
         'payload': payload,
     } for payload in parallel_workloads]
 
@@ -16,17 +16,17 @@ def parallel_workload(name, **data):
 
 
 @generate_flow_definition(modifiers={
-    parallel_workload: {'tasks': '$.ParallelWorkloadInputBuilder.details.result[0]'},
+    parallel_workload: {'tasks': '$.ParallelWorkloadInputBuilder.details.results[0].output'},
 })
 class ParallelWorkloadsTool(GladierBaseTool):
-    funcx_functions = [
+    compute_functions = [
         parallel_workload_input_builder,
         parallel_workload,
     ]
     required_input = [
-        'funcx_endpoint_compute',
+        'compute_endpoint',
         'parallel_workloads',
-        'parallel_workload_funcx_id'
+        'parallel_workload_function_id'
     ]
 
 
@@ -45,11 +45,16 @@ if __name__ == '__main__':
                 {'name': 'bar'},
                 {'name': 'baz'},
             ],
-            'funcx_endpoint_compute': '553e7b64-0480-473c-beef-be762ba979a9',
+            'compute_endpoint': '4b116d3c-1703-4f8f-9f6f-39921e5864df',
         }
     }
     work_flow = ParallelWorkloadsClient()
+    # Optionally shohw details of the flow input and definition
+    print('Using Input:')
+    pprint(work_flow.get_input())
+    print('\n\nFlow Definition: ')
     pprint(work_flow.flow_definition)
+
 
     flow = work_flow.run_flow(flow_input=flow_input)
     run_id = flow['run_id']

@@ -1,7 +1,7 @@
 Glossary
 ========
 
-**Gladier** builds on a science services framework, in the form of Globus Auth, Transfer, Search, Groups, and Flows, plus funcX function-as-a-service. 
+**Gladier** builds on a science services framework, in the form of Globus Auth, Transfer, Search, Groups, and Flows, plus Comptue function-as-a-service. 
 These services provide a reliable, secure, and high-performance substrate to access and manage data and computing resources. Here we highlight
 several of these services and describe how they are used to create Gladier deployments.
 
@@ -9,7 +9,7 @@ Globus
 ------
 
 **Globus**  provides a collection of data services built for science 
-including: Globus Auth, Transfer, Search, Groups, and Flows, and funcX to enable
+including: Globus Auth, Transfer, Search, Groups, and Flows, and Compute to enable
 distributed function-as-a-service execution. 
 Globus Services are highly reliable, professionally operated cloud-hosted 
 services that support the work of over 150,000 researchers worldwide as 
@@ -40,9 +40,9 @@ actions to
 meet the needs of specific communities.
 
 
-FuncX
------
-**funcX** is a function-as-a-service platform that 
+Globus Compute
+--------------
+**Globus Compute** is a function-as-a-service platform that
 implements a federated compute substrate, 
 enabling computation to be 
 registered as Python functions and invocations to be dispatched to remote 
@@ -50,13 +50,13 @@ computers for
 execution. The service provides a single point-of-contact, 
 supporting function registration, 
 sharing, and discovery as well as reliable and secure execution on connected 
-endpoints. The funcX endpoint software, built on Parsl, 
-allows functions to 
+endpoints. The compute endpoint software, built on Parsl,
+allows functions to
 be executed in containers and for resources to be dynamically provisioned on cloud and 
-cluster systems. 
-These funcX endpoints provide
-serverless capabilities whereby researchers fire-and-forget tasks that are dynamically 
-allocated across the supercomputer using an opportunistic backfill queue to utilize 
+cluster systems.
+These compute endpoints provide
+serverless capabilities whereby researchers fire-and-forget tasks that are dynamically
+allocated across the supercomputer using an opportunistic backfill queue to utilize
 spare capacity.
 
 
@@ -96,5 +96,5 @@ Globus Auth
 **Auth** Auth allows for users to delegate permissions for clients to access services in the Gladier
 architecture, and for services to access other services on their behalf as well.
 For example, it allows Globus Flows to manage Globus Transfers and to execute
-analyses via funcX on systems accessible only to the user.
+analyses via Compute on systems accessible only to the user.
 

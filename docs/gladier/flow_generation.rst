@@ -12,13 +12,13 @@ Flow generation is available for both clients and tools with the ``@generate_flo
 decorator. Although it's applied the same way, the decorator behaves a little differently
 for a client and a tool.
 
-* Gladier Tool -- Generates a flow for each function defined in ``funcx_functions``
+* Gladier Tool -- Generates a flow for each function defined in ``compute_functions``
 * Gladier Client -- Combines flows for each Gladier Tool defined in ``gladier_tools``
 
 Flow Generation on Gladier Tools
 --------------------------------
 
-For Gladier Tools that only need one flow step per FuncX Function, flow generation
+For Gladier Tools that only need one flow step per Compute Function, flow generation
 can be a good option. Gladier will automatically determine information about the functions
 on the tool, and incorporate them into the flow. The usage looks like this:
 
@@ -45,11 +45,11 @@ Overriding some attributes of the flow can be done with ``modifiers``.
 .. code-block::
 
     @generate_flow_definition(modifiers={
-        ls: {'endpoint': 'funcx_endpoint_non_compute'}
+        ls: {'endpoint': 'compute_endpoint'}
     })
     class FileSystemListCommand(GladierBaseTool):
         """List files on the filesystem"""
-        funcx_functions = [ls]
+        compute_functions = [ls]
 
 
 
@@ -65,8 +65,8 @@ Note that modifiers can also be used with Gladier Clients to customize some attr
 .. code-block::
 
     @generate_flow_definition(modifiers={
-       'generate_metadata': {'endpoint': 'funcx_endpoint_non_compute'},
-       'publish_to_search': {'endpoint': 'funcx_endpoint_non_compute',
+       'generate_metadata': {'endpoint': 'compute_endpoint'},
+       'publish_to_search': {'endpoint': 'compute_endpoint',
                              'payload': 'generate_metadata'}
     })
     class ProcessData(GladierBaseClient):

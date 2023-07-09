@@ -17,7 +17,7 @@ Gladier builds on the powerful cloud-hosted `Globus platform <https://docs.globu
 `Globus automation services <https://docs.globus.org/globus-automation-services/>`_
 for reliable and scalable flow execution; `Globus Auth <https://docs.globus.org/api/auth/>`_ for
 secure distributed operation; and services like
-`Globus Transfer <https://docs.globus.org/api/transfer/>`_, `funcX <https://funcx.org/>`_, and
+`Globus Transfer <https://docs.globus.org/api/transfer/>`_, `Globus Compute <https://funcx.org/>`_, and
 `Globus Search <https://docs.globus.org/api/search/>`_ to implement data transfer, compute,
 cataloging, and other actions.
 

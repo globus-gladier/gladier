@@ -11,4 +11,4 @@ def ls(data):
 @generate_flow_definition
 class FileSystemListCommand(GladierBaseTool):
     """List files on the filesystem"""
-    funcx_functions = [ls]
+    compute_functions = [ls]

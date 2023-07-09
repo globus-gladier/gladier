@@ -15,9 +15,8 @@ Gladier requires scopes for the following Services:
     * `https://auth.globus.org/scopes/eec9b274-0c81-4334-bdc2-54e90e689b9a/view_flows`
     * `https://auth.globus.org/scopes/eec9b274-0c81-4334-bdc2-54e90e689b9a/run_status`
     * `https://auth.globus.org/scopes/eec9b274-0c81-4334-bdc2-54e90e689b9a/manage_flows`
-* FuncX
+* Globus Compute
     * `openid`
-    * `urn:globus:auth:scope:search.api.globus.org:all`
     * `https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all`
 * Deployed Flow
     * Scope varies per-flow

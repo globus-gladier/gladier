@@ -22,7 +22,7 @@ The new class has two main attributes:
   ``gladier_tools.posix.Tar`` and ``gladier_tools.globus.Transfer`` tools defined in Examples
 * ``@generate_flow_definition`` -- Splices together flows on each tool into one single runnable flow
 
-Each Gladier tool sets its own FuncX Functions, required input, and separate Globus Flow. The
+Each Gladier tool sets its own Compute Functions, required input, and separate Globus Flow. The
 Gladier Client gathers everything into one place. It handles registering functions, ensuring each
 tools input requirements are met, and deploying/updating the final combined Globus flow. After that,
 running the flow is as simple as these two lines:
@@ -34,14 +34,14 @@ running the flow is as simple as these two lines:
    flow = tar_transfer_cli.run_flow()
 
 The first line instantiates the client with default values, which means that it will automatically
-trigger a Globus Auth login and register Flows and FuncX functions as needed.
+trigger a Globus Auth login and register Flows and Compute Functions as needed.
 
 The second line, ``flow = hello_cli.run_flow()``, is responsible for the following things
 
 * Gather default input from each tool
 * Validate input for each tool
-* Trigger an initial login for access to FuncX and the Flows Service
-* Register funcX functions (and re-register them, if they were previously registered and have changed)
+* Trigger an initial login for access to the Compute Service and the Flows Service
+* Register Compute Functions (and re-register them, if they were previously registered and have changed)
 * Register the flow_definition (and update it, if it was previously registered, and has changed)
 * Trigger a second login to authorize the deployed flow
 * Start the flow

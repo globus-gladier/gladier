@@ -1,6 +1,89 @@
 Upgrade Migrations
 ==================
 
+
+Migrating to v0.9.0
+-------------------
+
+Funcx was removed in favor of the new Globus Compute SDK, requiring some name
+changes in tooling. The list of required changes are below:
+
+* ``Gladier Base Tool "funcx_functions" changed to "compute_functions"``
+    * Old tools will still be backwards compatible, but will use newer function names instead
+    * Tools should be migrated to use compute_functions instead of funcx_functions
+* ``Input Functions previously "{name}_funcx_id" are now "{name}_function_id"
+* ``Default "funcx_endpoint_compute" name changed to "compute_endpoint"
+    * Naming convention "funcx_endpoint_non_compute" has been dropped and is no longer used,
+    * however users are still free to name endpoints as they wish
+* Default action URL is now ``https://compute.actions.globus.org``
+* Task output format changed, previously ``$.MyTask.details.result[0]`` is now ``$.MyTask.details.results[0].output``
+    * Both styles are currently outputted for backwards compatibility. New tooling should switch to the newer style.
+
+These changes mainly affect tools. See the example tool shown below:
+
+.. code-block:: python
+
+   @generate_flow_definition(modifiers={
+      parallel_workload: {'tasks': '$.ParallelWorkloadInputBuilder.details.results[0].output'},
+   })
+   class ParallelWorkloadsTool(GladierBaseTool):
+      compute_functions = [
+         parallel_workload_input_builder,
+         parallel_workload,
+      ]
+      required_input = [
+         'compute_endpoint',
+         'parallel_workloads',
+         'parallel_workload_function_id'
+      ]
+
+The flow definition for functions has also changed, and the above will generate the following:
+
+.. code-block:: JSON
+
+   {
+      "States": {
+         "Comment": "Flow with states: ParallelWorkloadInputBuilder, ParallelWorkload",
+         "StartAt": "ParallelWorkloadInputBuilder",
+         "ParallelWorkloadInputBuilder": {
+            "Comment": null,
+            "Type": "Action",
+            "ActionUrl": "https://compute.actions.globus.org",
+            "ExceptionOnActionFailure": false,
+            "Parameters": {
+            "tasks": [
+               {
+                  "endpoint.$": "$.input.compute_endpoint",
+                  "function.$": "$.input.parallel_workload_input_builder_function_id",
+                  "payload.$": "$.input"
+               }
+            ]
+            },
+            "ResultPath": "$.ParallelWorkloadInputBuilder",
+            "WaitTime": 300,
+            "Next": "ParallelWorkload"
+         },
+         "ParallelWorkload": {
+            "Comment": null,
+            "Type": "Action",
+            "ActionUrl": "https://compute.actions.globus.org",
+            "ExceptionOnActionFailure": false,
+            "Parameters": {
+            "tasks.$": "$.ParallelWorkloadInputBuilder.details.results[0].output"
+            },
+            "ResultPath": "$.ParallelWorkload",
+            "WaitTime": 300,
+            "End": true
+         }
+      }
+   }
+
+Migrating to v0.6.0 -- v0.8.0
+-----------------------------
+
+No features added in these releases require changes
+
+
 Migrating to v0.5.0
 -------------------
 

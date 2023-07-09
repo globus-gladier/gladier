@@ -17,10 +17,10 @@ def make_files(**data):
 
 @generate_flow_definition
 class MakeFiles(GladierBaseTool):
-    funcx_functions = [make_files]
+    compute_functions = [make_files]
     required_input = [
         'make_input',
-        'funcx_endpoint_compute'
+        'compute_endpoint'
     ]
 
 
@@ -45,8 +45,8 @@ if __name__ == '__main__':
             'encrypt_input': '/tmp/myfiles.tgz',
             # Set this to the symmetric key you want to use to encrypt/decrypt the file
             'encrypt_key': 'my_secret',
-            # Set this to your own funcx endpoint where you want to encrypt files
-            # 'funcx_endpoint_compute': '',
+            # Set this to your own compute endpoint where you want to encrypt files
+            # 'compute_endpoint': '',
             # Set this to the globus endpoint where your encrypted archive has been created
             # 'transfer_source_endpoint_id': '',
             # By default, this will transfer the encrypt file to Globus Tutorial Endpoint 1

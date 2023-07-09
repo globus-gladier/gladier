@@ -11,7 +11,7 @@ def makedirs(**data):
 @generate_flow_definition
 class MakeDirs(GladierBaseTool):
     """List files on the filesystem"""
-    funcx_functions = [makedirs]
+    compute_functions = [makedirs]
     required = ['name']
     flow_input = {
         'mode': 0o777,
