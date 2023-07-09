@@ -359,7 +359,9 @@ class GladierBaseClient(object):
         compute_ids = dict()
         for tool in self.tools:
             log.debug(f'Checking functions for {tool}')
-            compute_funcs = getattr(tool, 'compute_functions', [])
+            compute_funcs = (
+                getattr(tool, 'compute_functions', []) + getattr(tool, 'funcx_functions', [])
+            )
             if not compute_funcs:
                 log.warning(f'Tool {tool} did not define any compute functions!')
             if not compute_funcs and not isinstance(compute_funcs, Iterable):

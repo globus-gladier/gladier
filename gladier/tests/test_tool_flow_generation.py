@@ -1,7 +1,8 @@
 import pytest
 from gladier.base import GladierBaseTool
 from gladier.decorators import generate_flow_definition
-from gladier.exc import FlowGenException
+from gladier.exc import FlowGenException, FlowModifierException
+from gladier import GladierBaseClient
 from globus_automate_client.flows_client import validate_flow_definition
 
 
@@ -171,3 +172,29 @@ def test_tool_custom_action_url():
     tool = MockTool()
     assert tool.flow_definition['States']['MockFunc']['ActionUrl'] == \
         'https://myap.example.com'
+
+
+def test_generated_flow_with_old_tool():
+
+    @generate_flow_definition
+    class MyLegacyTool(GladierBaseTool):
+
+        required_input = [
+            'funcx_endpoint_non_compute',
+        ]
+
+        funcx_functions = [
+            mock_func,
+        ]
+
+    @generate_flow_definition(modifiers={
+        'mock_func': {
+            'payload': '$.Foo.details.result[0]',
+            'WaitTime': 600,
+        }
+    })
+    class MyClient(GladierBaseClient):
+        gladier_tools = [MyLegacyTool]
+
+    with pytest.raises(FlowModifierException):
+        MyClient()
