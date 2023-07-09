@@ -143,15 +143,16 @@ class GladierBaseClient(object):
         """
         # Storage will automatically change if client credentials are detected.
         CLI_ID, _ = self._get_confidential_client_credentials()
+        client_id = CLI_ID or self.client_id
+
         if self.secret_config_filename:
             storage_filename = pathlib.Path(self.secret_config_filename)
         else:
-            cid = CLI_ID or self.client_id
-            storage_filename = pathlib.Path(f"~/.gladier/{cid}.cfg").expanduser()
+            storage_filename = pathlib.Path(f"~/.gladier/{client_id}.cfg").expanduser()
             storage_filename.parent.mkdir(exist_ok=True)
 
         storage_section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
-        storage_tokens_section = f'tokens_{self.client_id}'
+        storage_tokens_section = f'tokens_{client_id}'
 
         return GladierSecretsConfig(storage_filename, storage_section,
                                     tokens_section=storage_tokens_section)

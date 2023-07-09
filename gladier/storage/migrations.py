@@ -77,7 +77,8 @@ class MigrateOldConfigFile(ConfigMigration):
         # contains any.
         data_section = [x for x in sections if x != 'general' and not x.startswith('tokens_')]
         if len(data_section) == 0 or len(list(self.config[data_section[0]].values())) > 0:
-            log.warning(f'Existing config {fname} contains values in {data_section}, skipping')
+            log.warning(f'Existing config {fname} contains values in {data_section} which may be '
+                        'important, skipping...')
             return False
 
         return True
