@@ -301,3 +301,15 @@ def test_flow_generation_legacy_funcx_tools(logged_in):
         funcx_functions = [lambda x: x]
 
     assert LegacyFuncXTool().compute_functions
+
+
+def test_client_flow_schema(logged_in):
+
+    @generate_flow_definition
+    class MyClient(GladierBaseClient):
+        gladier_tools = ['gladier.tests.test_data.gladier_mocks.MockTool']
+        flow_schema = {'foo': 'bar'}
+
+    mc = MyClient()
+    mc.sync_flow()
+    assert mc.flow_schema == mc.flows_manager.flow_schema

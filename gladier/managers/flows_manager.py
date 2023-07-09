@@ -187,13 +187,17 @@ class FlowsManager(ServiceManager):
         return self.flows_client
 
     @staticmethod
-    def get_flow_checksum(flow_definition):
+    def get_flow_checksum(flow_definition, flow_schema):
         """
         Get the SHA256 checksum of the current flow definition.
 
         :return: sha256 hex string of flow definition
         """
-        return hashlib.sha256(json.dumps(flow_definition, sort_keys=True).encode()).hexdigest()
+
+        flow_def = json.dumps(flow_definition, sort_keys=True)
+        flow_schema = json.dumps(flow_schema, sort_keys=True)
+        data = (flow_def + flow_schema).encode()
+        return hashlib.sha256(data).hexdigest()
 
     @staticmethod
     def get_globus_urn(uuid, id_type='group'):
@@ -263,7 +267,7 @@ class FlowsManager(ServiceManager):
         if not flow_id:
             raise gladier.exc.NoFlowRegistered(
                 'No flow_id set on flow manager and no id tracked in storage.')
-        elif flow_checksum != self.get_flow_checksum(self.flow_definition):
+        elif flow_checksum != self.get_flow_checksum(self.flow_definition, self.flow_schema):
             raise gladier.exc.FlowObsolete(
                 f'"flow_definition" on {self} has changed and needs to be re-registered.')
 
@@ -312,8 +316,9 @@ class FlowsManager(ServiceManager):
             try:
                 log.info(f'Flow checksum failed, updating flow {flow_id}...')
                 self.flows_client.update_flow(flow_id, self.flow_definition, **flow_kwargs)
-                self.storage.set_value('flow_checksum',
-                                       self.get_flow_checksum(self.flow_definition))
+                self.storage.set_value(
+                    'flow_checksum', self.get_flow_checksum(self.flow_definition, self.flow_schema)
+                )
             except globus_sdk.exc.GlobusAPIError as gapie:
                 if gapie.http_status == 404 and self.redeploy_on_404:
                     flow_id = None
@@ -324,7 +329,9 @@ class FlowsManager(ServiceManager):
             flow = self.flows_client.deploy_flow(self.flow_definition, title=self.flow_title,
                                                  **flow_kwargs).data
             self.storage.set_value('flow_id', flow['id'])
-            self.storage.set_value('flow_checksum', self.get_flow_checksum(self.flow_definition))
+            self.storage.set_value(
+                'flow_checksum', self.get_flow_checksum(self.flow_definition, self.flow_schema)
+            )
             self.login_manager.add_requirements([flow['globus_auth_scope']])
             self.refresh_flows_client()
 
