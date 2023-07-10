@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0b1](https://github.com/globus-gladier/gladier/compare/v0.8.4...v0.9.0b1) (2023-07-10)
+
+
+### ⚠ BREAKING CHANGES
+
+The breaking changes below mainly affect custom Gladier Tools. See the [Migration Guide](https://gladier.readthedocs.io/en/latest/migration.html) for details. 
+
+* ``Gladier Base Tool "funcx_functions" changed to "compute_functions"``
+    * Old tools will still be backwards compatible, but will use newer function names instead
+    * Tools should be migrated to use compute_functions instead of funcx_functions
+* ``Input Functions previously "{name}_funcx_id" are now "{name}_function_id"
+* ``Default "funcx_endpoint_compute" name changed to "compute_endpoint"
+    * Naming convention "funcx_endpoint_non_compute" has been dropped and is no longer used,
+    * however users are still free to name endpoints as they wish
+* Default action URL is now ``https://compute.actions.globus.org``
+* Task output format changed, previously ``$.MyTask.details.result[0]`` is now ``$.MyTask.details.results[0].output``
+    * Both styles are currently outputted for backwards compatibility. New tooling should switch to the newer style.
+* Raise exception for legacy funcx function modifiers pre-v0.9.0
+* Detect and auto-update old funcx functions
+* Changed funcx_endpoint_compute to compute_endpoint
+
+### Features
+
+* Add auto migration for older configs ([d51b95e](https://github.com/globus-gladier/gladier/commit/d51b95e112e1a62d1dd05f499f89272e040efe0f))
+* Add better support for flow schemas. ([b3ab831](https://github.com/globus-gladier/gladier/commit/b3ab831adfc860e1a5c5fe8b90234f0545b8cabf))
+* Add built-in support for confidential clients ([cdeb6c6](https://github.com/globus-gladier/gladier/commit/cdeb6c68fac601c2639033a1ebbbebd757c232ce))
+* Relpace funcx with the new globus compute sdk package ([6257742](https://github.com/globus-gladier/gladier/commit/62577423b5a5fa4e98860a8fe22919c621199702))
+* Switch to production Action Provider ([8e40235](https://github.com/globus-gladier/gladier/commit/8e40235c2b3dee0750b5057c223b12a56da2c8b4))
+
+
+### Bug Fixes
+
+* Custom Client IDs on Gladier Client classes not using correct storage ([05bbb01](https://github.com/globus-gladier/gladier/commit/05bbb01d35b0ac7cd52ae23065dfce1b0685f2b2))
+* Legacy funcx functions not being registered or tracked ([1e823a7](https://github.com/globus-gladier/gladier/commit/1e823a77ecb0b4c78526c130e8157b58581cdc69))
+* Raise exception for legacy funcx function modifiers pre-v0.9.0 ([739cfd3](https://github.com/globus-gladier/gladier/commit/739cfd3efaa9d16e7d57a44133d61a5621df6dfa))
+
+
+* Changed funcx_endpoint_compute to compute_endpoint ([d981741](https://github.com/globus-gladier/gladier/commit/d981741dc102097e3ee5d9e09320baa8eb3052f2))
+* Detect and auto-update old funcx functions ([94567fd](https://github.com/globus-gladier/gladier/commit/94567fd1367491599cc9af868d4544b9023b6bb4))
+
 
 ### [0.8.4](https://github.com/globus-gladier/gladier/compare/v0.8.3...v0.8.4) (2023-04-19)
 
