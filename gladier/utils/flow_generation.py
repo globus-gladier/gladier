@@ -6,7 +6,7 @@ from gladier.exc import FlowGenException
 from gladier.utils.flow_modifiers import FlowModifiers
 from gladier.utils.name_generation import (
     get_compute_flow_state_name,
-    get_compute_function_name
+    get_compute_function_name,
 )
 from gladier.utils.tool_chain import ToolChain
 
@@ -33,14 +33,16 @@ def _get_duplicate_functions(compute_functions: typing.List[callable]):
 
 
 def _fix_old_tools(tool):
-    funcx_functions = getattr(tool, 'funcx_functions', None)
-    compute_functions = getattr(tool, 'compute_functions', None)
+    funcx_functions = getattr(tool, "funcx_functions", None)
+    compute_functions = getattr(tool, "compute_functions", None)
 
     if funcx_functions and not compute_functions:
-        log.warning(f'Tool {tool} defines attributue "funcx_functions" which has now been '
-                    'changed to "compute_functions". Automatically configuring compute_functions '
-                    f'for new tool. Please update the old tool {tool}')
-        setattr(tool, 'compute_functions', funcx_functions)
+        log.warning(
+            f'Tool {tool} defines attributue "funcx_functions" which has now been '
+            'changed to "compute_functions". Automatically configuring compute_functions '
+            f"for new tool. Please update the old tool {tool}"
+        )
+        setattr(tool, "compute_functions", funcx_functions)
 
 
 def generate_tool_flow(tool: GladierBaseTool, modifiers):
@@ -50,8 +52,9 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
 
     duplicate_functions = _get_duplicate_functions(tool.compute_functions)
     if duplicate_functions:
-        raise FlowGenException(f'Tool {tool} contains duplicate function names: '
-                               f'{duplicate_functions}')
+        raise FlowGenException(
+            f"Tool {tool} contains duplicate function names: " f"{duplicate_functions}"
+        )
 
     flow_moder = FlowModifiers([tool], modifiers, cls=tool)
 
@@ -60,10 +63,12 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
         tools.chain_state(*generate_compute_flow_state(fx_func))
 
     flow = tools.flow_definition
-    if not flow['States']:
-        raise FlowGenException(f'Tool {tool} has no flow states. Add a list of python functions '
-                               f'as "{tool}.compute_functions = [myfunction]" or set a custom flow '
-                               f'definition instead using `{tool}.flow_definition = mydef`')
+    if not flow["States"]:
+        raise FlowGenException(
+            f"Tool {tool} has no flow states. Add a list of python functions "
+            f'as "{tool}.compute_functions = [myfunction]" or set a custom flow '
+            f"definition instead using `{tool}.flow_definition = mydef`"
+        )
     return flow_moder.apply_modifiers(flow)
 
 
@@ -71,17 +76,19 @@ def generate_compute_flow_state(compute_function):
     state_name = get_compute_flow_state_name(compute_function)
 
     return state_name, {
-        'Comment': compute_function.__doc__,
-        'Type': 'Action',
-        'ActionUrl': 'https://compute.actions.globus.org',
-        'ExceptionOnActionFailure': False,
-        'Parameters': {
-            'tasks': [{
-                'endpoint.$': '$.input.compute_endpoint',
-                'function.$': f'$.input.{get_compute_function_name(compute_function)}',
-                'payload.$': '$.input',
-            }]
+        "Comment": compute_function.__doc__,
+        "Type": "Action",
+        "ActionUrl": "https://compute.actions.globus.org",
+        "ExceptionOnActionFailure": False,
+        "Parameters": {
+            "tasks": [
+                {
+                    "endpoint.$": "$.input.compute_endpoint",
+                    "function.$": f"$.input.{get_compute_function_name(compute_function)}",
+                    "payload.$": "$.input",
+                }
+            ]
         },
-        'ResultPath': f'$.{state_name}',
-        'WaitTime': 300,
+        "ResultPath": f"$.{state_name}",
+        "WaitTime": 300,
     }

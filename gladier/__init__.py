@@ -5,8 +5,11 @@ from gladier.decorators import generate_flow_definition
 from gladier.managers import FlowsManager, CallbackLoginManager
 
 __all__ = [
-    GladierBaseClient, GladierBaseTool, generate_flow_definition, FlowsManager,
-    CallbackLoginManager
+    GladierBaseClient,
+    GladierBaseTool,
+    generate_flow_definition,
+    FlowsManager,
+    CallbackLoginManager,
 ]
 
 # https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library  # noqa

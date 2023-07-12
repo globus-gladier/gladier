@@ -6,8 +6,7 @@ log = logging.getLogger(__name__)
 
 
 class GladierConfig(configparser.ConfigParser):
-
-    def __init__(self, filename, section='default'):
+    def __init__(self, filename, section="default"):
         super().__init__()
         self.section = section
         self.filename = filename
@@ -16,14 +15,14 @@ class GladierConfig(configparser.ConfigParser):
     def load(self):
         self.read(self.filename)
         if self.section not in self.sections():
-            log.debug(f'Section {self.section} missing, adding to config.')
+            log.debug(f"Section {self.section} missing, adding to config.")
             self[self.section] = {}
             self.save()
 
     def save(self):
-        with open(self.filename, 'w') as configfile:
+        with open(self.filename, "w") as configfile:
             self.write(configfile)
-            log.debug(f'Saved local gladier config to {configfile}')
+            log.debug(f"Saved local gladier config to {configfile}")
 
     def update(self):
         if needs_migration(self):

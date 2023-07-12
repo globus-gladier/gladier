@@ -1,4 +1,3 @@
-
 from globus_compute_sdk.sdk.login_manager.protocol import LoginManagerProtocol
 from gladier.managers.compute_login_manager import ComputeLoginManager
 

@@ -5,7 +5,9 @@ from collections.abc import Iterable
 
 from gladier.base import GladierBaseTool
 from gladier.managers.login_manager import (
-    BaseLoginManager, AutoLoginManager, ConfidentialClientLoginManager
+    BaseLoginManager,
+    AutoLoginManager,
+    ConfidentialClientLoginManager,
 )
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
 from gladier.managers import FlowsManager, ComputeManager
@@ -21,6 +23,7 @@ import gladier.utils.tool_alias
 import gladier.managers.compute_login_manager
 import gladier.exc
 import gladier.version
+
 log = logging.getLogger(__name__)
 
 
@@ -96,9 +99,10 @@ class GladierBaseClient(object):
     :raises gladier.exc.AuthException: if authorizers given are insufficient
 
     """
+
     secret_config_filename: str = None
-    app_name: str = 'Gladier Client'
-    client_id: str = 'f1631610-d9e4-4db2-81ba-7f93ad4414e3'
+    app_name: str = "Gladier Client"
+    client_id: str = "f1631610-d9e4-4db2-81ba-7f93ad4414e3"
     globus_group: str = None
     subscription_id: str = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
@@ -108,19 +112,22 @@ class GladierBaseClient(object):
         auto_registration: bool = True,
         login_manager: BaseLoginManager = None,
         flows_manager: FlowsManager = None,
-            ):
-
+    ):
         self._tools = None
         self.storage = self._determine_storage()
-        self.login_manager = login_manager or self._determine_login_manager(self.storage)
+        self.login_manager = login_manager or self._determine_login_manager(
+            self.storage
+        )
 
-        self.flows_manager = flows_manager or FlowsManager(auto_registration=auto_registration)
+        self.flows_manager = flows_manager or FlowsManager(
+            auto_registration=auto_registration
+        )
         if self.globus_group:
             self.flows_manager.globus_group = self.globus_group
         if self.subscription_id:
             self.flows_manager.subscription_id = self.subscription_id
         if not self.flows_manager.flow_title:
-            self.flows_manager.flow_title = f'{self.__class__.__name__} flow'
+            self.flows_manager.flow_title = f"{self.__class__.__name__} flow"
 
         self.compute_manager = ComputeManager(auto_registration=auto_registration)
         self.storage.update()
@@ -131,7 +138,7 @@ class GladierBaseClient(object):
             man.register_scopes()
 
     def _get_confidential_client_credentials(self):
-        return os.getenv('GLADIER_CLIENT_ID'), os.getenv('GLADIER_CLIENT_SECRET')
+        return os.getenv("GLADIER_CLIENT_ID"), os.getenv("GLADIER_CLIENT_SECRET")
 
     def _determine_storage(self):
         """
@@ -151,11 +158,14 @@ class GladierBaseClient(object):
             storage_filename = pathlib.Path(f"~/.gladier/{client_id}.cfg").expanduser()
             storage_filename.parent.mkdir(exist_ok=True)
 
-        storage_section = gladier.utils.name_generation.get_snake_case(self.__class__.__name__)
-        storage_tokens_section = f'tokens_{client_id}'
+        storage_section = gladier.utils.name_generation.get_snake_case(
+            self.__class__.__name__
+        )
+        storage_tokens_section = f"tokens_{client_id}"
 
-        return GladierSecretsConfig(storage_filename, storage_section,
-                                    tokens_section=storage_tokens_section)
+        return GladierSecretsConfig(
+            storage_filename, storage_section, tokens_section=storage_tokens_section
+        )
 
     def _determine_login_manager(self, storage):
         """
@@ -165,8 +175,10 @@ class GladierBaseClient(object):
         """
         CLI_ID, CLI_SEC = self._get_confidential_client_credentials()
         if CLI_ID and CLI_SEC:
-            log.info('Client Credentials detected, using custom internal storage for '
-                     'storing tokens.')
+            log.info(
+                "Client Credentials detected, using custom internal storage for "
+                "storing tokens."
+            )
             return ConfidentialClientLoginManager(CLI_ID, CLI_SEC, storage=storage)
         else:
             return AutoLoginManager(self.client_id, storage, self.app_name)
@@ -181,15 +193,16 @@ class GladierBaseClient(object):
                          class.
         :return: gladier.GladierBaseTool
         """
-        log.debug(f'Looking for Gladier tool: {tool_ref} ({type(tool_ref)})')
+        log.debug(f"Looking for Gladier tool: {tool_ref} ({type(tool_ref)})")
         if isinstance(tool_ref, str):
             default_cls = gladier.utils.dynamic_imports.import_string(tool_ref)
             _, alias = gladier.utils.dynamic_imports.parse_alias(tool_ref)
             default_inst = default_cls(alias, alias_class)
             if issubclass(type(default_inst), gladier.base.GladierBaseTool):
                 return default_inst
-            raise gladier.exc.ConfigException(f'{default_inst} is not of type '
-                                              f'{gladier.base.GladierBaseTool}')
+            raise gladier.exc.ConfigException(
+                f"{default_inst} is not of type " f"{gladier.base.GladierBaseTool}"
+            )
         elif isinstance(tool_ref, gladier.base.GladierBaseTool):
             return tool_ref
         else:
@@ -198,7 +211,8 @@ class GladierBaseClient(object):
                 return cls_inst
             raise gladier.exc.ConfigException(
                 f'"{tool_ref}" must be a {gladier.base.GladierBaseTool} or a dotted import '
-                'string ')
+                "string "
+            )
 
     @property
     def version(self):
@@ -211,17 +225,19 @@ class GladierBaseClient(object):
 
         :return: a list of subclassed instances of gladier.GladierBaseTool
         """
-        if getattr(self, '_tools', None):
+        if getattr(self, "_tools", None):
             return self._tools
 
-        gtools = getattr(self, 'gladier_tools', [])
+        gtools = getattr(self, "gladier_tools", [])
         if not gtools or not isinstance(gtools, Iterable):
             if not self.get_flow_definition():
                 raise gladier.exc.ConfigException(
                     '"gladier_tools" must be a defined list of Gladier Tools. '
-                    'Ex: ["gladier.tools.hello_world.HelloWorld"]')
-        self._tools = [self.get_gladier_defaults_cls(gt, self.alias_class)
-                       for gt in gtools]
+                    'Ex: ["gladier.tools.hello_world.HelloWorld"]'
+                )
+        self._tools = [
+            self.get_gladier_defaults_cls(gt, self.alias_class) for gt in gtools
+        ]
         return self._tools
 
     @property
@@ -273,23 +289,26 @@ class GladierBaseClient(object):
 
         :return: A dict of the Automate Flow definition
         """
-        if not getattr(self, 'flow_definition', None):
-            raise gladier.exc.ConfigException(f'"flow_definition" was not set on '
-                                              f'{self.__class__.__name__}')
+        if not getattr(self, "flow_definition", None):
+            raise gladier.exc.ConfigException(
+                f'"flow_definition" was not set on ' f"{self.__class__.__name__}"
+            )
 
         if isinstance(self.flow_definition, dict):
             return self.flow_definition
         elif isinstance(self.flow_definition, str):
             return self.get_gladier_defaults_cls(self.flow_definition).flow_definition
-        raise gladier.exc.ConfigException('"flow_definition" must be a dict or an import string '
-                                          'to a sub-class of type '
-                                          '"gladier.GladierBaseTool"')
+        raise gladier.exc.ConfigException(
+            '"flow_definition" must be a dict or an import string '
+            "to a sub-class of type "
+            '"gladier.GladierBaseTool"'
+        )
 
     def get_flow_schema(self):
         """
         Get the flow schema attached to this class.
         """
-        return getattr(self, 'flow_schema', None)
+        return getattr(self, "flow_schema", None)
 
     def sync_flow(self):
         self.flows_manager.flow_definition = self.get_flow_definition()
@@ -352,11 +371,12 @@ class GladierBaseClient(object):
         """
         combine_flow_input = self.get_input() if use_defaults else dict()
         if flow_input is not None:
-            if not flow_input.get('input') or len(flow_input.keys()) != 1:
+            if not flow_input.get("input") or len(flow_input.keys()) != 1:
                 raise gladier.exc.ConfigException(
                     f'Malformed input to flow, all input must be nested under "input", got '
-                    f'{flow_input.keys()}')
-            combine_flow_input['input'].update(flow_input['input'])
+                    f"{flow_input.keys()}"
+                )
+            combine_flow_input["input"].update(flow_input["input"])
         for tool in self.tools:
             self.check_input(tool, combine_flow_input)
 
@@ -375,16 +395,17 @@ class GladierBaseClient(object):
         """
         compute_ids = dict()
         for tool in self.tools:
-            log.debug(f'Checking functions for {tool}')
-            compute_funcs = (
-                getattr(tool, 'compute_functions', []) + getattr(tool, 'funcx_functions', [])
+            log.debug(f"Checking functions for {tool}")
+            compute_funcs = getattr(tool, "compute_functions", []) + getattr(
+                tool, "funcx_functions", []
             )
             if not compute_funcs:
-                log.warning(f'Tool {tool} did not define any compute functions!')
+                log.warning(f"Tool {tool} did not define any compute functions!")
             if not compute_funcs and not isinstance(compute_funcs, Iterable):
                 raise gladier.exc.DeveloperException(
                     f'Attribute "compute_functions" on {tool} needs to be an iterable! Found '
-                    f'{type(compute_funcs)}')
+                    f"{type(compute_funcs)}"
+                )
 
             for func in compute_funcs:
                 name, val = self.compute_manager.validate_function(tool, func)
@@ -422,13 +443,20 @@ class GladierBaseClient(object):
             # Iterate over both private and public input variables, and include any relevant ones
             # Note: Precedence starts and ends with: Public --> Private --> Default on Tool
             input_keys = set(tool.get_flow_input()) | set(tool.get_required_input())
-            log.debug(f'{tool}: Looking for overrides for the following input keys: {input_keys}')
-            override_values = {k: self.storage.get_value(k) for k in input_keys
-                               if self.storage.get_value(k) is not None}
+            log.debug(
+                f"{tool}: Looking for overrides for the following input keys: {input_keys}"
+            )
+            override_values = {
+                k: self.storage.get_value(k)
+                for k in input_keys
+                if self.storage.get_value(k) is not None
+            }
             if override_values:
-                log.info(f'Updates from {self.storage.filename}: {list(override_values.keys())}')
+                log.info(
+                    f"Updates from {self.storage.filename}: {list(override_values.keys())}"
+                )
                 flow_input.update(override_values)
-        return {'input': flow_input}
+        return {"input": flow_input}
 
     def check_input(self, tool: GladierBaseTool, flow_input: dict):
         """
@@ -440,9 +468,10 @@ class GladierBaseClient(object):
         :raises: gladier.exc.ConfigException
         """
         for req_input in tool.get_required_input():
-            if req_input not in flow_input['input']:
+            if req_input not in flow_input["input"]:
                 raise gladier.exc.ConfigException(
-                    f'{tool} requires flow input value: "{req_input}"')
+                    f'{tool} requires flow input value: "{req_input}"'
+                )
 
     def get_status(self, action_id: str):
         """
@@ -479,4 +508,6 @@ class GladierBaseClient(object):
         :param state_name: The state in the automate definition to fetch
         :returns: sub-dict of get_status() describing the :state_name:.
         """
-        return gladier.utils.automate.get_details(self.get_status(action_id), state_name)
+        return gladier.utils.automate.get_details(
+            self.get_status(action_id), state_name
+        )

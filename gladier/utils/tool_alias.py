@@ -7,8 +7,7 @@ log = logging.getLogger(__name__)
 
 
 class ToolAlias(abc.ABC):
-
-    input_location = 'input'
+    input_location = "input"
 
     def __init__(self, alias):
         self.alias = alias
@@ -22,8 +21,8 @@ class ToolAlias(abc.ABC):
         return variable_name
 
     def get_input_variable(self, flow_input_variable, tool_inputs):
-        location = f'$.{self.input_location}.'
-        input_name = flow_input_variable.replace(location, '')
+        location = f"$.{self.input_location}."
+        input_name = flow_input_variable.replace(location, "")
         if input_name in tool_inputs:
             return input_name
 
@@ -35,13 +34,15 @@ class ToolAlias(abc.ABC):
             if isinstance(sdata[k], str):
                 input_var = self.get_input_variable(sdata[k], tool_inputs)
                 if input_var:
-                    new_var = f'$.{self.input_location}.{self.rename_variable(input_var, tool)}'
+                    new_var = f"$.{self.input_location}.{self.rename_variable(input_var, tool)}"
                     sdata[k] = new_var
             elif isinstance(sdata[k], dict):
                 sdata[k] = self.rename_input_variables(sdata[k], tool_inputs, tool)
             elif isinstance(sdata[k], list):
-                sdata[k] = [self.rename_input_variables(subsdata, tool_inputs, tool)
-                            for subsdata in sdata[k]]
+                sdata[k] = [
+                    self.rename_input_variables(subsdata, tool_inputs, tool)
+                    for subsdata in sdata[k]
+                ]
         return sdata
 
 
@@ -54,9 +55,8 @@ class NoAlias(ToolAlias):
 
 
 class StateSuffixVariablePrefix(ToolAlias):
-
     def rename_state(self, state_name, tool):
-        return f'{state_name}{self.alias}'
+        return f"{state_name}{self.alias}"
 
     def rename_variable(self, variable_name, tool):
-        return f'{gladier.utils.name_generation.get_snake_case(self.alias)}_{variable_name}'
+        return f"{gladier.utils.name_generation.get_snake_case(self.alias)}_{variable_name}"
