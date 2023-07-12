@@ -23,8 +23,9 @@ except LoadError:
     initial_authorizers = {}
 
 
-def callback(scopes: List[str]
-             ) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+def callback(
+    scopes: List[str],
+) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
     # 'force' is used for any underlying scope changes. For example, if a flow adds transfer
     # functionality since it was last run, running it again would require a re-login.
     frl.login(requested_scopes=scopes, force=True, refresh_tokens=True)
@@ -34,19 +35,21 @@ def callback(scopes: List[str]
 custom_login_manager = CallbackLoginManager(
     initial_authorizers,
     # If additional logins are needed, the callback is used.
-    callback=callback
+    callback=callback,
 )
 
 # Pass in any custom login manager to modify the behavior. Everything else stays the same.
 client = GladierTestClient(login_manager=custom_login_manager)
-run = client.run_flow(flow_input={
-    "input": {
-        "args": "echo 'Hello Custom Login!'",
-        "capture_output": True,
-        "compute_endpoint": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+run = client.run_flow(
+    flow_input={
+        "input": {
+            "args": "echo 'Hello Custom Login!'",
+            "capture_output": True,
+            "compute_endpoint": "4b116d3c-1703-4f8f-9f6f-39921e5864df",
+        }
     }
-})
+)
 
-run_id = run['run_id']
+run_id = run["run_id"]
 client.progress(run_id)
 print(f"Flow result: {client.get_status(run_id)['status']}")

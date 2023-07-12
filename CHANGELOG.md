@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### ⚠ BREAKING CHANGES
 
-The breaking changes below mainly affect custom Gladier Tools. See the [Migration Guide](https://gladier.readthedocs.io/en/latest/migration.html) for details. 
+The breaking changes below mainly affect custom Gladier Tools. See the [Migration Guide](https://gladier.readthedocs.io/en/latest/migration.html) for details.
 
 * ``Gladier Base Tool "funcx_functions" changed to "compute_functions"``
     * Old tools will still be backwards compatible, but will use newer function names instead

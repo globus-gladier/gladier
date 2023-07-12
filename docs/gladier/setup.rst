@@ -15,7 +15,7 @@ comprises two steps:
    :scale: 25 %
    :alt: Globus Automation Services
 
-The first step involves a Globus Transfer action, and the second a Globus Compute action. 
+The first step involves a Globus Transfer action, and the second a Globus Compute action.
 In order for your computer to be accessible by Globus, it needs to be running a Globus collection.
 See the Globus Connect Personal section below. For the second part, you  need to set up a Compute
 Endpoint to tell Globus where it should execute functions. See the Comptue Endpoint section below

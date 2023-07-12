@@ -35,7 +35,7 @@ by a single invocation of ``my_first_function``.
 
     Gladier Automatically creates flow state names by translating them from snake case to upper camel case.
     For example, ``my_first_function`` results in the state name ``MyFirstFunction``
- 
+
 When ``my_first_function`` finishes and ``my_second_function`` begins, it will be given the input stored in
 ``$.MyFirstFunction.details.result[0]``. This value **MUST** be a dictionary containing expected parameters
 in ``my_second_function``, otherwise a flow exception will be raised and the flow will be marked as a failure.
@@ -52,7 +52,7 @@ Multiple Globus Compute Tasks
 
 Globus Compute is built to run many tasks in parallel. You can instruct Gladier to pass multiple task payloads with the ``tasks`` modifier.
 However, at this level Globus Compute also needs an expcilit Compute endpoint and Function ID for each task it will process. It's common to
-use one Compute function to build the list of payloads to be run in parallel. 
+use one Compute function to build the list of payloads to be run in parallel.
 
 .. code-block:: python
 
@@ -98,7 +98,7 @@ When ``parallel_workload`` runs, it will execute all tasks in parallel, or by an
 outputs will be listed in ``$.ParallelWorkload.details.result`` once all tasks finish. If any task fails, a stack trace will be returned as a
 string. If all tasks fail, the flow will be marked as "FAILED".
 
-A full example of the Flow Definition as JSON output is below: 
+A full example of the Flow Definition as JSON output is below:
 
 .. code-block:: JSON
 
