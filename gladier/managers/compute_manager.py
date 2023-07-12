@@ -31,7 +31,10 @@ class ComputeManager(ServiceManager):
             authorizers=self.login_manager.get_manager_authorizers()
         )
 
-        self.__compute_client = Client(login_manager=compute_login_manager)
+        self.__compute_client = Client(
+            code_serialization_strategy=serialize.DillCodeSource(),
+            login_manager=compute_login_manager
+    )
         return self.__compute_client
 
     @staticmethod
@@ -51,7 +54,7 @@ class ComputeManager(ServiceManager):
         Get the SHA256 checksum of a compute function
         :return: sha256 hex string of a given compute function
         """
-        fxs = serialize.ComputeSerializer()
+        fxs = serialize.ComputeSerializer(strategy_code=serialize.DillCodeSource())
         serialized_func = fxs.serialize(compute_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
 
