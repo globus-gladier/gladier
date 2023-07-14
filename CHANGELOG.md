@@ -9,19 +9,19 @@ All notable changes to this project will be documented in this file. See [standa
 
 The breaking changes below mainly affect custom Gladier Tools. See the [Migration Guide](https://gladier.readthedocs.io/en/latest/migration.html) for details.
 
-* ``Gladier Base Tool "funcx_functions" changed to "compute_functions"``
+* Gladier Base Tool "funcx_functions" changed to "compute_functions"
     * Old tools will still be backwards compatible, but will use newer function names instead
     * Tools should be migrated to use compute_functions instead of funcx_functions
-* ``Input Functions previously "{name}_funcx_id" are now "{name}_function_id"
-* ``Default "funcx_endpoint_compute" name changed to "compute_endpoint"
+* Input Functions previously "{name}_funcx_id" are now "{name}_function_id"
+* Default "funcx_endpoint_compute" name changed to "compute_endpoint"
     * Naming convention "funcx_endpoint_non_compute" has been dropped and is no longer used,
     * however users are still free to name endpoints as they wish
-* Default action URL is now ``https://compute.actions.globus.org``
-* Task output format changed, previously ``$.MyTask.details.result[0]`` is now ``$.MyTask.details.results[0].output``
+* Default action URL is now `https://compute.actions.globus.org`
+* Task output format changed, previously `$.MyTask.details.result[0]` is now `$.MyTask.details.results[0].output`
     * Both styles are currently outputted for backwards compatibility. New tooling should switch to the newer style.
 * Raise exception for legacy funcx function modifiers pre-v0.9.0
 * Detect and auto-update old funcx functions
-* Changed funcx_endpoint_compute to compute_endpoint
+* Changed `funcx_endpoint_compute` to `compute_endpoint`
 
 ### Features
 
