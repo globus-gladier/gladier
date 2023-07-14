@@ -12,7 +12,7 @@ class GladierBaseTool(object):
     flow_input = dict()
     flow_transition_states = []
     required_input = []
-    alias_exempt = ['compute_endpoint']
+    alias_exempt = ["compute_endpoint"]
     compute_endpoints = dict()
     compute_functions = []
 
@@ -22,7 +22,7 @@ class GladierBaseTool(object):
         if alias and not alias_class:
             raise ValueError(
                 f'{self.__class__.__name__} given alias "{alias}" but not "alias_class". '
-                'ex: alias_class=gladier.utils.tool_alias.StateSuffixVariablePrefix'
+                "ex: alias_class=gladier.utils.tool_alias.StateSuffixVariablePrefix"
             )
         if alias_class:
             self.alias_renamer = alias_cls(alias)
@@ -54,17 +54,22 @@ class GladierBaseTool(object):
         return self.flow_transition_states
 
     def get_original_inputs(self) -> Mapping[str, Any]:
-        return [input_var for input_var in set(self.required_input) | set(self.flow_input.keys())
-                if input_var not in self.alias_exempt]
+        return [
+            input_var
+            for input_var in set(self.required_input) | set(self.flow_input.keys())
+            if input_var not in self.alias_exempt
+        ]
 
-    def rename_state(self, state_name: str, state_data: Mapping[str, Any]) -> Mapping[str, Any]:
+    def rename_state(
+        self, state_name: str, state_data: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
         name = self.alias_renamer.rename_state(state_name, self)
-        data = self.alias_renamer.rename_input_variables(state_data,
-                                                         self.get_original_inputs(), self)
+        data = self.alias_renamer.rename_input_variables(
+            state_data, self.get_original_inputs(), self
+        )
         return name, data
 
     def get_flow_definition(self) -> Mapping[str, Any]:
-
         if not self.alias:
             return self.flow_definition
 
@@ -72,15 +77,20 @@ class GladierBaseTool(object):
         for state_name, state_data in iter_flow(self.flow_definition):
             new_name, new_state = self.rename_state(state_name, state_data)
             new_states[new_name] = new_state
-            if new_state.get('Next'):
-                new_state['Next'] = self.alias_renamer.rename_state(new_state['Next'], self)
-            if new_state['Type'] == 'Choice':
-                for choice in new_state['Choices']:
-                    if choice.get('Next'):
-                        choice['Next'] = self.alias_renamer.rename_state(choice['Next'], self)
+            if new_state.get("Next"):
+                new_state["Next"] = self.alias_renamer.rename_state(
+                    new_state["Next"], self
+                )
+            if new_state["Type"] == "Choice":
+                for choice in new_state["Choices"]:
+                    if choice.get("Next"):
+                        choice["Next"] = self.alias_renamer.rename_state(
+                            choice["Next"], self
+                        )
 
         new_flow_def = copy.deepcopy(self.flow_definition)
-        new_flow_def['States'] = new_states
-        new_flow_def['StartAt'] = self.alias_renamer.rename_state(self.flow_definition['StartAt'],
-                                                                  self)
+        new_flow_def["States"] = new_states
+        new_flow_def["StartAt"] = self.alias_renamer.rename_state(
+            self.flow_definition["StartAt"], self
+        )
         return new_flow_def

@@ -42,9 +42,11 @@ def generate_flow_definition(_cls=None, *, modifiers=None):
                 c.flow_definition = combine_tool_flows(c, modifiers)
                 return c
             else:
-                raise FlowGenException(f'Invalid class {cls}, flow generation '
-                                       f'only supported for '
-                                       f'{[GladierBaseTool, GladierBaseClient]}')
+                raise FlowGenException(
+                    f"Invalid class {cls}, flow generation "
+                    f"only supported for "
+                    f"{[GladierBaseTool, GladierBaseClient]}"
+                )
 
         return wrapper
 

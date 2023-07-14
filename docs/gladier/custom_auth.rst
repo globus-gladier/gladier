@@ -43,7 +43,7 @@ Customizing Auth
 ----------------
 
 The default behavior of Auth in Gladier can be changed by passing a custom Login Manager
-into any Gladier Client: 
+into any Gladier Client:
 
 .. code-block:: python
 

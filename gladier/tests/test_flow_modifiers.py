@@ -19,7 +19,7 @@ class MyTool(GladierBaseTool):
 def test_basic_modifiers():
     mods = {
         mock_func2: {
-            'payload': mock_func,
+            "payload": mock_func,
         }
     }
     fm = FlowModifiers([MyTool()], mods)
@@ -35,8 +35,8 @@ def test_invalid_modifiers():
 
 def test_missing_modifiers():
     mods = {
-        'mock_func3': {
-            'payload': mock_func,
+        "mock_func3": {
+            "payload": mock_func,
         }
     }
     with pytest.raises(FlowGenException):
@@ -45,8 +45,8 @@ def test_missing_modifiers():
 
 def test_unsupported_modifiers():
     mods = {
-        'mock_func2': {
-            'plumbus': mock_func,
+        "mock_func2": {
+            "plumbus": mock_func,
         }
     }
     with pytest.raises(FlowGenException):
@@ -54,16 +54,14 @@ def test_unsupported_modifiers():
 
 
 def test_duplicated_tools():
-    fm = FlowModifiers([MyTool(), MyTool()], {
-        'mock_func2': {
-            'payload': 'mock_func'
+    fm = FlowModifiers([MyTool(), MyTool()], {"mock_func2": {"payload": "mock_func"}})
+    new_flow = fm.apply_modifiers(
+        {
+            "States": {
+                "MockFunc": {"Parameters": {"tasks": [{"payload": "foo"}]}},
+                "MockFunc2": {"Parameters": {"tasks": [{"payload": "bar"}]}},
+            }
         }
-    })
-    new_flow = fm.apply_modifiers({
-        'States': {
-            'MockFunc': {'Parameters': {'tasks': [{'payload': 'foo'}]}},
-            'MockFunc2': {'Parameters': {'tasks': [{'payload': 'bar'}]}},
-        }
-    })
-    mock2_pl = new_flow['States']['MockFunc2']['Parameters']['tasks'][0]['payload.$']
-    assert mock2_pl == '$.MockFunc.details.results'
+    )
+    mock2_pl = new_flow["States"]["MockFunc2"]["Parameters"]["tasks"][0]["payload.$"]
+    assert mock2_pl == "$.MockFunc.details.results"

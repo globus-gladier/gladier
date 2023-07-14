@@ -22,18 +22,18 @@ tools you want to use. In this case, we want to use the Tar, and Transfer tools.
          'gladier_tools.posix.Tar',
          'gladier_tools.globus.Transfer',
       ]
-    
-The ``@generate_flow_definition`` decorator takes the flow definitions of the individual tools and constructs a flow definition for the new flow, so we do not have 
+
+The ``@generate_flow_definition`` decorator takes the flow definitions of the individual tools and constructs a flow definition for the new flow, so we do not have
 to define a custom flow definition. To view the constructed flow definition, use ``pprint(tat.flow_definition)``. Refer to the `Flow Generation <https://gladier.readthedocs.io/en/docs/flow_generation.html>`_ doc for more details on the same.
 
-The next step is to define the input for the flow. It might be helpful to refer to the docs for each of the tools to find out what needs to be passed in as input. 
+The next step is to define the input for the flow. It might be helpful to refer to the docs for each of the tools to find out what needs to be passed in as input.
 For example, here are the documentations for the `Tar <https://gladier.readthedocs.io/en/docs/tools/posix/tar.html>`_ and `Transfer <https://gladier.readthedocs.io/en/docs/tools/globus/transfer.html>`_ tools. Feel free to use the below blueprint:
 
 .. code-block:: python
-    
+
    flow_input = {
       'input': {
-         # Set this to the file/folder that has to be tarred 
+         # Set this to the file/folder that has to be tarred
          'tar_input': '',
          # Set this to your own compute endpoint where you want to tar files
          'compute_endpoint': '',
@@ -51,7 +51,7 @@ For example, here are the documentations for the `Tar <https://gladier.readthedo
 All that is left is to create an instance of the ``GladierBaseClient`` class and run the flow. Use the below code to view the progress of the flow:
 
 .. code-block:: python
-    
+
    tat = TarAndTransfer()
    pprint(tat.flow_definition)
    flow = tat.run_flow(flow_input=flow_input)

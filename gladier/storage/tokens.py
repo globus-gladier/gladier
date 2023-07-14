@@ -9,10 +9,9 @@ log = logging.getLogger(__name__)
 
 
 class GladierSecretsConfig(GladierConfig):
-
     DEFAULT_PERMISSION = stat.S_IRUSR | stat.S_IWUSR
 
-    def __init__(self, *args, tokens_section='tokens', **kwargs):
+    def __init__(self, *args, tokens_section="tokens", **kwargs):
         self.tokens_section = tokens_section
         super().__init__(*args, **kwargs)
 
@@ -30,7 +29,7 @@ class GladierSecretsConfig(GladierConfig):
         self.load()
         for name, value in flat_pack(tokens).items():
             self.set(self.tokens_section, name, value)
-        log.debug(f'Wrote tokens to {self.filename}')
+        log.debug(f"Wrote tokens to {self.filename}")
         self.save()
 
     def read_tokens(self):
@@ -41,5 +40,5 @@ class GladierSecretsConfig(GladierConfig):
         self.load()
         self.remove_section(self.tokens_section)
         self.add_section(self.tokens_section)
-        log.debug(f'Tokens cleared from {self.filename}')
+        log.debug(f"Tokens cleared from {self.filename}")
         self.save()

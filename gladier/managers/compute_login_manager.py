@@ -15,6 +15,7 @@ class ComputeLoginManager:
 
     https://github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/sdk/login_manager/protocol.py  # noqa
     """
+
     SCOPES = [
         Client.FUNCX_SCOPE,
         AuthScopes.openid,
@@ -24,9 +25,7 @@ class ComputeLoginManager:
         self.authorizers = authorizers
 
     def get_auth_client(self) -> globus_sdk.AuthClient:
-        return globus_sdk.AuthClient(
-            authorizer=self.authorizers[AuthScopes.openid]
-        )
+        return globus_sdk.AuthClient(authorizer=self.authorizers[AuthScopes.openid])
 
     def get_web_client(
         self, *, base_url: str | None = None, app_name: str | None = None
