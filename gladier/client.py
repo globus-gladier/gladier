@@ -283,7 +283,7 @@ class GladierBaseClient(object):
             self.flow_definition = self.start_at.get_flow_definition()
 
         if self.flow_definition is None:
-            raise gladier.exc.ConfigException(f'"flow_definition" was not set on '
+            raise gladier.exc.ConfigException('"flow_definition" was not set on '
                                               f'{self.__class__.__name__}')
 
         if isinstance(self.flow_definition, dict):

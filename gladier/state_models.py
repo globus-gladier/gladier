@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import typing as t
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from enum import Enum
 
 from pydantic import BaseModel, Extra
 
 from .helpers import (
     JSONObject,
     eliminate_none_values,
-    insure_json_path,
+    ensure_json_path,
     insure_parameter_values,
 )
 
@@ -93,7 +95,7 @@ class GladierBaseCompositeState(GladierBaseState):
         return super().get_flow_definition()
 
 
-class GladierStateWithNextOrEnd(GladierBaseState):
+class StateWithNextOrEnd(GladierBaseState):
     def next(self, next_state: GladierBaseState) -> GladierBaseState:
         self.next_state = next_state
         return next_state
@@ -116,7 +118,7 @@ class GladierStateWithNextOrEnd(GladierBaseState):
         return flow_definition
 
 
-class GladierStateWithParametersOrInputPath(GladierBaseState, ABC):
+class StateWithParametersOrInputPath(GladierBaseState, ABC):
     parameters: t.Optional[t.Dict[str, t.Any]] = None
     input_path: t.Optional[str] = None
 
@@ -134,13 +136,13 @@ class GladierStateWithParametersOrInputPath(GladierBaseState, ABC):
                 self.parameters
             )
         elif self.input_path is not None:
-            params_or_input_path["InputPath"] = insure_json_path(self.input_path)
+            params_or_input_path["InputPath"] = ensure_json_path(self.input_path)
 
         flow_state.update(params_or_input_path)
         return flow_definition
 
 
-class GladierStateWithResultPath(GladierBaseState, ABC):
+class StateWithResultPath(GladierBaseState, ABC):
     result_path: t.Optional[str] = None
 
     def get_flow_definition(self) -> JSONObject:
@@ -151,14 +153,25 @@ class GladierStateWithResultPath(GladierBaseState, ABC):
             if self.result_path is not None
             else f"$.{self.valid_state_name}Result"
         )
-        flow_state.update({"ResultPath": insure_json_path(result_path)})
+        flow_state.update({"ResultPath": ensure_json_path(result_path)})
         return flow_definition
 
 
-class GladierActionState(
-    GladierStateWithNextOrEnd,
-    GladierStateWithParametersOrInputPath,
-    GladierStateWithResultPath,
+class ActionExceptionName(str, Enum):
+    ActionFailedException = "ActionFailedException"
+    ActionUnableToRun = "ActionUnableToRun"
+    ActionTimeout = "ActionTimeout"
+    NoTokenException = "NoTokenException"
+    States_All = "States.All"
+    States_IntrinsicFailure = "States.IntrinsicFailure"
+    States_ParameterPathFailure = "States.ParameterPathFailure"
+    States_ResultPathMatchFailure = "States.ResultPathMatchFailure"
+
+
+class ActionState(
+    StateWithNextOrEnd,
+    StateWithParametersOrInputPath,
+    StateWithResultPath,
 ):
     action_url: str
     state_type: str = "Action"
@@ -168,10 +181,19 @@ class GladierActionState(
     exception_on_action_failure: bool = False
     run_as: t.Optional[str] = None
 
-    def add_exception_handler(
-        self, exception_name: str, exception_handler: GladierBaseState
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.exception_handlers: t.Dict[ActionExceptionName, GladierBaseState] = {}
+
+    def set_exception_handler(
+        self,
+        exception_names: t.Union[ActionExceptionName, t.List[ActionExceptionName]],
+        exception_handler: GladierBaseState,
     ):
-        ...
+        if isinstance(exception_names, ActionExceptionName):
+            exception_names = [exception_names]
+        for exc_name in exception_names:
+            self.exception_handlers[exc_name] = exception_handler
 
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
@@ -182,11 +204,23 @@ class GladierActionState(
             "ActionScope": self.action_scope,
             "ExceptionOnActionFailure": self.exception_on_action_failure,
         }
+        if len(self.exception_handlers) > 0:
+            catches: t.Dict[str, t.Set[str]] = defaultdict(set)
+            # Create an "inverted" dictionary of the exception name -> handler dictionary
+            # tracked on the object so that we have one entry per handler state with the
+            # set of exceptions which are handled by that state as values
+            for exc_name, handler_state in self.exception_handlers.items():
+                catches[handler_state.valid_state_name].add(exc_name.value)
+            # Now re-invert to the format for the Catch clause on the state
+            action_flow_state["Catch"] = [
+                {"ErrorEquals": list(exc_names), "Next": handler}
+                for handler, exc_names in catches.items()
+            ]
         flow_state.update(action_flow_state)
         eliminate_none_values(flow_state, deep=True)
         return flow_definition
 
     def get_child_states(self) -> t.List[GladierBaseState]:
         next_states = super().get_child_states()
-        exception_handler_states: t.List[GladierBaseState] = []  # TODO: Compute this
+        exception_handler_states = list(self.exception_handlers.values())
         return next_states + exception_handler_states

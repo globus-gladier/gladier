@@ -6,13 +6,13 @@ import typing as t
 from pydantic import validator
 from pydantic.fields import ModelField
 
-from gladier import GladierStateWithNextOrEnd, JSONObject
+from gladier import StateWithNextOrEnd, JSONObject
 from gladier.tools import exclusive_validator_generator
 
 _wait_state_exclusives_list = ["seconds", "timestamp", "seconds_path", "timestamp_path"]
 
 
-class WaitState(GladierStateWithNextOrEnd):
+class WaitState(StateWithNextOrEnd):
     state_type: str = "Wait"
     seconds: t.Optional[int] = None
     timestamp: t.Optional[datetime.datetime] = None

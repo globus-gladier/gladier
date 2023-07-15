@@ -3,7 +3,7 @@ from __future__ import annotations
 from gladier import (
     GladierStateWithNextOrEnd,
     GladierStateWithParametersOrInputPath,
-    GladierStateWithResultPath,
+    StateWithResultPath,
     JSONObject,
 )
 
@@ -11,7 +11,7 @@ from gladier import (
 class PassState(
     GladierStateWithNextOrEnd,
     GladierStateWithParametersOrInputPath,
-    GladierStateWithResultPath,
+    StateWithResultPath,
 ):
     state_type: str = "Pass"
 

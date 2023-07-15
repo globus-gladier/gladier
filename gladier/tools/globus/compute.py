@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import typing as t
 
-from gladier import GladierActionState, JSONObject
+from gladier import ActionState, JSONObject
 from gladier.managers import ComputeManager
 
 
-class GlobusComputeStep(GladierActionState):
+class GlobusComputeStep(ActionState):
     endpoint_id: str = "$.input.globus_compute_endpoint"
     function_to_call: t.Union[t.Callable[[t.Any], t.Any], str]
     function_parameters: t.Union[t.Dict[str, t.Any], str]

@@ -5,7 +5,7 @@ from jsonpath_ng.exceptions import JsonPathParserError
 from typing_extensions import TypeAlias
 
 JSONObject: TypeAlias = t.Dict[str, "JSONValue"]
-JSONList: TypeAlias = t.List["JSONValue"]
+JSONList: TypeAlias = t.Iterable["JSONValue"]
 JSONValue: TypeAlias = t.Union[JSONObject, JSONList, str, int, float, bool, None]
 
 
@@ -20,7 +20,7 @@ def deep_update_dict(
     return dest_dict
 
 
-def insure_json_path(path: t.Optional[str]) -> t.Optional[str]:
+def ensure_json_path(path: t.Optional[str]) -> t.Optional[str]:
     if path is not None and not path.startswith("$."):
         path = "$." + path
     return path

@@ -10,11 +10,12 @@ from gladier.managers import CallbackLoginManager, FlowsManager
 
 from .helpers import JSONList, JSONObject, JSONValue
 from .state_models import (
-    GladierActionState,
+    ActionExceptionName,
+    ActionState,
     GladierBaseState,
-    GladierStateWithNextOrEnd,
-    GladierStateWithParametersOrInputPath,
-    GladierStateWithResultPath,
+    StateWithNextOrEnd,
+    StateWithParametersOrInputPath,
+    StateWithResultPath,
 )
 
 _nameables = (
@@ -25,11 +26,12 @@ _nameables = (
         generate_flow_definition,
         CallbackLoginManager,
         FlowsManager,
-        GladierActionState,
+        ActionExceptionName,
+        ActionState,
         GladierBaseState,
-        GladierStateWithNextOrEnd,
-        GladierStateWithParametersOrInputPath,
-        GladierStateWithResultPath,
+        StateWithNextOrEnd,
+        StateWithParametersOrInputPath,
+        StateWithResultPath,
     )
     if hasattr(x, "__name__")
 )
