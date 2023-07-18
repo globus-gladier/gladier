@@ -36,15 +36,15 @@ def test_bad_flow_permission():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="py37 missing key test feature")
-def test_run_flow_with_label(logged_in, mock_flows_client):
+def test_run_flow_with_label(logged_in, mock_specific_flow_client):
     cli = MockGladierClient()
     cli.run_flow(label="my flow")
     # Python 3.7 doesn't support checking kwargs this way. Skip it.
-    assert mock_flows_client.run_flow.call_args.kwargs["label"] == "my flow"
+    assert mock_specific_flow_client.run_flow.call_args.kwargs["label"] == "my flow"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="py37 missing key test feature")
-def test_run_flow_with_long_label(logged_in, mock_flows_client):
+def test_run_flow_with_long_label(logged_in, mock_specific_flow_client):
     cli = MockGladierClient()
     my_label = "fl" + "o" * 63
     expected_label = "fl" + "o" * 60 + ".."
@@ -52,18 +52,20 @@ def test_run_flow_with_long_label(logged_in, mock_flows_client):
     assert len(expected_label) == 64
     cli.run_flow(label=my_label)
     # Python 3.7 doesn't support checking kwargs this way. Skip it.
-    assert mock_flows_client.run_flow.call_args.kwargs["label"] == expected_label
+    assert (
+        mock_specific_flow_client.run_flow.call_args.kwargs["label"] == expected_label
+    )
 
 
 def test_exception_on_immediate_flow_failure(
-    logged_in, mock_flows_client, globus_response
+    logged_in, mock_specific_flow_client, globus_response
 ):
     globus_response.data = {
         "status": "FAILED",
         "run_id": "my_run_id",
         "details": {"description": "something bad happened"},
     }
-    mock_flows_client.run_flow.return_value = globus_response
+    mock_specific_flow_client.run_flow.return_value = globus_response
     cli = MockGladierClient()
     with pytest.raises(ConfigException):
         cli.run_flow()
@@ -85,19 +87,22 @@ def test_explicit_flow_id():
 
 
 def test_unexpected_400_run_flow_without_json(
-    auto_login, mock_flows_client, mock_globus_api_error
+    auto_login, mock_specific_flow_client, mock_globus_api_error
 ):
     mock_globus_api_error.text = "something that is not JSON!"
-    mock_flows_client.run_flow.side_effect = mock_globus_api_error
+    mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
     with pytest.raises(globus_sdk.exc.GlobusAPIError):
         fm.run_flow()
 
 
 def test_dependent_scope_change_run_flow(
-    auto_login, mock_flows_client, mock_dependent_token_change_error
+    auto_login,
+    mock_specific_flow_client,
+    mock_dependent_token_change_error,
+    monkeypatch,
 ):
-    mock_flows_client.run_flow.side_effect = mock_dependent_token_change_error
+    mock_specific_flow_client.run_flow.side_effect = mock_dependent_token_change_error
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
     # Ensure scopes are set, then disable auto_login behavior
     auto_login.get_manager_authorizers()
@@ -126,9 +131,9 @@ def test_dependent_scope_change_no_login(logged_in, mock_flows_client, monkeypat
 
 
 def test_gladier_raises_globus_errors(
-    logged_in, mock_flows_client, mock_globus_api_error, monkeypatch
+    logged_in, mock_specific_flow_client, mock_globus_api_error, monkeypatch
 ):
-    mock_flows_client.run_flow.side_effect = mock_globus_api_error
+    mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
     cli = MockGladierClient()
 
     with pytest.raises(mock_globus_api_error):
@@ -158,35 +163,43 @@ def test_schema_changed(auto_login, storage):
 
 
 def test_run_flow_redeploy_on_404(
-    auto_login, storage, mock_flows_client, mock_globus_api_error
+    auto_login,
+    storage,
+    mock_flows_client,
+    mock_specific_flow_client,
+    mock_globus_api_error,
 ):
     fm = FlowsManager(flow_definition={"foo": "bar"}, login_manager=auto_login)
     storage.set_value("flow_id", "pre_configured_flow")
     mock_globus_api_error.http_status = 404
-    mock_flows_client.run_flow.side_effect = mock_globus_api_error
+    mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
     fm.storage = storage
     with pytest.raises(mock_globus_api_error):
         fm.run_flow()
     # The manager will first attempt to run the flow, which will fail. It will then
     # deploy and attempt to re-run, resulting in the following calls
-    assert mock_flows_client.deploy_flow.call_count == 1
-    assert mock_flows_client.run_flow.call_count == 2
+    assert mock_flows_client.create_flow.call_count == 1
+    assert mock_specific_flow_client.run_flow.call_count == 2
 
 
 def test_run_flow_404_on_explicit_flow_id(
-    auto_login, storage, mock_flows_client, mock_globus_api_error
+    auto_login,
+    storage,
+    mock_flows_client,
+    mock_specific_flow_client,
+    mock_globus_api_error,
 ):
     fm = FlowsManager(
         flow_id="foo", flow_definition={"foo": "bar"}, login_manager=auto_login
     )
     mock_globus_api_error.http_status = 404
-    mock_flows_client.run_flow.side_effect = mock_globus_api_error
+    mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
     fm.storage = storage
     with pytest.raises(mock_globus_api_error):
         fm.run_flow()
     # The manager should not attempt to re-deploy on explicitly set flow_ids
-    assert mock_flows_client.deploy_flow.call_count == 0
-    assert mock_flows_client.run_flow.call_count == 1
+    assert mock_flows_client.create_flow.call_count == 0
+    assert mock_specific_flow_client.run_flow.call_count == 1
 
 
 def test_register_flow_redeploy_on_404(
@@ -198,7 +211,7 @@ def test_register_flow_redeploy_on_404(
     mock_flows_client.update_flow.side_effect = mock_globus_api_error
     fm.storage = storage
     fm.register_flow()
-    assert mock_flows_client.deploy_flow.call_count == 1
+    assert mock_flows_client.create_flow.call_count == 1
     assert mock_flows_client.update_flow.call_count == 1
 
 
@@ -221,7 +234,7 @@ def test_get_status(
 ):
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
     globus_response.data = mock_flow_status_active
-    mock_flows_client.flow_action_status.return_value = globus_response
+    mock_flows_client.get_run.return_value = globus_response
     fm.get_status("run_id")
 
 
@@ -243,9 +256,9 @@ def test_progress(
 
     responses = GlobusResponse()
 
-    mock_flows_client.flow_action_status.return_value = responses
+    mock_flows_client.get_run.return_value = responses
     fm.progress("run_id")
-    assert mock_flows_client.flow_action_status.call_count == 3
+    assert mock_flows_client.get_run.call_count == 3
 
 
 def test_get_details(
@@ -253,9 +266,6 @@ def test_get_details(
 ):
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
     globus_response.data = mock_flow_status_succeeded
-    mock_flows_client.flow_action_status.return_value = globus_response
+    mock_flows_client.get_run.return_value = globus_response
     response = fm.get_details("run_id", "ShellCmd")
-    from pprint import pprint
-
-    pprint(response)
     assert "Hello Custom Storage!" in response["details"]["result"][0][1]

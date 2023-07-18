@@ -388,7 +388,7 @@ class GladierBaseClient(object):
             self.check_input(tool, combine_flow_input)
 
         self.sync_flow()
-        return self.flows_manager.run_flow(flow_input=combine_flow_input, **flow_kwargs)
+        return self.flows_manager.run_flow(body=combine_flow_input, **flow_kwargs)
 
     def get_compute_function_ids(self):
         """Get all compute function ids for this run, registering them if there are no ids

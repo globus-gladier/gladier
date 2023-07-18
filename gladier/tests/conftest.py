@@ -7,14 +7,20 @@ import pytest
 import fair_research_login
 from gladier.storage import config, tokens
 import globus_sdk
-import globus_automate_client
 
-from globus_automate_client import flows_client
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
 from gladier.managers import ComputeManager
 from gladier.managers.login_manager import CallbackLoginManager
 
 data_dir = os.path.join(os.path.dirname(__file__), "test_data")
+
+ALL_FLOW_SCOPES = [
+    globus_sdk.FlowsClient.scopes.manage_flows,
+    globus_sdk.FlowsClient.scopes.view_flows,
+    globus_sdk.FlowsClient.scopes.run,
+    globus_sdk.FlowsClient.scopes.run_status,
+    globus_sdk.FlowsClient.scopes.run_manage,
+]
 
 
 @pytest.fixture(autouse=True)
@@ -67,28 +73,48 @@ def mock_secrets_config(monkeypatch):
 @pytest.fixture(autouse=True)
 def mock_flows_client(monkeypatch, globus_response):
     """Ensure there are no calls out to the Globus Automate Client"""
-    mock_flows_cli = Mock()
-    mock_flows_cli.deploy_flow.return_value = globus_response(
-        mock_data={
-            "id": "mock_flow_id",
-            "globus_auth_scope": mock_automate_flow_scope,
-        }
+    mock_create_flow = Mock(
+        return_value=globus_response(
+            mock_data={
+                "id": "mock_flow_id",
+                "globus_auth_scope": mock_automate_flow_scope,
+            }
+        )
     )
-    mock_flows_cli.run_flow.return_value = globus_response(
-        mock_data={
-            "run_id": "mock_flow_id",
-            "status": "ACTIVE",
-        }
+    mock_update_flow = Mock(
+        return_value=globus_response(
+            mock_data={
+                "id": "mock_flow_id",
+            }
+        )
     )
-    mock_flows_cli.scope_for_flow = (
-        lambda sc: f"https://auth.globus.org/scopes/{sc}/flow_{sc}_user"
+    mock_get_run = Mock(
+        return_value=globus_response(
+            mock_data={
+                "id": "mock_flow_id",
+            }
+        )
     )
-    monkeypatch.setattr(
-        globus_automate_client.FlowsClient,
-        "new_client",
-        Mock(return_value=mock_flows_cli),
+
+    monkeypatch.setattr(globus_sdk.FlowsClient, "create_flow", mock_create_flow)
+    monkeypatch.setattr(globus_sdk.FlowsClient, "update_flow", mock_update_flow)
+    monkeypatch.setattr(globus_sdk.FlowsClient, "get_run", mock_update_flow)
+    return globus_sdk.FlowsClient
+
+
+@pytest.fixture(autouse=True)
+def mock_specific_flow_client(monkeypatch, globus_response):
+    """Ensure there are no calls out to the Globus Automate Client"""
+    mock_run_flow = Mock(
+        return_value=globus_response(
+            mock_data={
+                "run_id": "mock_flow_id",
+                "status": "ACTIVE",
+            }
+        )
     )
-    return mock_flows_cli
+    monkeypatch.setattr(globus_sdk.SpecificFlowClient, "run_flow", mock_run_flow)
+    return globus_sdk.SpecificFlowClient
 
 
 @pytest.fixture(autouse=True)
@@ -111,7 +137,7 @@ def logged_out(monkeypatch):
 
 @pytest.fixture
 def logged_in_tokens():
-    scopes = list(flows_client.ALL_FLOW_SCOPES) + [
+    scopes = ALL_FLOW_SCOPES + [
         # Compute Scope
         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
         # Required by Compute
