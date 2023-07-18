@@ -10,7 +10,9 @@ from .choice_state import (
     NotRule,
     OrRule,
 )
+from .fail import FailState
 from .pass_state import PassState
+from .succeed import SucceedState
 from .wait import WaitState
 
 _nameables = (
@@ -24,9 +26,11 @@ _nameables = (
         OrRule,
         PassState,
         WaitState,
+        FailState,
+        SucceedState,
     )
     if hasattr(x, "__name__")
 )
-_unnameables: t.List[str] = ["JSONObject", "JSONList", "JSONValue"]
+_unnameables: t.List[str] = []
 
 __all__ = tuple(_nameables) + tuple(_unnameables)

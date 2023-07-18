@@ -148,13 +148,18 @@ class StateWithResultPath(GladierBaseState, ABC):
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
         flow_state = self.get_flow_state_dict()
+        flow_state.update({"ResultPath": self.result_path_for_step()})
+        return flow_definition
+
+    def result_path_for_step(self) -> str:
         result_path = (
             self.result_path
             if self.result_path is not None
             else f"$.{self.valid_state_name}Result"
         )
-        flow_state.update({"ResultPath": ensure_json_path(result_path)})
-        return flow_definition
+        result_path = ensure_json_path(result_path)
+        return result_path
+
 
 
 class ActionExceptionName(str, Enum):

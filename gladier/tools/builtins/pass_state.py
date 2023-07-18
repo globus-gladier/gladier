@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from gladier import (
-    GladierStateWithNextOrEnd,
-    GladierStateWithParametersOrInputPath,
+    StateWithNextOrEnd,
+    StateWithParametersOrInputPath,
     StateWithResultPath,
     JSONObject,
 )
 
 
 class PassState(
-    GladierStateWithNextOrEnd,
-    GladierStateWithParametersOrInputPath,
+    StateWithParametersOrInputPath,
+    StateWithNextOrEnd,
     StateWithResultPath,
 ):
     state_type: str = "Pass"
