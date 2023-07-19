@@ -12,7 +12,6 @@ from .choice_state import (
 )
 from .fail import FailState
 from .pass_state import PassState
-from .succeed import SucceedState
 from .wait import WaitState
 
 _nameables = (
@@ -27,7 +26,6 @@ _nameables = (
         PassState,
         WaitState,
         FailState,
-        SucceedState,
     )
     if hasattr(x, "__name__")
 )
