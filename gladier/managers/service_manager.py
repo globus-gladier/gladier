@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 import abc
 from gladier.managers.login_manager import BaseLoginManager
 from gladier.storage.config import GladierConfig
@@ -9,10 +9,15 @@ log = logging.getLogger(__name__)
 
 
 class ServiceManager(abc.ABC):
-    def __init__(self, **kwargs):
-        self._storage = kwargs.get("storage")
+    def __init__(
+        self,
+        storage: Optional[GladierConfig] = None,
+        login_manager: Optional[BaseLoginManager] = None,
+        **kwargs,
+    ):
+        self._storage = storage
 
-        self.login_manager = kwargs.get("login_manager")
+        self.login_manager = login_manager
         self.register_scopes()
 
     @property
