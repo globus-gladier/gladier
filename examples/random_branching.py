@@ -16,17 +16,9 @@ def random_int(high_val: int) -> int:
 
 
 def main():
-    class RandomComputeStep(GlobusComputeStep):
-        high_val: int
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, function_to_call=random_int, **kwargs)
-
-        def get_flow_definition(self) -> JSONObject:
-            self.set_call_params_from_self_model(["high_val"])
-            return super().get_flow_definition()
-
-    random_step = RandomComputeStep(high_val=3)
+    random_step = GlobusComputeStep(
+        function_to_call=random_int, function_parameters={"high_val": 3}
+    )
     choice_state = (
         ChoiceState()
         .choice(
@@ -39,9 +31,8 @@ def main():
                     error="Unluck 0 selected, simulated error",
                 ),
             )
-        )
-        .set_default(PassState())
-    )
+        ))
+    choice_state.set_default(PassState(state_name="SuccessfulCompletion"))
     random_step.next(choice_state)
 
     client = GladierBaseClient(start_at=random_step)
