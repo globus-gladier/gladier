@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+
+## [0.9.0b2](https://github.com/globus-gladier/gladier/compare/v0.9.0b1...v0.9.0b2) (2023-07-17)
+
+### Bug Fixes
+
+* Function serialization failures using compute-sdk 2.2.3 ([4b0bb36](https://github.com/globus-gladier/gladier/commit/4b0bb36aa955bc41384dcc170fa865388e6c3ae7)), closes [/github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/serialize/concretes.py#L121](https://github.com/globus-gladier//github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/serialize/concretes.py/issues/L121)
+
+
 ## [0.9.0b1](https://github.com/globus-gladier/gladier/compare/v0.8.4...v0.9.0b1) (2023-07-10)
 
 
