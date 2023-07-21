@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 from gladier import JSONObject
-from gladier.tools.globus import GlobusComputeStep
+from gladier.tools.globus import GlobusComputeStep, ComputeFunctionType
 
 
 def shell_cmd(
@@ -97,9 +97,8 @@ class ShellCmdStep(GlobusComputeStep):
     input_path: t.Optional[str] = None
     output_path: t.Optional[str] = None
     error_path: t.Optional[str] = None
-    function_to_call: t.Union[t.Callable[[t.Any], t.Any], str] = shell_cmd
+    function_to_call: ComputeFunctionType = shell_cmd
     function_parameters: t.Union[t.Dict[str, t.Any], str] = ""
-    action_url = "https://compute.actions.globus.org/fxap"
 
     """Run a command in a shell with various options. Suitable for use as a
     Globus Compute function. On anything other than exit success (returning 0), an

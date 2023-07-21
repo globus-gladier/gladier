@@ -5,27 +5,23 @@ import typing as t
 from gladier import ActionState, GladierBaseClient, JSONObject
 from gladier.managers import BaseLoginManager, ComputeManager
 
+ComputeFunctionType = t.Union[t.Callable[[t.Any], t.Any], str]
 
 class GlobusComputeStep(ActionState):
-    function_to_call: t.Union[t.Callable[[t.Any], t.Any], str]
+    function_to_call: ComputeFunctionType 
     action_url = "https://compute.actions.globus.org/fxap"
     endpoint_id: str = "$.input.globus_compute_endpoint"
     function_parameters: t.Optional[t.Union[t.Dict[str, t.Any], str]] = None
 
-    def __init__(
-        self, *args, login_manager: t.Optional[BaseLoginManager] = None, **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        if login_manager is None:
-            temp_client = GladierBaseClient()
-            login_manager = temp_client.login_manager
-        self.compute_manager = ComputeManager(
-            storage=login_manager.storage, login_manager=login_manager
-        )
 
     def get_flow_definition(self) -> JSONObject:
+        temp_client = GladierBaseClient()
+        login_manager = temp_client.login_manager
+        compute_manager = ComputeManager(
+            storage=login_manager.storage, login_manager=login_manager
+        )
         if not isinstance(self.function_to_call, str):
-            fn_name, fn_id = self.compute_manager.validate_function(
+            fn_name, fn_id = compute_manager.validate_function(
                 self, self.function_to_call
             )
         else:
@@ -53,4 +49,4 @@ class GlobusComputeStep(ActionState):
 
     def path_to_return_val(self):
         result_path = self.result_path_for_step()
-        return f"{result_path}.details.result[0]"
+        return f"{result_path}.details.results[0].output"
