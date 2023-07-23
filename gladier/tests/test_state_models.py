@@ -23,33 +23,49 @@ class TestState(ActionState):
     action_url = "https://fake_state.com/ap"
 
 
-def _three_step_flow() -> GladierBaseState:
-    state1 = TestState(state_name="state1")
-    state1.next(TestState(state_name="state2")).next(TestState(state_name="state3"))
-    return state1
+_default_test_states = ("state1", "state2", "state3")
 
 
-def _test_three_step_flow_definition(flow_def: t.Dict[str, t.Any]):
-    assert flow_def["StartAt"] == "state1"
+def _create_test_flow_sequence(test_states=_default_test_states) -> GladierBaseState:
+    start_at: t.Optional[TestState] = None
+    for state_name in test_states:
+        test_state = TestState(state_name=state_name)
+        if start_at is None:
+            start_at = test_state
+        else:
+            # By re-assigning start_at to the return from next, we emulate the behavior
+            # of chained calls to next()
+            start_at = start_at.next(test_state)
+    return start_at
+
+
+def _test_flow_definition_sequence(
+    flow_def: t.Dict[str, t.Any], test_expected_state_sequence=_default_test_states
+):
+    assert flow_def["StartAt"] == test_expected_state_sequence[0]
     assert "States" in flow_def
-    for expected_state in {"state1", "state2", "state3"}:
+    prev_state_name: t.Optional[str] = None
+    for expected_state in test_expected_state_sequence:
         assert expected_state in flow_def["States"], flow_def["States"].keys()
+        if prev_state_name is not None:
+            assert flow_def["States"][prev_state_name]["Next"] == expected_state
+        prev_state_name = expected_state
 
 
 def test_base_client_startat():
-    client = GladierBaseClient(start_at=_three_step_flow())
+    client = GladierBaseClient(start_at=_create_test_flow_sequence())
     flow_def = client.get_flow_definition()
-    _test_three_step_flow_definition(flow_def)
+    _test_flow_definition_sequence(flow_def)
 
 
 def test_base_client_subclass():
     @generate_flow_definition
     class TestClient(GladierBaseClient):
-        gladier_tools = [_three_step_flow()]
+        gladier_tools = [_create_test_flow_sequence()]
 
     test_client = TestClient()
     flow_def = test_client.get_flow_definition()
-    _test_three_step_flow_definition(flow_def)
+    _test_flow_definition_sequence(flow_def)
 
 
 def test_action_with_exception_handler():
@@ -68,12 +84,11 @@ def test_action_with_exception_handler():
     for state_name in {"ParentState", "AllHandler"}:
         assert flow_def["States"][state_name]["End"] is True
     catches = flow_def["States"]["ParentState"]["Catch"]
-    assert len(catches) ==  1, catches
+    assert len(catches) == 1, catches
     assert (
         ActionExceptionName.States_All.value in catches[0]["ErrorEquals"]
         and ActionExceptionName.ActionUnableToRun.value in catches[0]["ErrorEquals"]
     )
-
 
 
 def test_mixed_state_model_and_tool():
@@ -85,14 +100,30 @@ def test_mixed_state_model_and_tool():
 
     @generate_flow_definition
     class TestClient(GladierBaseClient):
-        gladier_tools = [_three_step_flow(), MockTool]
+        gladier_tools = [_create_test_flow_sequence(), MockTool]
 
     test_client = TestClient()
     flow_def = test_client.get_flow_definition()
 
-    _test_three_step_flow_definition(flow_def)
+    _test_flow_definition_sequence(flow_def)
     assert "MockFunc" in flow_def["States"]
     assert flow_def["States"]["state3"]["Next"] == "MockFunc"
+
+
+def test_insert_next():
+    start_at = _create_test_flow_sequence()
+    start_at.next(TestState(state_name="Inserted"), insert_next=True)
+    flow_def = start_at.get_flow_definition()
+    _test_flow_definition_sequence(
+        flow_def, (_default_test_states[0], "Inserted") + _default_test_states[1:]
+    )
+
+
+def test_replace_next():
+    start_at = _create_test_flow_sequence()
+    start_at.next(TestState(state_name="Replaced"), replace_next=True)
+    flow_def = start_at.get_flow_definition()
+    _test_flow_definition_sequence(flow_def, (_default_test_states[0], "Replaced"))
 
 
 @pytest.mark.skip(reason="Flow generation for flows with loops is currently broken")

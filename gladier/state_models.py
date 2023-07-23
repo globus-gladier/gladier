@@ -96,9 +96,44 @@ class GladierBaseCompositeState(GladierBaseState):
 
 
 class StateWithNextOrEnd(GladierBaseState):
-    def next(self, next_state: GladierBaseState) -> GladierBaseState:
-        self.next_state = next_state
-        return next_state
+    def next(
+        self,
+        next_state: GladierBaseState,
+        insert_next: bool = False,
+        replace_next: bool = False,
+    ) -> GladierBaseState:
+        """Set another state as the Next for this state
+
+        Set the provided next_state as the next state in the Flow after the Flow rooting
+        at this state. That is, the provided next_state will become the new "last" state
+        in the Flow starting with this state. This allows for chaining multiple calls to
+        the method with each adding to the end of the Flow. The options insert and
+        replace change this behavior as described.
+
+        Args:
+            next_state: The state to set as Next after this state in the Flow.
+            insert_next: If True, insert the next_state immediately after this state,
+                retaining the rest of the flow currently referred to as next after the
+                inserted state.
+            replace_next: If True, remove all states in the Flow after this state and
+                replace it with the provided next_state
+
+        Returns:
+            the state next is invoked upon allowing for chaining of calls to next
+        """
+
+        try:
+            if replace_next:
+                self.next_state = next_state
+                return self
+            if insert_next:
+                old_next = getattr(self, "next_state")
+                self.next_state = next_state
+                next_state = old_next
+            self.next_state.next(next_state)
+        except AttributeError:
+            self.next_state = next_state
+        return self
 
     def get_child_states(self) -> t.List[GladierBaseState]:
         super_children = super().get_child_states()
@@ -159,7 +194,6 @@ class StateWithResultPath(GladierBaseState, ABC):
         )
         result_path = ensure_json_path(result_path)
         return result_path
-
 
 
 class ActionExceptionName(str, Enum):
