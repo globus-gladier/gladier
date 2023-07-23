@@ -180,6 +180,7 @@ class StateWithParametersOrInputPath(GladierBaseState, ABC):
 
         if self.parameters is None and self.set_parameters_from_properties:
             self.parameters = self.dict()
+            breakpoint()
             for prop_name in self.non_parameter_properties:
                 self.parameters.pop(prop_name)
 

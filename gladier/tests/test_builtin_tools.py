@@ -13,6 +13,7 @@ from gladier.tools.builtins import (
     ComparisonRule,
     PassState,
     WaitState,
+    ExpressionEvalState,
 )
 
 from gladier import ActionState
@@ -125,3 +126,15 @@ def test_custom_action():
         flow_def["States"][expected_state_name]["Parameters"].keys()
         == param_vals.keys()
     )
+
+
+def test_expression_eval():
+    parameters = {"a": "=1+2", "b": "= 'Hello ' + 'World'", "c.=": "'Constant'"}
+    expr_eval = ExpressionEvalState(parameters=parameters)
+
+    flow_def = expr_eval.get_flow_definition()
+    state_def = flow_def["States"][expr_eval.valid_state_name]
+    assert state_def["Type"] == "ExpressionEval"
+    state_param_keys = state_def["Parameters"].keys()
+    expected_keys = {k if k.endswith(".=") else k + ".=" for k in parameters.keys()}
+    assert state_param_keys == expected_keys
