@@ -15,6 +15,8 @@ from gladier.tools.builtins import (
     WaitState,
 )
 
+from gladier import ActionState
+
 
 @dataclass
 class WaitStateTestCase:
@@ -95,3 +97,31 @@ def test_choice_rule_multiple_tests():
         cr1 = ComparisonRule(
             Variable="$.foo", StringLessThan="zzz", BooleanEquals="False"
         )
+
+
+def test_custom_action():
+    class NewAction(ActionState):
+        action_url = "https://actions.example.com/test_action"
+        param1: t.Union[str, int]
+        param2: str
+
+    param_vals = {"param1": 1, "param2": "val2"}
+    new_action = NewAction(**param_vals)
+
+    flow_def = new_action.get_flow_definition()
+
+    expected_state_name = NewAction.__name__
+
+    assert flow_def["StartAt"] == expected_state_name
+    assert expected_state_name in flow_def["States"]
+    assert (
+        flow_def["States"][expected_state_name]["ActionUrl"]
+        == "https://actions.example.com/test_action"
+    ), flow_def["States"][expected_state_name]
+
+    # Check that exactly the expected key values are in the parameters, no more than
+    # defined in the test class, and also no less
+    assert (
+        flow_def["States"][expected_state_name]["Parameters"].keys()
+        == param_vals.keys()
+    )

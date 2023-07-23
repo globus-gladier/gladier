@@ -153,14 +153,35 @@ class StateWithNextOrEnd(GladierBaseState):
         return flow_definition
 
 
+_common_non_parameter_properties = set(
+    [
+        "state_type",
+        "set_parameters_from_properties",
+        "non_parameter_properties",
+        "action_url",
+        "wait_time",
+        "exception_on_action_failure",
+        "exception_handlers",
+        "_flow_definition",
+    ]
+)
+
+
 class StateWithParametersOrInputPath(GladierBaseState, ABC):
     parameters: t.Optional[t.Dict[str, t.Any]] = None
     input_path: t.Optional[str] = None
+    set_parameters_from_properties: bool = True
+    non_parameter_properties: t.Set[str] = _common_non_parameter_properties
 
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
         flow_state = self.get_flow_state_dict()
         params_or_input_path = {}
+
+        if self.parameters is None and self.set_parameters_from_properties:
+            self.parameters = self.dict()
+            for prop_name in self.non_parameter_properties:
+                self.parameters.pop(prop_name)
 
         if self.parameters is not None:
             if self.input_path is not None:
