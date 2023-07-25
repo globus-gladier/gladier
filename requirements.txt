@@ -3,5 +3,3 @@ globus-automate-client>=0.13,<0.17
 packaging>=21.3
 fair-research-login>=0.2.6
 pydantic>=1.0
-globus-compute-sdk>=2.0
-jsonpath-ng>=1.5

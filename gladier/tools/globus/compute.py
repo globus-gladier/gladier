@@ -7,12 +7,12 @@ from gladier.managers import BaseLoginManager, ComputeManager
 
 ComputeFunctionType = t.Union[t.Callable[[t.Any], t.Any], str]
 
-class GlobusComputeStep(ActionState):
-    function_to_call: ComputeFunctionType 
+
+class GlobusComputeState(ActionState):
+    function_to_call: ComputeFunctionType
     action_url = "https://compute.actions.globus.org/fxap"
     endpoint_id: str = "$.input.globus_compute_endpoint"
     function_parameters: t.Optional[t.Union[t.Dict[str, t.Any], str]] = None
-
 
     def get_flow_definition(self) -> JSONObject:
         temp_client = GladierBaseClient()

@@ -102,23 +102,20 @@ class GladierBaseClient(object):
 
     """
 
-    secret_config_filename: str = None
-    app_name: str = "Gladier Client"
+    secret_config_filename: t.Optional[str] = None
+    app_name: t.Optional[str] = "Gladier Client"
     client_id: str = "f1631610-d9e4-4db2-81ba-7f93ad4414e3"
-    globus_group: str = None
-    subscription_id: str = None
+    globus_group: t.Optional[str] = None
+    subscription_id: t.Optional[str] = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
     def __init__(
         self,
         auto_registration: bool = True,
-        login_manager: BaseLoginManager = None,
-        flows_manager: FlowsManager = None,
-        start_at: t.Optional[gladier.GladierBaseState] = None,
+        login_manager: t.Optional[BaseLoginManager] = None,
+        flows_manager: t.Optional[FlowsManager] = None,
     ):
-        self.start_at = start_at
         self._tools = None
-        self.flow_definition: t.Optional[t.Union[t.Dict, str]] = None
         self.storage = self._determine_storage()
         self.login_manager = login_manager or self._determine_login_manager(
             self.storage
@@ -296,23 +293,23 @@ class GladierBaseClient(object):
 
         :return: A dict of the Automate Flow definition
         """
-        if self.flow_definition is None and self.start_at is not None:
-            self.flow_definition = self.start_at.get_flow_definition()
-
-        if self.flow_definition is None:
+        try:
+            if isinstance(self.flow_definition, dict):
+                return self.flow_definition
+            elif isinstance(self.flow_definition, str):
+                return self.get_gladier_defaults_cls(
+                    self.flow_definition
+                ).flow_definition
+            else:
+                raise gladier.exc.ConfigException(
+                    '"flow_definition" must be a dict or an import string '
+                    "to a sub-class of type "
+                    '"gladier.GladierBaseTool"'
+                )
+        except AttributeError:
             raise gladier.exc.ConfigException(
                 '"flow_definition" was not set on ' f"{self.__class__.__name__}"
             )
-
-        if isinstance(self.flow_definition, dict):
-            return self.flow_definition
-        elif isinstance(self.flow_definition, str):
-            return self.get_gladier_defaults_cls(self.flow_definition).flow_definition
-        raise gladier.exc.ConfigException(
-            '"flow_definition" must be a dict or an import string '
-            "to a sub-class of type "
-            '"gladier.GladierBaseTool"'
-        )
 
     def get_flow_schema(self):
         """
@@ -521,3 +518,19 @@ class GladierBaseClient(object):
         return gladier.utils.automate.get_details(
             self.get_status(action_id), state_name
         )
+
+
+class GladierClient(GladierBaseClient):
+    def __init__(
+        self,
+        flow_definition: t.Mapping[str, t.Any],
+        auto_registration: bool = True,
+        login_manager: t.Optional[BaseLoginManager] = None,
+        flows_manager: t.Optional[FlowsManager] = None,
+    ):
+        super().__init__(
+            auto_registration=auto_registration,
+            login_manager=login_manager,
+            flows_manager=flows_manager,
+        )
+        self.flow_definition = flow_definition

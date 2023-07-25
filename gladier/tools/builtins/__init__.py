@@ -5,6 +5,7 @@ import typing as t
 from .choice_state import (
     AndRule,
     ChoiceOption,
+    ChoiceRule,
     ChoiceState,
     ComparisonRule,
     NotRule,
@@ -21,6 +22,7 @@ _nameables = (
         AndRule,
         ChoiceOption,
         ChoiceState,
+        ChoiceRule,
         ComparisonRule,
         NotRule,
         OrRule,

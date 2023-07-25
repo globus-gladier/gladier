@@ -4,7 +4,7 @@ import logging
 import typing as t
 
 from gladier.base import GladierBaseTool
-from gladier.client import GladierBaseClient
+from gladier.client import GladierBaseClient, GladierClient
 from gladier.decorators import generate_flow_definition
 from gladier.managers import CallbackLoginManager, FlowsManager
 
@@ -23,6 +23,7 @@ _nameables = (
     for x in (
         GladierBaseTool,
         GladierBaseClient,
+        GladierClient,
         generate_flow_definition,
         CallbackLoginManager,
         FlowsManager,

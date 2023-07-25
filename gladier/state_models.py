@@ -11,7 +11,7 @@ from .helpers import (
     JSONObject,
     eliminate_none_values,
     ensure_json_path,
-    insure_parameter_values,
+    ensure_parameter_values,
 )
 
 
@@ -88,7 +88,7 @@ class GladierBaseState(ABC, BaseModel):
 
 
 class GladierBaseCompositeState(GladierBaseState):
-    state_name_prefix: t.Optional[str] = None
+    state_name_prefix: str = ""
 
     @abstractmethod
     def get_flow_definition(self) -> JSONObject:
@@ -180,16 +180,15 @@ class StateWithParametersOrInputPath(GladierBaseState, ABC):
 
         if self.parameters is None and self.set_parameters_from_properties:
             self.parameters = self.dict()
-            breakpoint()
             for prop_name in self.non_parameter_properties:
-                self.parameters.pop(prop_name)
+                self.parameters.pop(prop_name, None)
 
         if self.parameters is not None:
             if self.input_path is not None:
                 raise ValueError(
                     "A state can only have one of 'parameters' and 'input_path'"
                 )
-            params_or_input_path["Parameters"] = insure_parameter_values(
+            params_or_input_path["Parameters"] = ensure_parameter_values(
                 self.parameters
             )
         elif self.input_path is not None:

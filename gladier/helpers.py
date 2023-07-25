@@ -1,7 +1,5 @@
 import typing as t
 
-from jsonpath_ng import parse as parse_jsonpath
-from jsonpath_ng.exceptions import JsonPathParserError
 from typing_extensions import TypeAlias
 
 JSONObject: TypeAlias = t.Dict[str, "JSONValue"]
@@ -42,7 +40,7 @@ def eliminate_none_values(d: t.Dict[t.Any, t.Any], deep=False) -> None:
         d.pop(k)
 
 
-def insure_parameter_values(
+def ensure_parameter_values(
     params: JSONObject, deep=True, eliminate_none_values=False
 ) -> JSONObject:
     ret_obj: JSONObject = {}
@@ -64,29 +62,20 @@ def insure_parameter_values(
                 k = k + ".="
                 v = v[1:]
         elif deep and isinstance(v, dict):
-            v = insure_parameter_values(
+            v = ensure_parameter_values(
                 v, deep=deep, eliminate_none_values=eliminate_none_values
             )
         elif deep and isinstance(v, list):
             new_v = []
             for list_val in v:
                 if isinstance(list_val, dict):
-                    list_val = insure_parameter_values(
+                    list_val = ensure_parameter_values(
                         list_val, deep=deep, eliminate_none_values=eliminate_none_values
                     )
                 new_v.append(list_val)
             v = new_v
         ret_obj[k] = v
     return ret_obj
-
-
-def eval_jsonpath_for_input(json_path: str, flow_input: JSONObject) -> t.Any:
-    try:
-        expression = parse_jsonpath(json_path)
-    except JsonPathParserError:
-        return json_path
-    result = expression.find(flow_input)
-    return result[0].value
 
 
 def insert_json_path(

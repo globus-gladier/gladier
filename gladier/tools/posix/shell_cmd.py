@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as t
 
 from gladier import JSONObject
-from gladier.tools.globus import GlobusComputeStep, ComputeFunctionType
+from gladier.tools.globus import GlobusComputeState, ComputeFunctionType
 
 
 def shell_cmd(
@@ -87,7 +87,7 @@ def shell_cmd(
     return res.returncode, res.stdout, res.stderr
 
 
-class ShellCmdStep(GlobusComputeStep):
+class ShellCmdState(GlobusComputeState):
     cmd_args: t.Union[t.List[str], str]
     capture_output: bool = False
     cwd: t.Optional[str] = None

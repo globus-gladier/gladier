@@ -1,5 +1,10 @@
-from gladier import GladierBaseClient
-from gladier.tools.globus import GlobusComputeStep, GlobusTransferItem, GlobusTransfer
+from gladier import GladierBaseClient, GladierClient
+from gladier.tools.globus import (
+    GlobusComputeState,
+    GlobusTransferItem,
+    GlobusTransfer,
+    GlobusTransferDelete,
+)
 
 
 def mock_func(**kwargs):
@@ -7,11 +12,11 @@ def mock_func(**kwargs):
 
 
 def test_globus_compute_state():
-    compute_step = GlobusComputeStep(
+    compute_step = GlobusComputeState(
         function_to_call=mock_func, function_parameters={"foo": "bar"}
     )
 
-    client = GladierBaseClient(start_at=compute_step)
+    client = GladierClient(flow_definition=compute_step.get_flow_definition())
     flow_def = client.get_flow_definition()
 
     assert flow_def["StartAt"] == compute_step.valid_state_name
@@ -46,3 +51,21 @@ def test_globus_transfer_state():
         "transfer_items"
         in flow_def["States"][transfer_step.valid_state_name]["Parameters"]
     )
+
+
+def test_globus_transfer_delete_state():
+    transfer_delete_step = GlobusTransferDelete(
+        endpoint_id="src", items=["file1", "dir1"], recursive=True
+    )
+
+    flow_def = transfer_delete_step.get_flow_definition()
+
+    assert (
+        flow_def["States"][transfer_delete_step.valid_state_name]["Parameters"][
+            "endpoint_id"
+        ]
+        == "src"
+    )
+    assert flow_def["States"][transfer_delete_step.valid_state_name]["Parameters"][
+        "items"
+    ] == ["file1", "dir1"]

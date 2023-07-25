@@ -7,6 +7,7 @@ from gladier import (
     ActionState,
     ActionExceptionName,
     GladierBaseClient,
+    GladierClient,
     GladierBaseState,
     GladierBaseTool,
     StateWithNextOrEnd,
@@ -19,7 +20,7 @@ def mock_func(data):
     pass
 
 
-class TestState(ActionState):
+class SimpleTestState(ActionState):
     action_url = "https://fake_state.com/ap"
 
 
@@ -27,9 +28,9 @@ _default_test_states = ("state1", "state2", "state3")
 
 
 def _create_test_flow_sequence(test_states=_default_test_states) -> GladierBaseState:
-    start_at: t.Optional[TestState] = None
+    start_at: t.Optional[SimpleTestState] = None
     for state_name in test_states:
-        test_state = TestState(state_name=state_name)
+        test_state = SimpleTestState(state_name=state_name)
         if start_at is None:
             start_at = test_state
         else:
@@ -53,7 +54,9 @@ def _test_flow_definition_sequence(
 
 
 def test_base_client_startat():
-    client = GladierBaseClient(start_at=_create_test_flow_sequence())
+    client = GladierClient(
+        flow_definition=_create_test_flow_sequence().get_flow_definition()
+    )
     flow_def = client.get_flow_definition()
     _test_flow_definition_sequence(flow_def)
 
@@ -69,12 +72,12 @@ def test_base_client_subclass():
 
 
 def test_action_with_exception_handler():
-    parent_action = TestState(state_name="ParentState")
+    parent_action = SimpleTestState(state_name="ParentState")
     parent_action.set_exception_handler(
-        ActionExceptionName.States_All, TestState(state_name="AllHandler")
+        ActionExceptionName.States_All, SimpleTestState(state_name="AllHandler")
     )
     parent_action.set_exception_handler(
-        ActionExceptionName.ActionUnableToRun, TestState(state_name="AllHandler")
+        ActionExceptionName.ActionUnableToRun, SimpleTestState(state_name="AllHandler")
     )
 
     flow_def = parent_action.get_flow_definition()
@@ -112,7 +115,7 @@ def test_mixed_state_model_and_tool():
 
 def test_insert_next():
     start_at = _create_test_flow_sequence()
-    start_at.next(TestState(state_name="Inserted"), insert_next=True)
+    start_at.next(SimpleTestState(state_name="Inserted"), insert_next=True)
     flow_def = start_at.get_flow_definition()
     _test_flow_definition_sequence(
         flow_def, (_default_test_states[0], "Inserted") + _default_test_states[1:]
@@ -121,15 +124,15 @@ def test_insert_next():
 
 def test_replace_next():
     start_at = _create_test_flow_sequence()
-    start_at.next(TestState(state_name="Replaced"), replace_next=True)
+    start_at.next(SimpleTestState(state_name="Replaced"), replace_next=True)
     flow_def = start_at.get_flow_definition()
     _test_flow_definition_sequence(flow_def, (_default_test_states[0], "Replaced"))
 
 
 @pytest.mark.skip(reason="Flow generation for flows with loops is currently broken")
 def test_looped_flow():
-    state1 = TestState(state_name="state1")
-    state2 = TestState(state_name="state2")
+    state1 = SimpleTestState(state_name="state1")
+    state2 = SimpleTestState(state_name="state2")
     state1.next(state2)
     state2.next(state1)
 
