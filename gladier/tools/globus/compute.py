@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import typing as t
 
-from gladier import ActionState, GladierBaseClient, JSONObject
+from gladier import GladierBaseClient, JSONObject
+from gladier.tools.builtins import ActionState
 from gladier.managers import BaseLoginManager, ComputeManager
 
 ComputeFunctionType = t.Union[t.Callable[[t.Any], t.Any], str]

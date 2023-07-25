@@ -10,8 +10,6 @@ from gladier.managers import CallbackLoginManager, FlowsManager
 
 from .helpers import JSONList, JSONObject, JSONValue
 from .state_models import (
-    ActionExceptionName,
-    ActionState,
     GladierBaseState,
     StateWithNextOrEnd,
     StateWithParametersOrInputPath,
@@ -27,8 +25,6 @@ _nameables = (
         generate_flow_definition,
         CallbackLoginManager,
         FlowsManager,
-        ActionExceptionName,
-        ActionState,
         GladierBaseState,
         StateWithNextOrEnd,
         StateWithParametersOrInputPath,

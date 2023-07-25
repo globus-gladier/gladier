@@ -7,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from gladier.tools.builtins import (
+    ActionState,
     AndRule,
     ChoiceOption,
     ChoiceState,
@@ -15,8 +16,6 @@ from gladier.tools.builtins import (
     WaitState,
     ExpressionEvalState,
 )
-
-from gladier import ActionState
 
 
 @dataclass

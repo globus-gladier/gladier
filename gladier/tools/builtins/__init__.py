@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
+from .action import ActionExceptionName, ActionState
 from .choice_state import (
     AndRule,
     ChoiceOption,
@@ -19,6 +20,8 @@ from .wait import WaitState
 _nameables = (
     x.__name__
     for x in (
+        ActionExceptionName,
+        ActionState,
         AndRule,
         ChoiceOption,
         ChoiceState,

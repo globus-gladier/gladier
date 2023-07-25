@@ -1,6 +1,7 @@
 import typing as t
 
-from gladier import ActionState, JSONObject
+from gladier import JSONObject
+from gladier.tools.builtins import ActionState
 from pydantic import BaseModel
 
 
