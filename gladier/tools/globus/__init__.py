@@ -8,6 +8,7 @@ from .transfer import GlobusTransfer, GlobusTransferDelete, GlobusTransferItem
 _nameables = (
     x.__name__
     for x in (
+        ComputeFunctionType,
         GlobusComputeState,
         GlobusTransfer,
         GlobusTransferDelete,

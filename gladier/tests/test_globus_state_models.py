@@ -1,4 +1,4 @@
-from gladier import GladierBaseClient, GladierClient
+from gladier import GladierClient
 from gladier.tools.globus import (
     GlobusComputeState,
     GlobusTransferItem,
