@@ -5,7 +5,7 @@ import typing as t
 from pydantic import BaseModel, validator
 from pydantic.fields import ModelField
 
-from gladier import GladierBaseState, JSONObject
+from gladier import AWSBaseState, JSONObject
 from gladier.tools import exclusive_validator_generator, validate_path_property
 
 
@@ -144,7 +144,7 @@ class NotRule(ChoiceRule):
 
 class ChoiceOption(BaseModel):
     rule: ChoiceRule
-    next: GladierBaseState
+    next: AWSBaseState
 
     def flow_dict(self) -> JSONObject:
         fd = self.rule.flow_dict()
@@ -153,32 +153,58 @@ class ChoiceOption(BaseModel):
 
 
 # TODO: add support here
-class ChoiceState(GladierBaseState):
+class ChoiceState(AWSBaseState):
+    """
+    The Choice state allows for branching logic depending on a set of conditions.
+
+    An example is below:
+
+    .. code-block:: python
+
+        choice_state = (
+            ChoiceState()
+            .choice(
+                ChoiceOption(
+                    rule=ComparisonRule(
+                        Variable=random_step.path_to_return_val(), NumericEquals=0.0
+                    ),
+                    next=FailState(
+                        cause="Random value 0 selected",
+                        error="Unluck 0 selected, simulated error",
+                    ),
+                )
+            ))
+        choice_state.set_default(PassState(state_name="SuccessfulCompletion"))
+
+    See the full list of Comparison Rules above, and operations.
+
+    """
+
     state_type = "Choice"
     rules: t.List[ChoiceRule] = []
-    default: t.Optional[GladierBaseState] = None
+    default: t.Optional[AWSBaseState] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices: t.List[ChoiceOption] = []
 
-    def choice(self, choice_option: ChoiceOption) -> GladierBaseState:
+    def choice(self, choice_option: ChoiceOption) -> AWSBaseState:
         self._choices.append(choice_option)
         return self
 
-    def set_default(self, default_choice: GladierBaseState) -> GladierBaseState:
+    def set_default(self, default_choice: AWSBaseState) -> AWSBaseState:
         self.default = default_choice
         return self.default
 
     def get_flow_definition(self) -> JSONObject:
         flow_def = super().get_flow_definition()
         state_def = self.get_flow_state_dict()
-        if isinstance(self.default, GladierBaseState):
+        if isinstance(self.default, AWSBaseState):
             state_def["Default"] = self.default.valid_state_name
         state_def["Choices"] = [cr.flow_dict() for cr in self._choices]
         return flow_def
 
-    def get_child_states(self) -> t.List[GladierBaseState]:
+    def get_child_states(self) -> t.List[AWSBaseState]:
         return (
             [choice.next for choice in self._choices] + [self.default]
             if self.default is not None

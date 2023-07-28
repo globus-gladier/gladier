@@ -3,7 +3,7 @@ from collections import defaultdict
 from enum import Enum
 
 from gladier import (
-    GladierBaseState,
+    AWSBaseState,
     JSONObject,
     StateWithNextOrEnd,
     StateWithParametersOrInputPath,
@@ -13,6 +13,10 @@ from gladier.helpers import eliminate_none_values
 
 
 class ActionExceptionName(str, Enum):
+    """
+    Names of all possible exceptions that can be thrown by Globus Action Provider states.
+    """
+
     ActionFailedException = "ActionFailedException"
     ActionUnableToRun = "ActionUnableToRun"
     ActionTimeout = "ActionTimeout"
@@ -28,6 +32,8 @@ class ActionState(
     StateWithParametersOrInputPath,
     StateWithResultPath,
 ):
+    """The Action State defines the base class for all Globus Action Providers."""
+
     action_url: str
     state_type: str = "Action"
     action_scope: t.Optional[str] = None
@@ -38,13 +44,21 @@ class ActionState(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.exception_handlers: t.Dict[ActionExceptionName, GladierBaseState] = {}
+        self.exception_handlers: t.Dict[ActionExceptionName, AWSBaseState] = {}
 
     def set_exception_handler(
         self,
         exception_names: t.Union[ActionExceptionName, t.List[ActionExceptionName]],
-        exception_handler: GladierBaseState,
+        exception_handler: AWSBaseState,
     ):
+        """
+        Set an exception handler in case any state raises an exception during a flow.
+
+        :param exception_names: Can be a string of one exception name or a list of any defined within
+        the ActionExceptionName Class.
+        :param exception_handler: Name of the state which will be run if any of the ``exception_names`` above
+        are encountered.
+        """
         if isinstance(exception_names, ActionExceptionName):
             exception_names = [exception_names]
         for exc_name in exception_names:
@@ -75,7 +89,7 @@ class ActionState(
         eliminate_none_values(flow_state, deep=True)
         return flow_definition
 
-    def get_child_states(self) -> t.List[GladierBaseState]:
+    def get_child_states(self) -> t.List[AWSBaseState]:
         next_states = super().get_child_states()
         exception_handler_states = list(self.exception_handlers.values())
         return next_states + exception_handler_states

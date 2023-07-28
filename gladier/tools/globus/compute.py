@@ -9,10 +9,30 @@ from gladier.managers import BaseLoginManager, ComputeManager
 ComputeFunctionType = t.Union[t.Callable[[t.Any], t.Any], str]
 
 
-class GlobusComputeState(ActionState):
+class ComputeState(ActionState):
+    """
+    The Globus Compute State allows for executing registered functions on a POSIX
+    based system. It requires a registered python function and a valid Globus Compute
+    endpoint to run on.
+
+    Example:
+
+    .. code-block:: python
+
+        def random_int(high_val: int) -> int:
+            from random import randint
+
+            return randint(0, high_val)
+
+
+        random_step = GlobusComputeState(
+            function_to_call=random_int, function_parameters={"high_val": 3}
+        )
+    """
+
     function_to_call: ComputeFunctionType
     action_url = "https://compute.actions.globus.org/fxap"
-    endpoint_id: str = "$.input.globus_compute_endpoint"
+    endpoint_id: str = "$.input.compute_endpoint"
     function_parameters: t.Optional[t.Union[t.Dict[str, t.Any], str]] = None
 
     def get_flow_definition(self) -> JSONObject:

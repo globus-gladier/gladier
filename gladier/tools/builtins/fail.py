@@ -1,8 +1,12 @@
 import typing as t
-from gladier import GladierBaseState, JSONObject
+from gladier import AWSBaseState, JSONObject
 
 
-class FailState(GladierBaseState):
+class FailState(AWSBaseState):
+    """
+    Specify an explicit place in the flow where it should fail if encountered.
+    """
+
     state_type = "Fail"
     cause: t.Optional[str] = None
     error: t.Optional[str] = None

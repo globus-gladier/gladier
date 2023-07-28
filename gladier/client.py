@@ -200,9 +200,7 @@ class GladierBaseClient(object):
             raise gladier.exc.ConfigException(
                 f"{default_inst} is not of type " f"{gladier.base.GladierBaseTool}"
             )
-        elif isinstance(
-            tool_ref, (gladier.base.GladierBaseTool, gladier.GladierBaseState)
-        ):
+        elif isinstance(tool_ref, (gladier.base.GladierBaseTool, gladier.AWSBaseState)):
             return tool_ref
         else:
             cls_inst = tool_ref()
