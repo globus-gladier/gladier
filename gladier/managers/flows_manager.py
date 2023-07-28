@@ -1,30 +1,28 @@
-import logging
-import warnings
 import hashlib
 import json
+import logging
+import warnings
 from typing import Callable
 
-import globus_sdk
-import globus_automate_client
-
 import gladier
-from gladier.managers.service_manager import ServiceManager
-import gladier.storage.config
-import gladier.utils.dynamic_imports
-import gladier.utils.automate
-import gladier.utils.name_generation
-import gladier.storage.migrations
-import gladier.utils.tool_alias
-import gladier.managers.compute_login_manager
 import gladier.exc
+import gladier.managers.compute_login_manager
+import gladier.storage.config
+import gladier.storage.migrations
+import gladier.utils.automate
+import gladier.utils.dynamic_imports
+import gladier.utils.name_generation
+import gladier.utils.tool_alias
 import gladier.version
-
+import globus_automate_client
+import globus_sdk
+from gladier.managers.service_manager import ServiceManager
 from globus_automate_client.flows_client import (
     MANAGE_FLOWS_SCOPE,
-    VIEW_FLOWS_SCOPE,
     RUN_FLOWS_SCOPE,
-    RUN_STATUS_SCOPE,
     RUN_MANAGE_SCOPE,
+    RUN_STATUS_SCOPE,
+    VIEW_FLOWS_SCOPE,
 )
 
 log = logging.getLogger(__name__)
@@ -271,7 +269,7 @@ class FlowsManager(ServiceManager):
 
     def check_flow(self):
         """
-        Check if the flow has changed by validating the current flow_definition agaist
+        Check if the flow has changed by validating the current flow_definition against
         the stored checksum. Raises an exception if the checksums do not match.
 
         :raises: gladier.exc.NoFlowRegistered if no flow has been registered

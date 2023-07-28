@@ -1,11 +1,21 @@
-import traceback
+from __future__ import annotations
+
 import logging
+
 from globus_compute_sdk import serialize
 
 log = logging.getLogger(__name__)
 
 automate_response_keys = {"action_id", "status", "state_name"}
 compute_response_keys = {"result", "status", "exception", "task_id"}
+import traceback
+
+from globus_compute_sdk.serialize import ComputeSerializer
+
+log = logging.getLogger(__name__)
+
+automate_response_keys = {"action_id", "status", "state_name"}
+funcx_response_keys = {"result", "status", "exception", "task_id"}
 
 
 def is_automate_response(state_output):
@@ -44,6 +54,6 @@ def get_details(response, state_name=None):
 
 def deserialize_exception(encoded_exc):
     try:
-        serialize.ComputeSerializer().deserialize(encoded_exc).reraise()
+        ComputeSerializer().deserialize(encoded_exc).reraise()
     except Exception:
         return traceback.format_exc()
