@@ -88,6 +88,7 @@ class GladierBaseState(ABC, BaseModel):
 
 
 class GladierBaseCompositeState(GladierBaseState):
+    state_type: str = "CompositeVirtualState"
     state_name_prefix: str = ""
 
     @abstractmethod
@@ -163,6 +164,14 @@ _common_non_parameter_properties = set(
         "exception_on_action_failure",
         "exception_handlers",
         "_flow_definition",
+        "action_scope",
+        "comment",
+        "input_path",
+        "parameters",
+        "result_path",
+        "run_as",
+        "state_name",
+        "next_state",
     ]
 )
 
@@ -176,23 +185,23 @@ class StateWithParametersOrInputPath(GladierBaseState, ABC):
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
         flow_state = self.get_flow_state_dict()
-        params_or_input_path = {}
+        params_or_input_path: JSONObject = {}
 
-        if self.parameters is None and self.set_parameters_from_properties:
-            self.parameters = self.dict()
-            for prop_name in self.non_parameter_properties:
-                self.parameters.pop(prop_name, None)
-
-        if self.parameters is not None:
-            if self.input_path is not None:
-                raise ValueError(
-                    "A state can only have one of 'parameters' and 'input_path'"
-                )
-            params_or_input_path["Parameters"] = ensure_parameter_values(
-                self.parameters
-            )
-        elif self.input_path is not None:
+        # Presence of input_path takes precedence over parameter values because parameter
+        # values are likely to be present from model defaults even if not explicitly set
+        # (or desired) by the user
+        if self.input_path is not None:
             params_or_input_path["InputPath"] = ensure_json_path(self.input_path)
+        else:
+            if self.parameters is None and self.set_parameters_from_properties:
+                self.parameters = self.dict()
+                for prop_name in self.non_parameter_properties:
+                    self.parameters.pop(prop_name, None)
+
+            if self.parameters is not None and len(self.parameters) > 0:
+                params_or_input_path["Parameters"] = ensure_parameter_values(
+                    self.parameters
+                )
 
         flow_state.update(params_or_input_path)
         return flow_definition
