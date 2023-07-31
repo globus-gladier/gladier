@@ -11,6 +11,7 @@ from .choice_state import (
     ComparisonRule,
     NotRule,
     OrRule,
+    ChoiceSkipState,
 )
 from .expression_eval import ExpressionEvalState
 from .fail import FailState
@@ -29,6 +30,7 @@ _nameables = (
         ComparisonRule,
         NotRule,
         OrRule,
+        ChoiceSkipState,
         ExpressionEvalState,
         PassState,
         WaitState,
