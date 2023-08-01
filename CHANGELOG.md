@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 
+## [0.9.0b3](https://github.com/globus-gladier/gladier/compare/v0.9.0b2...v0.9.0b3) (2023-08-01)
+
+### Features
+
+* Added an experimental State API for building flows imperatively ([PR-253](https://github.com/globus-gladier/gladier/pull/253))
+
 ## [0.9.0b2](https://github.com/globus-gladier/gladier/compare/v0.9.0b1...v0.9.0b2) (2023-07-17)
 
 ### Bug Fixes
