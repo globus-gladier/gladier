@@ -240,9 +240,14 @@ class FlowsManager(ServiceManager):
         return identities
 
     def get_flow_id(self) -> str:
-        """Return flow id. If an ID was set on this class in the constructor, that is
-        used. Otherwise, a retrieve from storage is attempted with 'flow_id'.
-        :returns: flow_id uuid for deployed flow, or None if it does not exist"""
+        """
+        Return flow id. If an ID was set on this class in the constructor, that is
+        used. Otherwise, a retrieve from storage is attempted with 'flow_id' if a
+        flow has been run before and a local id is cached in storage. If no flow_id
+        exists from either of these locations, None is returned instead.
+
+        :returns: flow_id uuid for deployed flow, or None if it does not exist
+        """
         return self.flow_id or self.storage.get_value("flow_id")
 
     def flow_changed(self) -> bool:

@@ -416,7 +416,7 @@ class GladierBaseClient(object):
 
     def get_flow_id(self) -> str:
         """
-        Get the flow id from the flows manager class.
+        Get the flow id from the :ref:`sdk_reference_flows_manager`.
         """
         return self.flows_manager.get_flow_id()
 
