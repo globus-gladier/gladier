@@ -278,15 +278,15 @@ class FlowsManager(ServiceManager):
         flow_id = self.get_flow_id()
         flow_checksum = self.storage.get_value("flow_checksum")
         if not flow_id:
-            raise gladier.exc.NoFlowRegistered(
-                "No flow_id set on flow manager and no id tracked in storage."
-            )
+            message = "No flow_id set on flow manager and no id tracked in storage."
+            log.info(message)
+            raise gladier.exc.NoFlowRegistered(message)
         elif flow_checksum != self.get_flow_checksum(
             self.flow_definition, self.flow_schema
         ):
-            raise gladier.exc.FlowObsolete(
-                f'"flow_definition" on {self} has changed and needs to be re-registered.'
-            )
+            message = f'"flow_definition" on {self} has changed and needs to be re-registered.'
+            log.info(message)
+            raise gladier.exc.FlowObsolete(message)
 
     def sync_flow(self) -> str:
         """
