@@ -57,8 +57,6 @@ class FlowsManager(ServiceManager):
     :param flow_schema: The schema to be used alongside the flow definition
     :param flow_title: The title for the Globus Flow
     :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
-    :param subscription_id: (deprecated) Subscription ID has no effect and will be removed in a
-                            future version.
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
     :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results
@@ -92,7 +90,6 @@ class FlowsManager(ServiceManager):
         flow_schema: dict = None,
         flow_title: str = None,
         globus_group: str = None,
-        subscription_id: str = None,
         on_change: Callable = ensure_flow_registered,
         redeploy_on_404: bool = True,
         **kwargs,
@@ -104,13 +101,6 @@ class FlowsManager(ServiceManager):
         self.globus_group = globus_group
         self.on_change = on_change or (lambda self, exc: None)
         self.redeploy_on_404 = redeploy_on_404
-
-        if subscription_id:
-            warnings.warn(
-                f"{self.flow_title}: subscription_id is no longer used and "
-                "should not be set on flows.",
-                category=DeprecationWarning,
-            )
 
         if self.flow_id is not None:
             self.redeploy_on_404 = False
