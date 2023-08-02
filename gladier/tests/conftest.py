@@ -154,7 +154,8 @@ def mock_globus_api_error(monkeypatch):
     class MockGlobusAPIError(Exception):
         http_status = 400
         code = "Error"
-        message = json.dumps(
+        message = ""
+        text = json.dumps(
             {
                 "error": {
                     "code": "FLOW_GENERIC_ERROR",
@@ -179,7 +180,7 @@ def mock_dependent_token_change_error(mock_globus_api_error):
             }
         }
     )
-    mock_globus_api_error.message = automate_message
+    mock_globus_api_error.text = automate_message
     return mock_globus_api_error
 
 
