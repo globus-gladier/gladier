@@ -78,8 +78,6 @@ class GladierBaseClient(object):
     * globus_group (default: None)
        * A Globus Group to be applied to all flow/run permissions. Group will automatically be
          added to flow_viewers, flow_starters, flow_administrators, run_managers, run_monitors
-    * subscription_id (default: None)
-       * The subscription id associated with this flow
     * alias_class (default: gladier.utils.tool_alias.StateSuffixVariablePrefix)
        * The default class used to for applying aliases to Tools
 
@@ -106,7 +104,6 @@ class GladierBaseClient(object):
     app_name: t.Optional[str] = "Gladier Client"
     client_id: str = "f1631610-d9e4-4db2-81ba-7f93ad4414e3"
     globus_group: t.Optional[str] = None
-    subscription_id: t.Optional[str] = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
     def __init__(
@@ -126,8 +123,6 @@ class GladierBaseClient(object):
         )
         if self.globus_group:
             self.flows_manager.globus_group = self.globus_group
-        if self.subscription_id:
-            self.flows_manager.subscription_id = self.subscription_id
         if not self.flows_manager.flow_title:
             self.flows_manager.flow_title = f"{self.__class__.__name__} flow"
 
