@@ -1,6 +1,7 @@
 import sys
 import uuid
 import pytest
+import globus_sdk
 from unittest.mock import Mock
 from gladier.exc import ConfigException
 from gladier.managers.flows_manager import FlowsManager
@@ -83,8 +84,18 @@ def test_explicit_flow_id():
     assert cli.get_flow_id() == "foo"
 
 
+def test_unexpected_400_run_flow_without_json(
+    auto_login, mock_flows_client, mock_globus_api_error
+):
+    mock_globus_api_error.text = "something that is not JSON!"
+    mock_flows_client.run_flow.side_effect = mock_globus_api_error
+    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    with pytest.raises(globus_sdk.exc.GlobusAPIError):
+        fm.run_flow()
+
+
 def test_dependent_scope_change_run_flow(
-    auto_login, mock_flows_client, mock_dependent_token_change_error, monkeypatch
+    auto_login, mock_flows_client, mock_dependent_token_change_error
 ):
     mock_flows_client.run_flow.side_effect = mock_dependent_token_change_error
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)

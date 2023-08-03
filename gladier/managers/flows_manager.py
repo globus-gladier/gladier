@@ -278,15 +278,15 @@ class FlowsManager(ServiceManager):
         flow_id = self.get_flow_id()
         flow_checksum = self.storage.get_value("flow_checksum")
         if not flow_id:
-            raise gladier.exc.NoFlowRegistered(
-                "No flow_id set on flow manager and no id tracked in storage."
-            )
+            message = "No flow_id set on flow manager and no id tracked in storage."
+            log.info(message)
+            raise gladier.exc.NoFlowRegistered(message)
         elif flow_checksum != self.get_flow_checksum(
             self.flow_definition, self.flow_schema
         ):
-            raise gladier.exc.FlowObsolete(
-                f'"flow_definition" on {self} has changed and needs to be re-registered.'
-            )
+            message = f'"flow_definition" on {self} has changed and needs to be re-registered.'
+            log.info(message)
+            raise gladier.exc.FlowObsolete(message)
 
     def sync_flow(self) -> str:
         """
@@ -386,17 +386,7 @@ class FlowsManager(ServiceManager):
         try:
             flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
-            log.debug("Encountered error when running flow", exc_info=True)
-            automate_error_message = json.loads(gapie.message)
-            detail_message = automate_error_message["error"]["detail"]
-            if "unable to get tokens for scopes" in detail_message:
-                self.login_manager.add_scope_change([self.flow_scope])
-                self.refresh_flows_client()
-                log.info("Initiating new login for dependent scope change")
-                flow = self.flows_client.run_flow(
-                    flow_id, self.flow_scope, **kwargs
-                ).data
-            elif gapie.http_status == 404 and self.redeploy_on_404:
+            if gapie.http_status == 404 and self.redeploy_on_404:
                 log.warning(
                     f"Flow {flow_id} returned 404 and is either deleted or unavailable. "
                     f"Purging flow_id from config file..."
@@ -411,6 +401,26 @@ class FlowsManager(ServiceManager):
                 flow = self.flows_client.run_flow(
                     flow_id, self.flow_scope, **kwargs
                 ).data
+            elif gapie.http_status == 400:
+                # Typically, 400s with strange text error messages are due to dependent scopes
+                # changing on the flow between runs, eg add a new Transfer AP and now it needs
+                # a tranfer scope, which the previous access token didn't have. Attempt to pick
+                # the dependent scope problem out of any generic 400, or re-raise if not.
+                try:
+                    log.debug("Encountered error when running flow", exc_info=True)
+                    automate_error_message = json.loads(gapie.text)
+                    detail_message = automate_error_message["error"]["detail"]
+                    if "unable to get tokens for scopes" in detail_message:
+                        self.login_manager.add_scope_change([self.flow_scope])
+                        self.refresh_flows_client()
+                        log.info("Initiating new login for dependent scope change")
+                        flow = self.flows_client.run_flow(
+                            flow_id, self.flow_scope, **kwargs
+                        ).data
+                    else:
+                        raise
+                except (TypeError, ValueError):
+                    raise gapie from None
             else:
                 raise
         log.info(
