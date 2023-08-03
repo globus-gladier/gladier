@@ -113,12 +113,10 @@ def test_dependent_scope_change_run_flow(
     assert auto_login.login.call_count == 0
 
     # Gladier will re-run run_flow after login, so catch the second 'run_flow()'
-    with pytest.raises(gladier.exc.AuthException):
+    with pytest.raises(globus_sdk.GlobusAPIError):
         fm.run_flow()
-    assert auto_login.scope_changes == {
-        "https://auth.globus.org/scopes/foo/flow_foo_user"
-    }
     assert auto_login.login.call_count == 1
+    assert not auto_login.scope_changes
 
 
 def test_dependent_scope_change_no_login(logged_in, mock_flows_client, monkeypatch):
@@ -126,8 +124,9 @@ def test_dependent_scope_change_no_login(logged_in, mock_flows_client, monkeypat
     cli.login_manager.login = Mock()
     cli.login_manager.add_scope_change(["foo"])
 
-    with pytest.raises(gladier.exc.AuthException):
-        cli.run_flow()
+    cli.run_flow()
+    assert cli.login_manager.login.call_count == 1
+    assert not cli.login_manager.scope_changes
 
 
 def test_gladier_raises_globus_errors(
