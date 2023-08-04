@@ -4,6 +4,7 @@ import typing as t
 
 from .compute import ComputeFunctionType, GlobusComputeState
 from .transfer import GlobusTransfer, GlobusTransferDelete, GlobusTransferItem
+from .search import SearchIngest, SearchDelete, SearchDeleteByQuery
 
 _nameables = (
     x.__name__
@@ -13,6 +14,9 @@ _nameables = (
         GlobusTransfer,
         GlobusTransferDelete,
         GlobusTransferItem,
+        SearchIngest,
+        SearchDelete,
+        SearchDeleteByQuery,
     )
     if hasattr(x, "__name__")
 )
