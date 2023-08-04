@@ -84,21 +84,6 @@ class AWSBaseState(ABC, BaseModel):
             flow_def = self.get_flow_definition()
         return flow_def.get("States", {}).get(self.valid_state_name)
 
-    def add_state_to_flow_definition(self, other_state: AWSBaseState) -> JSONObject:
-        """
-        Add a new state to the flow definition.
-
-        TODO: Jim: This doesn't appear to be called in this module. Is this a public method that others should call?
-
-        """
-        flow_def = AWSBaseState.get_flow_definition(self)
-        if other_state.valid_state_name not in flow_def["States"]:
-            # other_state.get_flow_definition() # Force full generation of the state
-            flow_def["States"][
-                other_state.valid_state_name
-            ] = other_state.get_flow_state_dict()
-        return self._flow_definition
-
     def get_additional_scopes_for_input(self, flow_input: JSONObject) -> t.Set[str]:
         """
         Additional hook in case the input causes other required dependent scopes as part of the flow.
