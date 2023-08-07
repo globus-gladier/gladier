@@ -15,9 +15,9 @@ from .helpers import (
 )
 
 
-class AWSBaseState(ABC, BaseModel):
+class BaseState(ABC, BaseModel):
     """
-    Base object to define the basic structure of an AWS State. The AWS Base state ensures
+    Base object to define the basic structure of the State API. The Base state ensures
     that overriding classes will set a get_flow_definition() method and supplies some extra
     hooks for defining more complex behavior around deploying flows, for instance if a
     state could require extra scopes.
@@ -93,7 +93,7 @@ class AWSBaseState(ABC, BaseModel):
         """
         return set()
 
-    def get_child_states(self) -> t.List[AWSBaseState]:
+    def get_child_states(self) -> t.List[BaseState]:
         """
         Get any cached child states present on this state which have previously been added
         """
@@ -106,10 +106,11 @@ class AWSBaseState(ABC, BaseModel):
         return []
 
 
-class AWSBaseCompositeState(AWSBaseState):
+class BaseCompositeState(BaseState):
     """
     A class which allows combining two or more base states
     """
+
     state_type: str = "CompositeVirtualState"
     state_name_prefix: str = ""
 
@@ -118,17 +119,17 @@ class AWSBaseCompositeState(AWSBaseState):
         return super().get_flow_definition()
 
 
-class StateWithNextOrEnd(AWSBaseState):
+class StateWithNextOrEnd(BaseState):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.next_state: t.Optional[GladierBaseState] = None
 
     def next(
         self,
-        next_state: AWSBaseState,
+        next_state: BaseState,
         insert_next: bool = False,
         replace_next: bool = False,
-    ) -> AWSBaseState:
+    ) -> BaseState:
         """Set another state as the Next for this state
 
         Set the provided next_state as the next state in the Flow after the Flow rooting
@@ -166,7 +167,7 @@ class StateWithNextOrEnd(AWSBaseState):
             self.next_state.next(new_next_state)
         return self
 
-    def get_child_states(self) -> t.List[AWSBaseState]:
+    def get_child_states(self) -> t.List[BaseState]:
         """
         Get child states.
 
@@ -209,7 +210,7 @@ _common_non_parameter_properties = set(
 )
 
 
-class StateWithParametersOrInputPath(AWSBaseState, ABC):
+class StateWithParametersOrInputPath(BaseState, ABC):
     """
     Mixin class to enforce either parameters or input tpaths on a given states
     flow definition. A state with this inherited class may ONLY have
@@ -246,7 +247,7 @@ class StateWithParametersOrInputPath(AWSBaseState, ABC):
         return flow_definition
 
 
-class StateWithResultPath(AWSBaseState, ABC):
+class StateWithResultPath(BaseState, ABC):
     """
     Mixin to ensure a given state has a ResultPath associated with it. By
     default, the result path will be generated from the name of the state, but

@@ -1,8 +1,8 @@
 import typing as t
-from gladier import AWSBaseState, JSONObject
+from gladier import BaseState, JSONObject
 
 
-class FailState(AWSBaseState):
+class FailState(BaseState):
     """
     Specify an explicit place in the flow where it should fail if encountered.
     """

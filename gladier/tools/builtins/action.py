@@ -3,7 +3,7 @@ from collections import defaultdict
 from enum import Enum
 
 from gladier import (
-    AWSBaseState,
+    BaseState,
     JSONObject,
     StateWithNextOrEnd,
     StateWithParametersOrInputPath,
@@ -44,12 +44,12 @@ class ActionState(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.exception_handlers: t.Dict[ActionExceptionName, AWSBaseState] = {}
+        self.exception_handlers: t.Dict[ActionExceptionName, BaseState] = {}
 
     def set_exception_handler(
         self,
         exception_names: t.Union[ActionExceptionName, t.List[ActionExceptionName]],
-        exception_handler: AWSBaseState,
+        exception_handler: BaseState,
     ):
         """
         Set an exception handler in case any state raises an exception during a flow.
@@ -89,7 +89,7 @@ class ActionState(
         eliminate_none_values(flow_state, deep=True)
         return flow_definition
 
-    def get_child_states(self) -> t.List[AWSBaseState]:
+    def get_child_states(self) -> t.List[BaseState]:
         next_states = super().get_child_states()
         exception_handler_states = list(self.exception_handlers.values())
         return next_states + exception_handler_states
