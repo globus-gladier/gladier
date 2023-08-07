@@ -1,6 +1,6 @@
 from gladier import GladierClient
 from gladier.tools import (
-    ComputeState,
+    Compute,
     TransferItem,
     Transfer,
     TransferDelete,
@@ -12,7 +12,7 @@ def mock_func(**kwargs):
 
 
 def test_globus_compute_state():
-    compute_step = ComputeState(
+    compute_step = Compute(
         function_to_call=mock_func, function_parameters={"foo": "bar"}
     )
 

@@ -9,7 +9,7 @@ from gladier.managers import BaseLoginManager, ComputeManager
 ComputeFunctionType = t.Union[t.Callable[[t.Any], t.Any], str]
 
 
-class ComputeState(ActionState):
+class Compute(ActionState):
     """
     The Globus Compute State allows for executing registered functions on a POSIX
     based system. It requires a registered python function and a valid Globus Compute
@@ -25,7 +25,7 @@ class ComputeState(ActionState):
             return randint(0, high_val)
 
 
-        random_step = GlobusComputeState(
+        random_step = GlobusCompute(
             function_to_call=random_int, function_parameters={"high_val": 3}
         )
     """

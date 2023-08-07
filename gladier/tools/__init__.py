@@ -5,7 +5,7 @@ import typing as t
 from .helpers import exclusive_validator_generator, validate_path_property
 from .builtins import ChoiceState, ExpressionEvalState, FailState, WaitState, PassState
 from .globus import (
-    ComputeState,
+    Compute,
     Transfer,
     TransferItem,
     TransferDelete,
@@ -24,7 +24,7 @@ _nameables = (
         FailState,
         WaitState,
         PassState,
-        ComputeState,
+        Compute,
         TransferItem,
         Transfer,
         TransferDelete,

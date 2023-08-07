@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from .compute import ComputeFunctionType, ComputeState
+from .compute import ComputeFunctionType, Compute
 from .transfer import Transfer, TransferDelete, TransferItem
 from .search import SearchIngest, SearchDelete, SearchDeleteByQuery
 
@@ -10,7 +10,7 @@ _nameables = (
     x.__name__
     for x in (
         ComputeFunctionType,
-        ComputeState,
+        Compute,
         Transfer,
         TransferDelete,
         TransferItem,
