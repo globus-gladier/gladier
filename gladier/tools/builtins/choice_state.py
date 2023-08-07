@@ -161,12 +161,17 @@ class ChoiceState(BaseState):
 
     .. code-block:: python
 
+        from gladier.tools.builtins import ChoiceOption, ComparisonRule, FailState, PassState
+        from gladier.tools import ChoiceState
+        from gladier import GladierClient
+
+
         choice_state = (
             ChoiceState()
             .choice(
                 ChoiceOption(
                     rule=ComparisonRule(
-                        Variable=random_step.path_to_return_val(), NumericEquals=0.0
+                        Variable="$.input.myvar", NumericEquals=0.0
                     ),
                     next=FailState(
                         cause="Random value 0 selected",
@@ -175,6 +180,9 @@ class ChoiceState(BaseState):
                 )
             ))
         choice_state.set_default(PassState(state_name="SuccessfulCompletion"))
+
+        gc = GladierClient(choice_state.get_flow_definition())
+        gc.run_flow(flow_input={'input': {'myvar': 1}})
 
     See the full list of Comparison Rules above, and operations.
 
