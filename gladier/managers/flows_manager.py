@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 import warnings
-from typing import Callable
+import typing as t
 
 import gladier
 import gladier.exc
@@ -85,12 +85,12 @@ class FlowsManager(ServiceManager):
 
     def __init__(
         self,
-        flow_id: str = None,
-        flow_definition: dict = None,
-        flow_schema: dict = None,
-        flow_title: str = None,
-        globus_group: str = None,
-        on_change: Callable = ensure_flow_registered,
+        flow_id: t.Optional[str] = None,
+        flow_definition: t.Optional[dict] = None,
+        flow_schema: t.Optional[dict] = None,
+        flow_title: t.Optional[str] = None,
+        globus_group: t.Optional[str] = None,
+        on_change: t.Optional[t.Callable] = ensure_flow_registered,
         redeploy_on_404: bool = True,
         **kwargs,
     ):
@@ -239,7 +239,7 @@ class FlowsManager(ServiceManager):
             )
         return identities
 
-    def get_flow_id(self) -> str:
+    def get_flow_id(self) -> t.Optional[str]:
         """
         Return flow id. If an ID was set on this class in the constructor, that is
         used. Otherwise, a retrieve from storage is attempted with 'flow_id' if a

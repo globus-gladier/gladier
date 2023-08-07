@@ -414,7 +414,7 @@ class GladierBaseClient(object):
                 compute_ids[name] = val
         return compute_ids
 
-    def get_flow_id(self) -> str:
+    def get_flow_id(self) -> t.Optional[str]:
         """
         Get the flow id from the :ref:`sdk_reference_flows_manager`.
         """
