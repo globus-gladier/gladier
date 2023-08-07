@@ -97,6 +97,10 @@ class GladierBaseCompositeState(GladierBaseState):
 
 
 class StateWithNextOrEnd(GladierBaseState):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.next_state: t.Optional[GladierBaseState] = None
+
     def next(
         self,
         next_state: GladierBaseState,
@@ -123,33 +127,35 @@ class StateWithNextOrEnd(GladierBaseState):
             the state next is invoked upon allowing for chaining of calls to next
         """
 
-        try:
-            if replace_next:
-                self.next_state = next_state
-                return self
-            if insert_next:
-                old_next = getattr(self, "next_state")
-                self.next_state = next_state
-                next_state = old_next
-            self.next_state.next(next_state)
-        except AttributeError:
+        new_next_state: t.Optional[GladierBaseState] = next_state
+        if replace_next:
             self.next_state = next_state
+            return self
+        if insert_next:
+            old_next = self.next_state
+            self.next_state = next_state
+            new_next_state = old_next
+        if self.next_state is None:
+            self.next_state = new_next_state
+        elif (
+            isinstance(self.next_state, StateWithNextOrEnd)
+            and new_next_state is not None
+        ):
+            self.next_state.next(new_next_state)
         return self
 
     def get_child_states(self) -> t.List[GladierBaseState]:
         super_children = super().get_child_states()
-        try:
+        if self.next_state is not None:
             super_children.append(self.next_state)
-        except AttributeError:
-            pass
         return super_children
 
     def get_flow_definition(self) -> JSONObject:
         flow_definition = super().get_flow_definition()
         state_def = self.get_flow_state_dict()
-        try:
+        if self.next_state is not None:
             state_def["Next"] = self.next_state.valid_state_name
-        except AttributeError:
+        else:
             state_def["End"] = True
         return flow_definition
 
