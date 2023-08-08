@@ -85,27 +85,3 @@ def ensure_parameter_values(
             v = new_v
         ret_obj[k] = v
     return ret_obj
-
-
-def insert_json_path(
-    json_obj: JSONObject, json_path: str, value: JSONValue
-) -> JSONObject:
-    """
-    For a given flow definition snippet, add the additional JSON PATH for all
-    elements. For example, if the given path was: {"foo.$": "$.bar.baz"}, a ``value`` of
-    'bananas' would result in {"foo.$": "$.bar.bananas.baz"}
-
-    TODO: Jim -- I'm pretty sure the description is wrong. I can't follow this code for some reason. And also,
-    I'm not sure where this is being used elsewhere in the codebase or how it's supposed to be called.
-    """
-    path_elements = json_path.split(".")
-    store_to_dict = json_obj
-    if path_elements[0] != "$":
-        raise ValueError(f"JSONPath string must start with '$.', got {json_path}")
-    for path_element in path_elements[1:-1]:
-        path_val = store_to_dict.get(path_element)
-        if not isinstance(path_val, dict):
-            store_to_dict[path_element] = dict()
-        store_to_dict = store_to_dict[path_element]
-    store_to_dict[path_elements[-1]] = value
-    return json_obj
