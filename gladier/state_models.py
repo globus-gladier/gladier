@@ -74,9 +74,6 @@ class BaseState(ABC, BaseModel):
         """
         Get a flow definition for this state, which can either be get_flow_definition() if the flow
         has not yet been built, or the _flow_definition attribute if this has been called before.
-
-        TODO: Jim: First of all, is this correct, and could we run into problems if the flow definition changes
-        and the flow is cached under self._flow_definition? Is there a reason to cache this?
         """
         try:
             flow_def = self._flow_definition
