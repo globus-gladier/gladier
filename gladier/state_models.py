@@ -122,7 +122,7 @@ class BaseCompositeState(BaseState):
 class StateWithNextOrEnd(BaseState):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.next_state: t.Optional[GladierBaseState] = None
+        self.next_state: t.Optional[BaseState] = None
 
     def next(
         self,
@@ -150,7 +150,7 @@ class StateWithNextOrEnd(BaseState):
             the state next is invoked upon allowing for chaining of calls to next
         """
 
-        new_next_state: t.Optional[GladierBaseState] = next_state
+        new_next_state: t.Optional[BaseState] = next_state
         if replace_next:
             self.next_state = next_state
             return self
