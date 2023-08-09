@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0b4](https://github.com/globus-gladier/gladier/compare/v0.9.0b3...v0.9.0b4) (2023-08-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove the Globus-Automate-Client package as a dependency in favor of using the Globus SDK
+* Remove subscription id
+
+### Features
+
+* Relpace funcx with the new globus compute sdk package ([6257742](https://github.com/globus-gladier/gladier/commit/62577423b5a5fa4e98860a8fe22919c621199702))
+* Remove Globus-Automate-Client dependency ([748b3b5](https://github.com/globus-gladier/gladier/commit/748b3b5ce665a5f6dc84703642b78918037d9013))
+* Remove subscription id ([b3bab98](https://github.com/globus-gladier/gladier/commit/b3bab98d337260fbb9aff9f4bff17e1c683d5ecb))
+* Add Globus Search action providers to state api ([8dfd891](https://github.com/globus-gladier/gladier/commit/8dfd891f22ec7beef7c6b8c414c21e62bde63672))
+    * Added basic documentation to State API Classes on Read-The-Docs
+
+
+### Bug Fixes
+
+* Dependent scope change error after successful login ([f44020a](https://github.com/globus-gladier/gladier/commit/f44020a266f0974d35e1cb48f6125582605a426f))
+* Fixed dependent scope change on flows ([ffa9933](https://github.com/globus-gladier/gladier/commit/ffa99336d0d9056ff85d7589d9deafca791d20b7))
+
 
 ## [0.9.0b3](https://github.com/globus-gladier/gladier/compare/v0.9.0b2...v0.9.0b3) (2023-08-01)
 
