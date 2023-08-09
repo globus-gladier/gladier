@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Callable, List, Set, Iterable, Union, Any, Mapping
+from typing_extensions import TypeAlias
 import abc
 
 import fair_research_login
@@ -14,6 +15,10 @@ from gladier.storage.tokens import GladierSecretsConfig
 
 log = logging.getLogger(__name__)
 
+AUTHORIZER_MAP: TypeAlias = Mapping[
+    str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]
+]
+
 
 class BaseLoginManager(abc.ABC):
     def __init__(self, *args, **kwargs):
@@ -26,7 +31,7 @@ class BaseLoginManager(abc.ABC):
 
     def get_missing_authorizers(
         self,
-        authorizers: Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]],
+        authorizers: AUTHORIZER_MAP,
     ) -> Set[str]:
         # Disregard any scopes not in the 'required' list. This allows implementers to return
         # unrelated scopes.
@@ -36,13 +41,22 @@ class BaseLoginManager(abc.ABC):
         )
         return absent | self.scope_changes
 
-    def get_manager_authorizers(self):
+    def get_manager_authorizers(self) -> AUTHORIZER_MAP:
+        """
+        Method to be called by any service manager that needs authorizers. Method will guarantee
+        live authorizers to the best ability of the current login manager. If missing authorizers
+        exist, either because of a scope change or no login has taken place, an exception will be
+        raised.
+        :returns: a dictionary of authorizers keyed by scope
+        :raises gladier.exc.AuthException: If any required scope could not be obtained
+        """
         authorizers = self.get_authorizers()
         missing = self.get_missing_authorizers(authorizers)
 
         if missing:
             log.info("Attempting login to fetch missing authorizers.")
             self.login(missing)
+            self.clear_scope_changes()
             authorizers = self.get_authorizers()
             missing = self.get_missing_authorizers(authorizers)
 
@@ -97,6 +111,13 @@ class BaseLoginManager(abc.ABC):
         """
         log.debug(f"Tracking scope change: {scopes}")
         self.scope_changes = self.scope_changes | set(scopes)
+
+    def clear_scope_changes(self):
+        """
+        Clear any tracked scopes that required re-authorhization. This is typically called internally
+        after successful login and should not be invoked externally.
+        """
+        self.scope_changes = set()
 
 
 class AutoLoginManager(BaseLoginManager):
