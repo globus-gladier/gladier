@@ -4,8 +4,8 @@ import typing as t
 
 import pytest
 from gladier import (
+    BaseState,
     GladierBaseClient,
-    GladierBaseState,
     GladierBaseTool,
     GladierClient,
     StateWithNextOrEnd,
@@ -26,7 +26,7 @@ class SimpleTestState(ActionState):
 _default_test_states = ("state1", "state2", "state3")
 
 
-def _create_test_flow_sequence(test_states=_default_test_states) -> GladierBaseState:
+def _create_test_flow_sequence(test_states=_default_test_states) -> BaseState:
     start_at: t.Optional[SimpleTestState] = None
     for state_name in test_states:
         test_state = SimpleTestState(state_name=state_name)

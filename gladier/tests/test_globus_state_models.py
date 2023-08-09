@@ -1,9 +1,9 @@
 from gladier import GladierClient
-from gladier.tools.globus import (
-    GlobusComputeState,
-    GlobusTransferItem,
-    GlobusTransfer,
-    GlobusTransferDelete,
+from gladier.tools import (
+    Compute,
+    TransferItem,
+    Transfer,
+    TransferDelete,
 )
 
 
@@ -12,7 +12,7 @@ def mock_func(**kwargs):
 
 
 def test_globus_compute_state():
-    compute_step = GlobusComputeState(
+    compute_step = Compute(
         function_to_call=mock_func, function_parameters={"foo": "bar"}
     )
 
@@ -25,11 +25,11 @@ def test_globus_compute_state():
 
 
 def test_globus_transfer_state():
-    transfer_step = GlobusTransfer(
+    transfer_step = Transfer(
         source_endpoint_id="src",
         destination_endpoint_id="dest",
         transfer_items=[
-            GlobusTransferItem(source_path="src_path", destination_path="dest_path")
+            TransferItem(source_path="src_path", destination_path="dest_path")
         ],
     )
 
@@ -54,7 +54,7 @@ def test_globus_transfer_state():
 
 
 def test_globus_transfer_delete_state():
-    transfer_delete_step = GlobusTransferDelete(
+    transfer_delete_step = TransferDelete(
         endpoint_id="src", items=["file1", "dir1"], recursive=True
     )
 

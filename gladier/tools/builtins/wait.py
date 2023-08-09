@@ -13,6 +13,10 @@ _wait_state_exclusives_list = ["seconds", "timestamp", "seconds_path", "timestam
 
 
 class WaitState(StateWithNextOrEnd):
+    """
+    The wait state will pause the execution of a flow for a determined amonut of time below.
+    """
+
     state_type: str = "Wait"
     seconds: t.Optional[int] = None
     timestamp: t.Optional[datetime.datetime] = None
