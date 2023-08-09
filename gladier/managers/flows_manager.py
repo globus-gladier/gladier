@@ -4,6 +4,7 @@ import logging
 import warnings
 import typing as t
 
+import globus_sdk
 import gladier
 import gladier.exc
 import gladier.managers.compute_login_manager
@@ -14,16 +15,8 @@ import gladier.utils.dynamic_imports
 import gladier.utils.name_generation
 import gladier.utils.tool_alias
 import gladier.version
-import globus_automate_client
 import globus_sdk
 from gladier.managers.service_manager import ServiceManager
-from globus_automate_client.flows_client import (
-    MANAGE_FLOWS_SCOPE,
-    RUN_FLOWS_SCOPE,
-    RUN_MANAGE_SCOPE,
-    RUN_STATUS_SCOPE,
-    VIEW_FLOWS_SCOPE,
-)
 
 log = logging.getLogger(__name__)
 
@@ -76,11 +69,11 @@ class FlowsManager(ServiceManager):
     """
 
     AVAILABLE_SCOPES = [
-        MANAGE_FLOWS_SCOPE,
-        VIEW_FLOWS_SCOPE,
-        RUN_FLOWS_SCOPE,
-        RUN_STATUS_SCOPE,
-        RUN_MANAGE_SCOPE,
+        globus_sdk.FlowsClient.scopes.manage_flows,
+        globus_sdk.FlowsClient.scopes.view_flows,
+        globus_sdk.FlowsClient.scopes.run,
+        globus_sdk.FlowsClient.scopes.run_status,
+        globus_sdk.FlowsClient.scopes.run_manage,
     ]
 
     def __init__(
@@ -154,7 +147,7 @@ class FlowsManager(ServiceManager):
         self._flow_schema = value
 
     @property
-    def flows_client(self):
+    def flows_client(self) -> globus_sdk.FlowsClient:
         """
         :return: an authorized Gloubs Automate Client. If a flow has been deployed,
         the client returned will be authorized to run the flow. Stale clients pre-flow-deployment
@@ -163,25 +156,35 @@ class FlowsManager(ServiceManager):
         if getattr(self, "_flows_client", None) is not None:
             return self._flows_client
         authorizers = self.login_manager.get_manager_authorizers()
-
-        automate_authorizer = authorizers[
-            globus_automate_client.flows_client.MANAGE_FLOWS_SCOPE
-        ]
-        flow_authorizer = authorizers.get(self.flow_scope)
-
-        def get_flow_authorizer(*args, **kwargs):
-            return flow_authorizer
-
-        self._flows_client = globus_automate_client.FlowsClient.new_client(
-            None,
-            get_flow_authorizer,
-            automate_authorizer,
-        )
+        flow_authorizer = authorizers[globus_sdk.FlowsClient.scopes.manage_flows]
+        self._flows_client = globus_sdk.FlowsClient(authorizer=flow_authorizer)
         return self._flows_client
 
-    def refresh_flows_client(self) -> globus_automate_client.FlowsClient:
-        self._flows_client = None
-        return self.flows_client
+    @property
+    def specific_flow_client(self) -> globus_sdk.SpecificFlowClient:
+        """
+        :return: an authorized Gloubs Automate Client. If a flow has been deployed,
+        the client returned will be authorized to run the flow. Stale clients pre-flow-deployment
+        will need to call this again in order to run flows.
+        """
+        if getattr(self, "_specific_flow_client", None) is not None:
+            return self._specific_flow_client
+        authorizers = self.login_manager.get_manager_authorizers()
+        flow_authorizer = authorizers.get(self.flow_scope)
+
+        self._specific_flow_client = globus_sdk.SpecificFlowClient(
+            self.get_flow_id(), authorizer=flow_authorizer
+        )
+        return self._specific_flow_client
+
+    def refresh_specific_flow_client(self) -> globus_sdk.SpecificFlowClient:
+        """
+        Destroy the current flows client and return a new one with updated authorizers. This is
+        handy in the case where dependent scopes change on a flow, and after login a new client
+        is needed.
+        """
+        self._specific_flow_client = None
+        return self.specific_flow_client
 
     @staticmethod
     def get_flow_checksum(flow_definition, flow_schema):
@@ -328,7 +331,10 @@ class FlowsManager(ServiceManager):
             try:
                 log.info(f"Flow checksum failed, updating flow {flow_id}...")
                 self.flows_client.update_flow(
-                    flow_id, self.flow_definition, **flow_kwargs
+                    flow_id,
+                    title=self.flow_title,
+                    definition=self.flow_definition,
+                    **flow_kwargs,
                 )
                 self.storage.set_value(
                     "flow_checksum",
@@ -341,8 +347,8 @@ class FlowsManager(ServiceManager):
                     raise
         if flow_id is None:
             log.info("No flow detected, deploying new flow...")
-            flow = self.flows_client.deploy_flow(
-                self.flow_definition, title=self.flow_title, **flow_kwargs
+            flow = self.flows_client.create_flow(
+                self.flow_title, self.flow_definition, **flow_kwargs
             ).data
             log.debug(f'Flow deployed with id {flow["id"]}')
             self.storage.set_value("flow_id", flow["id"])
@@ -351,7 +357,7 @@ class FlowsManager(ServiceManager):
                 self.get_flow_checksum(self.flow_definition, self.flow_schema),
             )
             self.login_manager.add_requirements([flow["globus_auth_scope"]])
-            self.refresh_flows_client()
+            self.refresh_specific_flow_client()
 
         return flow_id
 
@@ -363,7 +369,6 @@ class FlowsManager(ServiceManager):
         self.storage.del_value("flow_checksum")
 
     def run_flow(self, **kwargs):
-        flow_id = self.get_flow_id()
 
         permissions = {
             p_type: self.get_flow_permission(p_type)
@@ -379,11 +384,11 @@ class FlowsManager(ServiceManager):
             kwargs["label"] = (label[:62] + "..") if len(label) > 64 else label
 
         try:
-            flow = self.flows_client.run_flow(flow_id, self.flow_scope, **kwargs).data
+            flow = self.specific_flow_client.run_flow(**kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
             if gapie.http_status == 404 and self.redeploy_on_404:
                 log.warning(
-                    f"Flow {flow_id} returned 404 and is either deleted or unavailable. "
+                    f"Flow {self.get_flow_id()} returned 404 and is either deleted or unavailable. "
                     f"Purging flow_id from config file..."
                 )
                 # On a 404, Gladier can't do anything since it cannot access the old flow.
@@ -391,11 +396,10 @@ class FlowsManager(ServiceManager):
                 self.purge_flow()
                 # Ensure the new flow is deployed
                 self.sync_flow()
-                # Fetch the new flow id
-                flow_id = self.get_flow_id()
-                flow = self.flows_client.run_flow(
-                    flow_id, self.flow_scope, **kwargs
-                ).data
+                # Remake the flow client
+                self.refresh_specific_flow_client()
+                # Run the flow
+                flow = self.specific_flow_client.run_flow(**kwargs).data
             elif gapie.http_status == 400:
                 # Typically, 400s with strange text error messages are due to dependent scopes
                 # changing on the flow between runs, eg add a new Transfer AP and now it needs
@@ -407,21 +411,16 @@ class FlowsManager(ServiceManager):
                     detail_message = automate_error_message["error"]["detail"]
                     if "unable to get tokens for scopes" in detail_message:
                         self.login_manager.add_scope_change([self.flow_scope])
-                        self.refresh_flows_client()
+                        self.refresh_specific_flow_client()
                         log.info("Initiating new login for dependent scope change")
-                        flow = self.flows_client.run_flow(
-                            flow_id, self.flow_scope, **kwargs
-                        ).data
+                        flow = self.specific_flow_client.run_flow(**kwargs).data
                     else:
                         raise
                 except (TypeError, ValueError):
                     raise gapie from None
             else:
                 raise
-        log.info(
-            f'Started flow {kwargs.get("label")} flow id '
-            f'"{flow_id}" with run "{flow["run_id"]}"'
-        )
+        log.info(f'Started flow {kwargs.get("label")} with run "{flow["run_id"]}"')
 
         if flow["status"] == "FAILED":
             raise gladier.exc.ConfigException(
@@ -439,9 +438,7 @@ class FlowsManager(ServiceManager):
         :raises: Globus Automate exceptions from self.flows_client.flow_action_status
         :returns: a Globus Automate status object (with varying state structures)
         """
-        status = self.flows_client.flow_action_status(
-            self.get_flow_id(), self.flow_scope, run_id
-        ).data
+        status = self.flows_client.get_run(run_id).data
         try:
             return gladier.utils.automate.get_details(status)
         except (KeyError, AttributeError):

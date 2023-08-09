@@ -1,6 +1,5 @@
 import pytest
 from gladier import GladierBaseClient, GladierBaseTool, generate_flow_definition, exc
-from globus_automate_client.flows_client import validate_flow_definition
 from gladier.utils.tool_alias import StateSuffixVariablePrefix
 
 
@@ -61,7 +60,6 @@ def test_client_combine_gen_and_non_gen_flows(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 2
 
 
@@ -76,7 +74,6 @@ def test_client_tool_with_three_steps(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 3
 
 
@@ -107,7 +104,6 @@ def test_client_tool_duplication(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 3
     assert set(flow_def["States"]) == {
         "MockFunc",
@@ -132,7 +128,6 @@ def test_client_tool_duplication_with_generated_defs(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 2
     assert set(flow_def["States"]) == {"SortedFirst", "SortedSecond"}
 
@@ -149,7 +144,6 @@ def test_client_tool_duplication_with_generated_def_strs(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 2
     assert set(flow_def["States"]) == {"MockFuncFirst", "MockFuncSecond"}
 
@@ -167,7 +161,6 @@ def test_client_tool_complex_duplication(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 9
     assert set(flow_def["States"]) == {
         "StateOne",
@@ -229,7 +222,6 @@ def test_choice_state_tool_chaining(logged_in):
 
     mc = MyClient()
     flow_def = mc.flow_definition
-    validate_flow_definition(flow_def)
     assert len(flow_def["States"]) == 4
     assert flow_def["States"]["MockFunc"].get("Next") is None
     # Chain should add 'next' in transition state 1b

@@ -3,7 +3,6 @@ from gladier.base import GladierBaseTool
 from gladier.decorators import generate_flow_definition
 from gladier.exc import FlowGenException, FlowModifierException
 from gladier import GladierBaseClient
-from globus_automate_client.flows_client import validate_flow_definition
 
 
 def mock_func(data):
@@ -24,7 +23,6 @@ def test_tool_generate_basic_flow_no_mods():
 
     tool = MockTool()
     fd = tool.flow_definition
-    validate_flow_definition(fd)
     assert isinstance(fd, dict)
     assert fd["Comment"] == "Flow with states: MockFunc"
     assert fd["StartAt"] == "MockFunc"
@@ -39,7 +37,6 @@ def test_tool_generate_multiple_states():
 
     tool = MockTool()
     fd = tool.flow_definition
-    validate_flow_definition(fd)
     assert isinstance(fd, dict)
     assert fd["Comment"] == "Flow with states: MockFunc, MockFunc2"
     assert fd["StartAt"] == "MockFunc"

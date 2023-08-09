@@ -1,5 +1,5 @@
+globus-sdk>=3.23.0,<4
 globus-compute-sdk>=2.0.1,<3.0.0
-globus-automate-client>=0.13,<0.17
 packaging>=21.3
 fair-research-login>=0.2.6
 pydantic>=1.0
