@@ -5,39 +5,52 @@ Upgrade Migrations
 Migrating to v0.9.0
 -------------------
 
-Funcx was removed in favor of the new Globus Compute SDK, requiring some name
-changes in tooling. The list of required changes are below:
-
-* ``Gladier Base Tool "funcx_functions" changed to "compute_functions"``
-    * Old tools will still be backwards compatible, but will use newer function names instead
-    * Tools should be migrated to use compute_functions instead of funcx_functions
-* ``Input Functions previously "{name}_funcx_id" are now "{name}_function_id"
-* ``Default "funcx_endpoint_compute" name changed to "compute_endpoint"
-    * Naming convention "funcx_endpoint_non_compute" has been dropped and is no longer used,
-    * however users are still free to name endpoints as they wish
-* Default action URL is now ``https://compute.actions.globus.org``
-* Task output format changed, previously ``$.MyTask.details.result[0]`` is now ``$.MyTask.details.results[0].output``
-    * Both styles are currently outputted for backwards compatibility. New tooling should switch to the newer style.
-
-These changes mainly affect tools. See the example tool shown below:
+Funcx was removed in favor of the new Globus Compute SDK, requiring changes in Gladier Tools.
+The main changes are demonstrated on the tool below:
 
 .. code-block:: python
 
    @generate_flow_definition(modifiers={
+      # The path of outputs has changed in Globus Compute from the following:
+      # MyTask.details.result[0] --> MyTask.details.results[0].output
+      # WARNING: Gladier tools with modifiers MUST change funcx_functions to compute_functions
       parallel_workload: {'tasks': '$.ParallelWorkloadInputBuilder.details.results[0].output'},
    })
    class ParallelWorkloadsTool(GladierBaseTool):
+
+      # Previously named "funcx_functions". This will continue to work for most tools UNLESS the tool
+      # defines modifiers above, which will raise an exception. All tools should migrate to "compute_functions"
       compute_functions = [
          parallel_workload_input_builder,
          parallel_workload,
       ]
+
       required_input = [
+         # The convention for endpoint names have changed. Previous names were: funcx_endpoint_compute and funcx_endpoint_non_compute
+         # New names only include "compute_endpoint"
          'compute_endpoint',
          'parallel_workloads',
+         # function names have changed from myfunc_funcx_id --> myfunc_function_id. These are generated automatically, and should not
+         # affect most usage.
          'parallel_workload_function_id'
       ]
 
-The flow definition for functions has also changed, and the above will generate the following:
+
+The full list of required changes are below:
+
+* Gladier Base Tool "funcx_functions" changed to "compute_functions"
+    * Old tools will still be backwards compatible, but will use newer function names instead
+    * Tools should be migrated to use compute_functions instead of funcx_functions
+    * Using modifiers with old tools will raise an exception in v0.9.0
+* Input Functions named previously "{name}_funcx_id" are now "{name}_function_id"
+* Default "funcx_endpoint_compute" name changed to "compute_endpoint"
+    * Naming convention "funcx_endpoint_non_compute" and "funcx_endpoint_compute" have been dropped and are no longer used,
+      however users are still free to name custom endpoints using modifiers to any chosen value.
+* Default action URL is now ``https://compute.actions.globus.org``
+* Task output format changed, previously ``$.MyTask.details.result[0]`` is now ``$.MyTask.details.results[0].output``
+    * Both styles are currently outputted for backwards compatibility. All tooling should switch to the newer style.
+
+For any tool developers using full flow definitions, the following example shows usage for the newest values and convestions:
 
 .. code-block:: JSON
 
