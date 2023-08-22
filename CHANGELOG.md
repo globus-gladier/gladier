@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+---
+## [0.9.0](https://github.com/globus-gladier/gladier/compare/v0.8.4...v0.9.0) (2023-08-22)
+
+See the [Migration Guide](https://gladier.readthedocs.io/en/latest/migration.html#migrating-to-v0-9-0) for
+upgrading. Note this mainly involves changing the names of `funcx_endpoint_compute` and `funcx_functions` to
+`compute_functions` and `compute_endpoint` respectively.
+
+
+### ⚠ BREAKING CHANGES
+
+* Changed convention ``funcx_endpoint_compute`` to ``compute_endpoint``
+* Changed Gladier Tools ``funcx_functions`` to ``compute_functions``
+* Remove Globus-Automate-Client dependency
+* Remove subscription id
+* Raise exception for legacy funcx function modifiers pre-v0.9.0
+* Detect and auto-update old funcx functions
+
+### Features
+
+* Add auto migration for older configs ([d51b95e](https://github.com/globus-gladier/gladier/commit/d51b95e112e1a62d1dd05f499f89272e040efe0f))
+* Add better support for flow schemas. ([b3ab831](https://github.com/globus-gladier/gladier/commit/b3ab831adfc860e1a5c5fe8b90234f0545b8cabf))
+* Add built-in support for confidential clients ([cdeb6c6](https://github.com/globus-gladier/gladier/commit/cdeb6c68fac601c2639033a1ebbbebd757c232ce))
+* Add Globus Search action providers to state api ([8dfd891](https://github.com/globus-gladier/gladier/commit/8dfd891f22ec7beef7c6b8c414c21e62bde63672))
+* Relpace funcx with the new globus compute sdk package ([6257742](https://github.com/globus-gladier/gladier/commit/62577423b5a5fa4e98860a8fe22919c621199702))
+* Switch to production Action Provider ([8e40235](https://github.com/globus-gladier/gladier/commit/8e40235c2b3dee0750b5057c223b12a56da2c8b4))
+
+
+### Bug Fixes
+
+* Custom Client IDs on Gladier Client classes not using correct storage ([05bbb01](https://github.com/globus-gladier/gladier/commit/05bbb01d35b0ac7cd52ae23065dfce1b0685f2b2))
+* Dependent scope change error after successful login ([f44020a](https://github.com/globus-gladier/gladier/commit/f44020a266f0974d35e1cb48f6125582605a426f))
+* Fixed dependent scope change on flows ([ffa9933](https://github.com/globus-gladier/gladier/commit/ffa99336d0d9056ff85d7589d9deafca791d20b7))
+* Function serialization failures using compute-sdk 2.2.3 ([4b0bb36](https://github.com/globus-gladier/gladier/commit/4b0bb36aa955bc41384dcc170fa865388e6c3ae7)), closes [/github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/serialize/concretes.py#L121](https://github.com/globus-gladier//github.com/funcx-faas/funcX/blob/main/compute_sdk/globus_compute_sdk/serialize/concretes.py/issues/L121)
+* Legacy funcx functions not being registered or tracked ([1e823a7](https://github.com/globus-gladier/gladier/commit/1e823a77ecb0b4c78526c130e8157b58581cdc69))
+* Raise exception for legacy funcx function modifiers pre-v0.9.0 ([739cfd3](https://github.com/globus-gladier/gladier/commit/739cfd3efaa9d16e7d57a44133d61a5621df6dfa))
+
+
+* Changed funcx_endpoint_compute to compute_endpoint ([d981741](https://github.com/globus-gladier/gladier/commit/d981741dc102097e3ee5d9e09320baa8eb3052f2))
+* Detect and auto-update old funcx functions ([94567fd](https://github.com/globus-gladier/gladier/commit/94567fd1367491599cc9af868d4544b9023b6bb4))
+* Remove Globus-Automate-Client dependency ([748b3b5](https://github.com/globus-gladier/gladier/commit/748b3b5ce665a5f6dc84703642b78918037d9013))
+* Remove subscription id ([b3bab98](https://github.com/globus-gladier/gladier/commit/b3bab98d337260fbb9aff9f4bff17e1c683d5ecb))
+---
+
 ## [0.9.0b4](https://github.com/globus-gladier/gladier/compare/v0.9.0b3...v0.9.0b4) (2023-08-09)
 
 
