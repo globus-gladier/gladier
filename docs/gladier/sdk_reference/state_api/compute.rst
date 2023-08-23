@@ -2,6 +2,6 @@ Compute
 =======
 
 
-.. autoclass:: gladier.tools.ComputeState
+.. autoclass:: gladier.tools.Compute
    :member-order: bysource
    :show-inheritance:

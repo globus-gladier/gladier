@@ -7,7 +7,7 @@ from pydantic import validator
 from pydantic.fields import ModelField
 
 from gladier import StateWithNextOrEnd, JSONObject
-from gladier.tools import exclusive_validator_generator
+from gladier.tools.helpers import exclusive_validator_generator
 
 _wait_state_exclusives_list = ["seconds", "timestamp", "seconds_path", "timestamp_path"]
 

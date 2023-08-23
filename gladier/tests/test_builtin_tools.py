@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import pytest
 from pydantic import ValidationError
 
-from gladier.tools.builtins import (
+from gladier.tools import (
     ActionState,
     AndRule,
     ChoiceOption,

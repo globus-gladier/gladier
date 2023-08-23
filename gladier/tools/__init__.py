@@ -2,35 +2,57 @@ from __future__ import annotations
 
 import typing as t
 
-from .helpers import exclusive_validator_generator, validate_path_property
-from .builtins import ChoiceState, ExpressionEvalState, FailState, WaitState, PassState
+from .builtins import (
+    ActionState,
+    AndRule,
+    ChoiceOption,
+    ChoiceRule,
+    ChoiceState,
+    ComparisonRule,
+    ExpressionEvalState,
+    FailState,
+    NotRule,
+    OrRule,
+    PassState,
+    WaitState,
+)
 from .globus import (
     Compute,
-    Transfer,
-    TransferItem,
-    TransferDelete,
-    SearchIngest,
+    ComputeFunctionType,
     SearchDelete,
     SearchDeleteByQuery,
+    SearchIngest,
+    Transfer,
+    TransferDelete,
+    TransferItem,
 )
+from .helpers import exclusive_validator_generator, validate_path_property
 
 _nameables = (
     x.__name__
     for x in (
-        exclusive_validator_generator,
-        validate_path_property,
+        ActionState,
+        AndRule,
+        ChoiceOption,
+        ChoiceRule,
         ChoiceState,
+        ComparisonRule,
         ExpressionEvalState,
         FailState,
-        WaitState,
+        NotRule,
+        OrRule,
         PassState,
+        WaitState,
         Compute,
-        TransferItem,
-        Transfer,
-        TransferDelete,
-        SearchIngest,
+        ComputeFunctionType,
         SearchDelete,
         SearchDeleteByQuery,
+        SearchIngest,
+        Transfer,
+        TransferDelete,
+        TransferItem,
+        exclusive_validator_generator,
+        validate_path_property,
     )
     if hasattr(x, "__name__")
 )
