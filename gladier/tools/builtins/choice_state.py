@@ -6,7 +6,7 @@ from pydantic import BaseModel, validator
 from pydantic.fields import ModelField
 
 from gladier import BaseState, JSONObject
-from gladier.tools import exclusive_validator_generator, validate_path_property
+from gladier.tools.helpers import exclusive_validator_generator, validate_path_property
 
 
 class ChoiceRule(BaseModel):
@@ -161,8 +161,7 @@ class ChoiceState(BaseState):
 
     .. code-block:: python
 
-        from gladier.tools.builtins import ChoiceOption, ComparisonRule, FailState, PassState
-        from gladier.tools import ChoiceState
+        from gladier.tools import ChoiceState, ChoiceOption, ComparisonRule, FailState, PassState
         from gladier import GladierClient
 
 
