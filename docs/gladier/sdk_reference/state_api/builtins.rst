@@ -4,6 +4,38 @@ Builtins
 ========
 
 
+Action State
+------------
+
+.. autoclass:: gladier.tools.ActionState
+   :member-order: bysource
+   :show-inheritance:
+
+
+And Rule (for Choice)
+---------------------
+
+.. autoclass:: gladier.tools.AndRule
+   :member-order: bysource
+   :show-inheritance:
+
+
+Choice Option
+-------------
+
+.. autoclass:: gladier.tools.ChoiceOption
+   :member-order: bysource
+   :show-inheritance:
+
+
+Choice Rule
+-----------
+
+.. autoclass:: gladier.tools.ChoiceRule
+   :member-order: bysource
+   :show-inheritance:
+
+
 Choice State
 ------------
 
@@ -24,6 +56,22 @@ Fail State
 ----------
 
 .. autoclass:: gladier.tools.FailState
+   :member-order: bysource
+   :show-inheritance:
+
+
+Not Rule (for Choice)
+---------------------
+
+.. autoclass:: gladier.tools.NotRule
+   :member-order: bysource
+   :show-inheritance:
+
+
+Or Rule (for Choice)
+--------------------
+
+.. autoclass:: gladier.tools.OrRule
    :member-order: bysource
    :show-inheritance:
 
