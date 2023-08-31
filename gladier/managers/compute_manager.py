@@ -1,10 +1,11 @@
 import hashlib
 import logging
+from packaging.version import parse as parse_version
 
 import gladier.managers.compute_login_manager
 from gladier.base import GladierBaseTool
 from gladier.managers.service_manager import ServiceManager
-from globus_compute_sdk import Client, serialize
+from globus_compute_sdk import Client, serialize, version as compute_sdk_version
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +33,9 @@ class ComputeManager(ServiceManager):
         )
 
         self.__compute_client = Client(
-            code_serialization_strategy=serialize.DillCodeSource(),
-            login_manager=compute_login_manager
-    )
+            code_serialization_strategy=self.get_serialization_strategy(),
+            login_manager=compute_login_manager,
+        )
         return self.__compute_client
 
     @staticmethod
@@ -49,12 +50,39 @@ class ComputeManager(ServiceManager):
         return f"{compute_function.__name__}_function_id"
 
     @staticmethod
+    def get_serialization_strategy():
+        """
+        Get serialization strategy for functions in the globus compute SDK. Defaults to serialize.DillCodeSource.
+        """
+        try:
+            return serialize.DillCodeSource()
+        except AttributeError:
+            # Note, this is being used to support pre-2.3.0 versions which don't have serialize.DillSourceCode.
+            # We should drop support for pre-2.3.0 in Gladier v0.10.0 and remove this!
+            log.warning(
+                'Failed to find default compute strategy "serialize.DillCodeSource()" in version '
+                f"(globus_compute_sdk v{compute_sdk_version.__version__}), using compute_sdk defaults instead."
+            )
+            return None
+
+    @staticmethod
     def get_compute_function_checksum(compute_function):
         """
         Get the SHA256 checksum of a compute function
         :return: sha256 hex string of a given compute function
         """
-        fxs = serialize.ComputeSerializer(strategy_code=serialize.DillCodeSource())
+        # This should only be supported in Gladier v0.10.0
+        if parse_version(compute_sdk_version.__version__) < parse_version("2.3.0"):
+            log.warning(
+                f"Using an older version (v{compute_sdk_version.__version__}) of the globus_compute_sdk "
+                "which does not support custom serialization strategies! Please upgrade, this will be removed "
+                "in Gladier v0.10.0"
+            )
+            fxs = serialize.ComputeSerializer()
+        else:
+            fxs = serialize.ComputeSerializer(
+                strategy_code=ComputeManager.get_serialization_strategy()
+            )
         serialized_func = fxs.serialize(compute_function).encode()
         return hashlib.sha256(serialized_func).hexdigest()
 
