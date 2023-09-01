@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+
+### [0.9.1](https://github.com/globus-gladier/gladier/compare/v0.9.0...v0.9.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* Add support for older globus_compute_sdk < 2.3.0 ([8e0e82b](https://github.com/globus-gladier/gladier/commit/8e0e82b5772bf8d0a1019a92e8b8f97238b9be05))
+	* Fix applies to globus-compute-sdk v2.1.0
+
 ---
 ## [0.9.0](https://github.com/globus-gladier/gladier/compare/v0.8.4...v0.9.0) (2023-08-22)
 
