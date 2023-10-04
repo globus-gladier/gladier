@@ -1,6 +1,7 @@
 import sys
 import uuid
 import pytest
+import time
 import globus_sdk
 from unittest.mock import Mock
 from gladier.exc import ConfigException
@@ -238,8 +239,13 @@ def test_get_status(
 
 
 def test_progress(
-    auto_login, mock_flow_status_active, mock_flow_status_succeeded, mock_flows_client
+    auto_login,
+    mock_flow_status_active,
+    mock_flow_status_succeeded,
+    mock_flows_client,
+    monkeypatch,
 ):
+    monkeypatch.setattr(time, "sleep", Mock())
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
 
     class GlobusResponse(object):
