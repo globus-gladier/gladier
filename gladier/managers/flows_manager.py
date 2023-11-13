@@ -135,13 +135,7 @@ class FlowsManager(ServiceManager):
 
     @property
     def flow_schema(self) -> dict:
-        return self._flow_schema or {
-            "input_schema": {
-                "additionalProperties": True,
-                "properties": {},
-                "type": "object",
-            }
-        }
+        return self._flow_schema or {"additionalProperties": True}
 
     @flow_schema.setter
     def flow_schema(self, value: dict):
