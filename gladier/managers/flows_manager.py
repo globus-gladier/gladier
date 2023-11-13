@@ -1,5 +1,6 @@
 import hashlib
 import json
+import time
 import logging
 import warnings
 import typing as t
@@ -449,7 +450,7 @@ class FlowsManager(ServiceManager):
         if response["status"] == "ACTIVE":
             print(f'[{response["status"]}]: {response["details"]["description"]}')
 
-    def progress(self, run_id, callback=None):
+    def progress(self, run_id, callback=None, delay=2):
         """
         Continuously call self.get_status() until the flow completes. Each status response is
         used as a parameter to the provided callback, by default will use the builtin callback
@@ -465,6 +466,7 @@ class FlowsManager(ServiceManager):
         while status["status"] not in ["SUCCEEDED", "FAILED"]:
             status = self.get_status(run_id)
             callback(status)
+            time.sleep(delay)
 
     def get_details(self, run_id, state_name):
         """

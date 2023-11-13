@@ -485,7 +485,7 @@ class GladierBaseClient(object):
         """
         return self.flows_manager.get_status(action_id)
 
-    def progress(self, action_id, callback=None):
+    def progress(self, action_id, callback=None, delay=2):
         """
         Continuously call self.get_status() until the flow completes. Each status response is
         used as a parameter to the provided callback, by default will use the builtin callback
@@ -496,7 +496,7 @@ class GladierBaseClient(object):
         :param callback: The function to call with the result from self.get_status. Must take
                          a single parameter: mycallback(self.get_status())
         """
-        return self.flows_manager.progress(action_id, callback=callback)
+        return self.flows_manager.progress(action_id, callback=callback, delay=delay)
 
     def get_details(self, action_id, state_name):
         """
