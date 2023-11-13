@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.2](https://github.com/globus-gladier/gladier/compare/v0.9.1...v0.9.2) (2023-11-13)
+
+
+### Bug Fixes
+
+* Exception when registering or updating new flows ([e3b8c18](https://github.com/globus-gladier/gladier/commit/e3b8c18b268b2ddd5bf0585d98306850f9ec1c2e))
+* Gladier progress status checking sometimes running too fast ([7a6e51d](https://github.com/globus-gladier/gladier/commit/7a6e51d3400070cb7d9351db811c1927424d3d5c))
+
 
 ### [0.9.1](https://github.com/globus-gladier/gladier/compare/v0.9.0...v0.9.1) (2023-09-01)
 
