@@ -4,18 +4,18 @@ import typing as t
 from dataclasses import dataclass
 
 import pytest
-from pydantic import ValidationError
-
 from gladier.tools import (
     ActionState,
     AndRule,
     ChoiceOption,
     ChoiceState,
     ComparisonRule,
+    ExpressionEvalState,
     PassState,
     WaitState,
-    ExpressionEvalState,
 )
+from gladier.tools.builtins import ChoiceSkipState
+from pydantic import ValidationError
 
 
 @dataclass
@@ -137,3 +137,18 @@ def test_expression_eval():
     state_param_keys = state_def["Parameters"].keys()
     expected_keys = {k if k.endswith(".=") else k + ".=" for k in parameters.keys()}
     assert state_param_keys == expected_keys
+
+
+def test_choice_skip_state():
+    choice_state_name = "ChoiceSkip"
+    skip_state = ChoiceSkipState(
+        state_name=choice_state_name,
+        rule=ComparisonRule(Variable="$.input.should_i", BooleanEquals=True),
+        state_for_rule=PassState(state_name="DoThisIfIShould"),
+    )
+    skip_state.next(PassState(state_name="ChoiceSkipTarget"))
+    flow_def = skip_state.get_flow_definition()
+    states = flow_def["States"]
+    assert flow_def["StartAt"] == choice_state_name
+    for state_name in {choice_state_name, "DoThisIfIShould", "ChoiceSkipTarget"}:
+        assert state_name in states, states.keys()

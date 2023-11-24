@@ -5,7 +5,7 @@ import typing as t
 from pydantic import BaseModel, validator
 from pydantic.fields import ModelField
 
-from gladier import BaseState, JSONObject
+from gladier import BaseCompositeState, BaseState, JSONObject, StateWithNextOrEnd
 from gladier.tools.helpers import exclusive_validator_generator, validate_path_property
 
 
@@ -217,3 +217,27 @@ class ChoiceState(BaseState):
             if self.default is not None
             else []
         )
+
+
+class ChoiceSkipState(BaseCompositeState):
+    rule: ChoiceRule
+    state_for_rule: StateWithNextOrEnd
+
+    def construct_flow(self) -> ChoiceState:
+        if not hasattr(self, "_next_state"):
+            raise ValueError(
+                f"For state {self.state_name} next() must be set prior to "
+                "generating the flow definition"
+            )
+        choice_state = ChoiceState(state_name=self.state_name, default=self._next_state)
+        choice_state.choice(ChoiceOption(rule=self.rule, next=self.state_for_rule))
+        self.state_for_rule.next(self._next_state, replace_next=True)
+        return choice_state
+
+    def next(
+        self,
+        next_state: BaseState,
+        for_state: t.Optional[t.Union[str, BaseState]] = None,
+    ) -> BaseState:
+        self._next_state = next_state
+        return self
