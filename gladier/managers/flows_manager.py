@@ -50,6 +50,9 @@ class FlowsManager(ServiceManager):
                             at runtime when used with a Gladier Client
     :param flow_schema: The schema to be used alongside the flow definition
     :param flow_title: The title for the Globus Flow
+    :param subscription_id: A subscription ID to associate with a flow. This typically is automatically
+                            determined and does not need to be supplied, but may be required if the user
+                            has more than one subscription
     :param globus_group: A Globus Group UUID. Used to grant all flow and run permissions
     :param on_change: callback on checksum mismatch or missing flow id. Default registers/deploys
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
@@ -83,6 +86,7 @@ class FlowsManager(ServiceManager):
         flow_definition: t.Optional[dict] = None,
         flow_schema: t.Optional[dict] = None,
         flow_title: t.Optional[str] = None,
+        subscription_id: t.Optional[str] = None,
         globus_group: t.Optional[str] = None,
         on_change: t.Optional[t.Callable] = ensure_flow_registered,
         redeploy_on_404: bool = True,
@@ -92,6 +96,7 @@ class FlowsManager(ServiceManager):
         self.flow_definition = flow_definition
         self.flow_schema = flow_schema
         self.flow_title = flow_title
+        self.subscription_id = subscription_id
         self.globus_group = globus_group
         self.on_change = on_change or (lambda self, exc: None)
         self.redeploy_on_404 = redeploy_on_404
@@ -322,6 +327,7 @@ class FlowsManager(ServiceManager):
         flow_kwargs = flow_permissions
         # Input schema is a required field and must be part of all flows.
         flow_kwargs["input_schema"] = self.flow_schema
+        flow_kwargs["subscription_id"] = None
         if flow_id:
             try:
                 log.info(f"Flow checksum failed, updating flow {flow_id}...")
