@@ -69,6 +69,10 @@ class GladierBaseClient(object):
        * A flow schema to accompany the flow definition. Schema is checked on each
          run and are re-deployed if it changes. Overrides any existing schema set
          on a given flow_manager instance unless unset.
+    * subscription_id (default: None)
+       * A subscription ID to associate with a flow. This typically is automatically
+         determined and does not need to be supplied, but may be required if the user
+         has more than one subscription
     * secret_config_filename (default: ``~/.gladier-secrets.cfg``)
        * Storage are for Globus Tokens and general storage
     * app_name (default: 'Gladier Client')
@@ -103,6 +107,7 @@ class GladierBaseClient(object):
     secret_config_filename: t.Optional[str] = None
     app_name: t.Optional[str] = "Gladier Client"
     client_id: str = "f1631610-d9e4-4db2-81ba-7f93ad4414e3"
+    subscription_id: t.Optional[str] = None
     globus_group: t.Optional[str] = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
 
@@ -119,7 +124,7 @@ class GladierBaseClient(object):
         )
 
         self.flows_manager = flows_manager or FlowsManager(
-            auto_registration=auto_registration
+            auto_registration=auto_registration, subscription_id=self.subscription_id
         )
         if self.globus_group:
             self.flows_manager.globus_group = self.globus_group
