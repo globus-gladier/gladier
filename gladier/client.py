@@ -124,7 +124,7 @@ class GladierBaseClient(object):
         )
 
         self.flows_manager = flows_manager or FlowsManager(
-            auto_registration=auto_registration, subscription_id=subscription_id
+            auto_registration=auto_registration, subscription_id=self.subscription_id
         )
         if self.globus_group:
             self.flows_manager.globus_group = self.globus_group
