@@ -27,7 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest build twine
-        if [ -f requirements.txt ]; then pip install -r requirements.txt pyyaml==5.3.1; fi
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -43,6 +43,7 @@ jobs:
         twine check dist/*
     - name: Test Docs
       run: |
-        pip install -r docs/requirements.txt pyyaml==5.3.1
+        # Setuptools needed for https://github.com/CrossNox/m2r2/issues/63
+        pip install -r docs/requirements.txt setuptools
         cd docs
         make html
