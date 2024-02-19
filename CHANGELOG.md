@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.3](https://github.com/globus-gladier/gladier/compare/v0.9.2...v0.9.3) (2024-02-16)
+
+
+### Features
+
+* Include the option to specify subscription_id for flows ([3dc5d58](https://github.com/globus-gladier/gladier/commit/3dc5d582613a4dc06effe1cdb052cb6abef7f18e))
+* Support Python 3.12 ([1e72a39](https://github.com/globus-gladier/gladier/commit/1e72a390ca408660f5d58a6bd4a020392500f453))
+
+
 ### [0.9.2](https://github.com/globus-gladier/gladier/compare/v0.9.1...v0.9.2) (2023-11-13)
 
 
