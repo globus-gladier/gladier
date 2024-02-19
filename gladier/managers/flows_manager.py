@@ -327,7 +327,10 @@ class FlowsManager(ServiceManager):
         flow_kwargs = flow_permissions
         # Input schema is a required field and must be part of all flows.
         flow_kwargs["input_schema"] = self.flow_schema
-        flow_kwargs["subscription_id"] = None
+        # TODO: The globus sdk does not currently support subscription id on UPDATE.
+        # This should change eventually, but right now cannot be supplied or it will raise errors
+        # It is added only on CREATE for now.
+        # flow_kwargs["subscription_id"] = self.subscription_id
         if flow_id:
             try:
                 log.info(f"Flow checksum failed, updating flow {flow_id}...")
@@ -348,6 +351,7 @@ class FlowsManager(ServiceManager):
                     raise
         if flow_id is None:
             log.info("No flow detected, deploying new flow...")
+            flow_kwargs["subscription_id"] = self.subscription_id
             flow = self.flows_client.create_flow(
                 self.flow_title, self.flow_definition, **flow_kwargs
             ).data
