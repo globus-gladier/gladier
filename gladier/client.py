@@ -116,6 +116,7 @@ class GladierBaseClient(object):
         auto_registration: bool = True,
         login_manager: t.Optional[BaseLoginManager] = None,
         flows_manager: t.Optional[FlowsManager] = None,
+        compute_manager: t.Optional[ComputeManager] = None,
     ):
         self._tools = None
         self.storage = self._determine_storage()
@@ -131,8 +132,8 @@ class GladierBaseClient(object):
         if not self.flows_manager.flow_title:
             self.flows_manager.flow_title = f"{self.__class__.__name__} flow"
 
-        self.compute_manager = ComputeManager(
-            auto_registration=auto_registration, group=self.globus_group
+        self.compute_manager = compute_manager or ComputeManager(
+            auto_registration=auto_registration
         )
         self.storage.update()
 
