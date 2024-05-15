@@ -100,6 +100,8 @@ class GladierBaseClient(object):
                           will auto-login when additional scopes are needed.
     :param flows_manager: A flows manager class with customized behavior. Attrs like group
                           and login_manager will automatically be set if None
+    :param compute_manager: A compute manager class with customized behavior. EXPERIMENTAL.
+                            Will likely change in the future!
     :raises gladier.exc.AuthException: if authorizers given are insufficient
 
     """
