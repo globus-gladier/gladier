@@ -4,7 +4,7 @@ import typing as t
 from dataclasses import dataclass
 
 import pytest
-from pydantic import ValidationError
+from gladier.utils.pydantic_v1 import ValidationError
 
 from gladier.tools import (
     ActionState,

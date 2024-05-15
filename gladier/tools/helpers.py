@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic.fields import ModelField
-
 
 def exclusive_validator_generator(
     exclusive_property_names: t.List[str], require_one_set=True
 ):
-    def exclusive_generator(
-        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
-    ):
+    def exclusive_generator(cls, v, values: t.Dict[str, t.Any], field, **kwargs):
         found: t.List[str] = []
         if v is not None:
             found.append(field.name)
@@ -34,9 +30,7 @@ def exclusive_validator_generator(
     return exclusive_generator
 
 
-def validate_path_property(
-    cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
-):
+def validate_path_property(cls, v, values: t.Dict[str, t.Any], field: t.Any, **kwargs):
     if field.name.lower().endswith("path") and not str(v).startswith("$."):
         raise ValueError(
             f"Field named {field.name} must have a JSONPath value, got {v}"

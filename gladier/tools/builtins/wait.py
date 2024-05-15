@@ -3,8 +3,7 @@ from __future__ import annotations
 import datetime
 import typing as t
 
-from pydantic import validator
-from pydantic.fields import ModelField
+from gladier.utils.pydantic_v1 import validator
 
 from gladier import StateWithNextOrEnd, JSONObject
 from gladier.tools.helpers import exclusive_validator_generator
@@ -29,12 +28,12 @@ class WaitState(StateWithNextOrEnd):
 
     @validator(*_wait_state_exclusives_list)
     def validate_exclusive_properties(
-        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
+        cls, v, values: t.Dict[str, t.Any], field: t.Any, **kwargs
     ):
         return cls.exclusive_validator(cls, v, values, field, **kwargs)
 
     @validator("timestamp_path", "seconds_path")
-    def validate_json_path(cls, v, field: ModelField):
+    def validate_json_path(cls, v, field: t.Any):
         if v is not None and not v.startswith("$."):
             raise ValueError(
                 f"Field {field.name} must be in JSONPath format "
