@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import BaseModel, validator
-from pydantic.fields import ModelField
+from gladier.utils.pydantic_v1 import BaseModel, validator
 
 from gladier import BaseState, JSONObject
 from gladier.tools.helpers import exclusive_validator_generator, validate_path_property
@@ -106,13 +105,13 @@ class ComparisonRule(ChoiceRule):
 
     @validator(*_Comparison_rule_operators)
     def validate_exclusive_properties(
-        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
+        cls, v, values: t.Dict[str, t.Any], field: t.Any, **kwargs
     ):
         return cls.exclusive_validator(cls, v, values, field, **kwargs)
 
     @validator(*_Comparison_rule_operators)
     def validate_path_properties(
-        cls, v, values: t.Dict[str, t.Any], field: ModelField, **kwargs
+        cls, v, values: t.Dict[str, t.Any], field: t.Any, **kwargs
     ):
         return validate_path_property(cls, v, values, field, **kwargs)
 

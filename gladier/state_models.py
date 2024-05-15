@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
 
-from pydantic import BaseModel, Extra
+from gladier.utils.pydantic_v1 import BaseModel, Extra
 
 from .helpers import (
     JSONObject,

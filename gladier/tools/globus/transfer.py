@@ -2,7 +2,7 @@ import typing as t
 
 from gladier import JSONObject
 from gladier.tools.builtins import ActionState
-from pydantic import BaseModel
+from gladier.utils.pydantic_v1 import BaseModel
 
 
 class TransferItem(BaseModel):
