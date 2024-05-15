@@ -1,4 +1,5 @@
-from gladier.tests.test_data.gladier_mocks import MockGladierClient
+from unittest.mock import Mock
+from gladier.tests.test_data.gladier_mocks import MockGladierClient, mock_func
 
 
 def test_get_input(logged_in):
@@ -54,3 +55,17 @@ def test_pub_config_overrides_priv(logged_in, storage, mock_secrets_config):
 def test_run_flow(logged_in):
     cli = MockGladierClient()
     cli.run_flow()
+
+
+def test_propagated_group_uuid(monkeypatch, logged_in):
+    class MockGladierClientShared(MockGladierClient):
+        globus_group = "my-globus-group"
+
+        gladier_tools = ["gladier.tests.test_data.gladier_mocks.GeneratedTool"]
+
+    cli = MockGladierClientShared()
+    monkeypatch.setattr(cli.compute_manager.compute_client, "register_function", Mock())
+    cli.run_flow()
+    cli.compute_manager.compute_client.register_function.assert_called_with(
+        mock_func, group="my-globus-group"
+    )

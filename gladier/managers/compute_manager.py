@@ -11,9 +11,10 @@ log = logging.getLogger(__name__)
 
 
 class ComputeManager(ServiceManager):
-    def __init__(self, auto_registration: bool = True, **kwargs):
+    def __init__(self, auto_registration: bool = True, group: str = None, **kwargs):
         super().__init__(**kwargs)
         self.auto_registration = auto_registration
+        self.group = group
 
     def get_scopes(self):
         return gladier.managers.compute_login_manager.ComputeLoginManager.SCOPES
@@ -126,5 +127,7 @@ class ComputeManager(ServiceManager):
 
     def register_function(self, tool: GladierBaseTool, function):
         """Register the functions with Globus Compute."""
-        log.info(f"{tool.__class__.__name__}: registering function {function.__name__}")
-        return self.compute_client.register_function(function)
+        log.info(
+            f"{tool.__class__.__name__}: registering function {function.__name__} with group {self.group}"
+        )
+        return self.compute_client.register_function(function, group=self.group)

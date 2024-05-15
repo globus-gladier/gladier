@@ -131,7 +131,9 @@ class GladierBaseClient(object):
         if not self.flows_manager.flow_title:
             self.flows_manager.flow_title = f"{self.__class__.__name__} flow"
 
-        self.compute_manager = ComputeManager(auto_registration=auto_registration)
+        self.compute_manager = ComputeManager(
+            auto_registration=auto_registration, group=self.globus_group
+        )
         self.storage.update()
 
         for man in (self.flows_manager, self.compute_manager):
