@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.4](https://github.com/globus-gladier/gladier/compare/v0.9.3...v0.9.4) (2024-05-15)
+
+
+### Features
+
+* Allow passing a custom compute manager ([5a827be](https://github.com/globus-gladier/gladier/commit/5a827bed82bd1831621d3155626097cfec281d67))
+* Compute functions now use globus_group on client for functions ([da6005d](https://github.com/globus-gladier/gladier/commit/da6005d2dfc971e7734dcb0cd8ec953a11ae2b62))
+
+
+### Bug Fixes
+
+* Pydantic v2 support ([3743b7a](https://github.com/globus-gladier/gladier/commit/3743b7a32eb4ac6fdfef9566aefd2c00c9498d8d))
+
 ### [0.9.3](https://github.com/globus-gladier/gladier/compare/v0.9.2...v0.9.3) (2024-02-16)
 
 
