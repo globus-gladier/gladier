@@ -69,3 +69,26 @@ def test_propagated_group_uuid(monkeypatch, logged_in):
     cli.compute_manager.compute_client.register_function.assert_called_with(
         mock_func, group="my-globus-group"
     )
+
+
+def test_propagated_group_uuid(monkeypatch, logged_in):
+    class MockGladierClientShared(MockGladierClient):
+        globus_group = "my-globus-group"
+
+        gladier_tools = ["gladier.tests.test_data.gladier_mocks.GeneratedTool"]
+
+    run_monitors = ["urn:globus:auth:identity:4846deda-625e-4456-9c84-1647e53d71e1"]
+    cli = MockGladierClientShared()
+    monkeypatch.setattr(cli.flows_manager.specific_flow_client, "run_flow", Mock())
+    cli.run_flow(run_monitors=run_monitors)
+
+    body = {"input": {"mock_func_function_id": "mock_compute_function"}}
+    run_managers = ["urn:globus:groups:id:my-globus-group"]
+    run_monitors = [
+        "urn:globus:groups:id:my-globus-group",
+        "urn:globus:auth:identity:4846deda-625e-4456-9c84-1647e53d71e1",
+    ]
+
+    cli.flows_manager.specific_flow_client.run_flow.assert_called_with(
+        body=body, run_monitors=run_monitors, run_managers=run_managers
+    )

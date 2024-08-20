@@ -375,21 +375,24 @@ class FlowsManager(ServiceManager):
 
     def run_flow(self, **kwargs):
 
-        permissions = {
-            p_type: self.get_flow_permission(p_type)
+        flow_kwargs = {
+            p_type: self.get_flow_permission(p_type) + kwargs.get(p_type, [])
             for p_type in ["run_managers", "run_monitors"]
             if self.get_flow_permission(p_type)
         }
-        log.debug(f'Flow run permissions set to: {permissions or "Flows defaults"}')
-        kwargs.update(permissions)
+        log.debug(f'Flow kwargs set to: {flow_kwargs or "Flows defaults"}')
 
         # Ensure the label is not longer than 64 chars
         if "label" in kwargs:
             label = kwargs["label"]
-            kwargs["label"] = (label[:62] + "..") if len(label) > 64 else label
+            flow_kwargs["label"] = (label[:62] + "..") if len(label) > 64 else label
+
+        for item in ["body", "tags", "additional_fields"]:
+            if kwargs.get(item):
+                flow_kwargs[item] = kwargs[item]
 
         try:
-            flow = self.specific_flow_client.run_flow(**kwargs).data
+            flow = self.specific_flow_client.run_flow(**flow_kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:
             if gapie.http_status == 404 and self.redeploy_on_404:
                 log.warning(
