@@ -20,7 +20,7 @@ import gladier.version
 from gladier.base import GladierBaseTool
 from gladier.managers import ComputeManager, FlowsManager
 from gladier.managers.login_manager import (
-    AutoLoginManager,
+    UserAppLoginManager,
     BaseLoginManager,
     ConfidentialClientLoginManager,
 )
@@ -189,7 +189,7 @@ class GladierBaseClient(object):
             )
             return ConfidentialClientLoginManager(CLI_ID, CLI_SEC, storage=storage)
         else:
-            return AutoLoginManager(self.client_id, storage, self.app_name)
+            return UserAppLoginManager(self.client_id, self.app_name, storage=storage)
 
     @staticmethod
     def get_gladier_defaults_cls(tool_ref, alias_class=None):

@@ -6,7 +6,7 @@ import typing as t
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient, GladierClient
 from gladier.decorators import generate_flow_definition
-from gladier.managers import CallbackLoginManager, FlowsManager
+from gladier.managers import CallbackLoginManager, FlowsManager, UserAppLoginManager
 
 from .helpers import JSONList, JSONObject, JSONValue
 from .state_models import (
@@ -24,6 +24,7 @@ _nameables = (
         GladierBaseClient,
         GladierClient,
         generate_flow_definition,
+        UserAppLoginManager,
         CallbackLoginManager,
         FlowsManager,
         BaseState,
