@@ -285,6 +285,7 @@ class UserAppLoginManager(BaseLoginManager):
     ):
         super().__init__()
         self.storage = storage
+        self.storage_namespace = "gladier_storage"
         self.client_id = client_id
         self.app_name = app_name
         self.globus_auth_parameters = (
@@ -297,20 +298,28 @@ class UserAppLoginManager(BaseLoginManager):
             config=globus_sdk.GlobusAppConfig(
                 request_refresh_tokens=self.request_refresh_tokens,
                 token_storage=self.token_storage,
+                token_validation_error_handler=self.get_token_validation_error_handler(),
             ),
+        )
+
+    def get_filepath(self):
+        storage_filename = pathlib.Path(self.storage.filename)
+        return (
+            (storage_filename.parent / storage_filename.stem)
+            .with_suffix(".db")
+            .absolute()
         )
 
     def get_token_storage(self) -> globus_sdk.tokenstorage.TokenStorage:
         """
         Uses Gladier Secrets Config to derive the filenames and sections for the Globus App Token Storage configuraiton.
         """
-        storage_filename = pathlib.Path(self.storage.filename)
-        filepath = (storage_filename.parent / storage_filename.stem).with_suffix(".db")
+        filepath = self.get_filepath()
         ts = globus_sdk.tokenstorage.SQLiteTokenStorage(
-            filepath, namespace=self.storage.section
+            filepath, namespace=self.storage_namespace
         )
         log.info(
-            f"Using Globus Token Storage: {filepath}, namespace: {self.storage.section}"
+            f"Using Globus Token Storage: {filepath}, namespace: {self.storage_namespace}"
         )
         return ts
 
@@ -318,6 +327,8 @@ class UserAppLoginManager(BaseLoginManager):
         def token_validation_error_handler(app, error):
             log.warning("Globus App login event!")
             app.login(auth_params=self.globus_auth_parameters)
+
+        return token_validation_error_handler
 
     def get_authorizers(
         self,

@@ -10,7 +10,8 @@ import globus_sdk
 
 from gladier.tests.test_data.gladier_mocks import mock_automate_flow_scope
 from gladier.managers import ComputeManager
-from gladier.managers.login_manager import CallbackLoginManager
+from gladier.managers.login_manager import CallbackLoginManager, UserAppLoginManager
+from gladier import GladierClient
 
 data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 
@@ -129,10 +130,8 @@ def mock_compute_client(monkeypatch):
 
 
 @pytest.fixture
-def logged_out(monkeypatch):
-    load = Mock(side_effect=fair_research_login.LoadError())
-    monkeypatch.setattr(fair_research_login.NativeClient, "load_tokens_by_scope", load)
-    return fair_research_login.NativeClient
+def logged_out():
+    return CallbackLoginManager({})
 
 
 @pytest.fixture
@@ -149,10 +148,8 @@ def logged_in_tokens():
 
 
 @pytest.fixture
-def logged_in(monkeypatch, logged_in_tokens):
-    load = Mock(return_value=logged_in_tokens)
-    monkeypatch.setattr(fair_research_login.NativeClient, "load_tokens_by_scope", load)
-    return fair_research_login.NativeClient
+def logged_in(monkeypatch, auto_login):
+    return auto_login
 
 
 @pytest.fixture

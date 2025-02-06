@@ -15,11 +15,11 @@ def test_logged_out(logged_out):
 
 
 def test_logged_in(logged_in):
-    mc = MockGladierClient()
+    mc = MockGladierClient(login_manager=logged_in)
     assert not mc.missing_authorizers
     assert mc.is_logged_in() is True
 
 
 def test_scopes(logged_in):
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     assert not set(ALL_FLOW_SCOPES).difference(cli.scopes)
