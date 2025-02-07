@@ -8,7 +8,6 @@ from typing_extensions import TypeAlias
 import abc
 import urllib
 
-import fair_research_login
 import globus_sdk
 from globus_sdk import (
     AccessTokenAuthorizer,
@@ -19,6 +18,11 @@ from globus_sdk.login_flows import CommandLineLoginFlowManager
 from gladier.exc import AuthException
 from gladier.storage.tokens import GladierSecretsConfig
 import globus_compute_sdk
+
+try:
+    import fair_research_login
+except:
+    fair_research_login = None
 
 log = logging.getLogger(__name__)
 
@@ -143,6 +147,11 @@ class AutoLoginManager(BaseLoginManager):
         self.client_id = client_id
         self.app_name = app_name
         self.auto_login = auto_login
+
+        if fair_research_login is None:
+            raise ModuleNotFoundError(
+                "Fair Research Login is not installed. You can install it with `pip install fair-research-login`. We recommend using gladier.UserAppLoginManager instead."
+            )
 
     @property
     def native_client(self):
