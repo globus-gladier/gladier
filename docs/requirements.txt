@@ -1,12 +1,7 @@
-sphinx
+# Fix a problem with m2r2 not working with spinx > 6. We may need to drop m2r2,
+# it hasn't seen updates in some time and is being a little problematic.
+sphinx<7
 sphinx-rtd-theme
 m2r2
 gladier
-# Temporary fix for https://github.com/yaml/pyyaml/issues/724
-PyYAML==5.3.1
 git+https://github.com/globus-gladier/gladier-tools.git#egg=gladier-tools
-
-
-# Small hack to ensure latest requirements, in case the newest Gladier version
-# Switched them up (Currently the case for globus-compute-sdk)
--r ../requirements.txt

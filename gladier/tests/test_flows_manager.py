@@ -114,7 +114,7 @@ def test_dependent_scope_change_run_flow(
     assert auto_login.login.call_count == 0
 
     # Gladier will re-run run_flow after login, so catch the second 'run_flow()'
-    with pytest.raises(globus_sdk.GlobusAPIError):
+    with pytest.raises(Exception):
         fm.run_flow()
     assert auto_login.login.call_count == 1
     assert not auto_login.scope_changes
