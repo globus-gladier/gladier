@@ -307,6 +307,6 @@ def test_client_flow_schema(logged_in):
         gladier_tools = ["gladier.tests.test_data.gladier_mocks.MockTool"]
         flow_schema = {"foo": "bar"}
 
-    mc = MyClient()
+    mc = MyClient(login_manager=logged_in)
     mc.sync_flow()
     assert mc.flow_schema == mc.flows_manager.flow_schema

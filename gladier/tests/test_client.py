@@ -53,7 +53,7 @@ def test_pub_config_overrides_priv(logged_in, storage, mock_secrets_config):
 
 
 def test_run_flow(logged_in):
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     cli.run_flow()
 
 
@@ -63,7 +63,7 @@ def test_propagated_group_uuid(monkeypatch, logged_in):
 
         gladier_tools = ["gladier.tests.test_data.gladier_mocks.GeneratedTool"]
 
-    cli = MockGladierClientShared()
+    cli = MockGladierClientShared(login_manager=logged_in)
     monkeypatch.setattr(cli.compute_manager.compute_client, "register_function", Mock())
     cli.run_flow()
     cli.compute_manager.compute_client.register_function.assert_called_with(

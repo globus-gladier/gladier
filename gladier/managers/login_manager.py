@@ -1,17 +1,24 @@
 import logging
 import time
+import pathlib
 from typing import Callable, List, Set, Iterable, Union, Any, Mapping
+import typing as t
+from collections import defaultdict
 from typing_extensions import TypeAlias
 import abc
+import urllib
 
 import fair_research_login
+import globus_sdk
 from globus_sdk import (
     AccessTokenAuthorizer,
     RefreshTokenAuthorizer,
     ConfidentialAppAuthClient,
 )
+from globus_sdk.login_flows import CommandLineLoginFlowManager
 from gladier.exc import AuthException
 from gladier.storage.tokens import GladierSecretsConfig
+import globus_compute_sdk
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +84,8 @@ class BaseLoginManager(abc.ABC):
         Load any existing authorizers and return them to the client. A login *should not* be
         attempted. The Login Manager will determine if the scopes provided are sufficient, and
         automatically call login() they are not.
+
+        Must return a dict where keys are scope strings and values are globus authorizors
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} must implement .get_authorizers()"
@@ -256,3 +265,156 @@ class ConfidentialClientLoginManager(BaseLoginManager):
             )
             for scope, tdata in self.by_scopes(tokens).items()
         }
+
+
+class UserAppLoginManager(BaseLoginManager):
+    """
+    https://globus-sdk-python.readthedocs.io/en/stable/authorization/globus_app/apps.html#globus_sdk.UserApp
+
+    A native Globus SDK implementation of the login manager. Recommended for most users.
+    """
+
+    request_refresh_tokens = True
+
+    def __init__(
+        self,
+        client_id: str,
+        app_name: str = "Glaider App",
+        globus_auth_parameters: globus_sdk.gare.GlobusAuthorizationParameters = None,
+        storage: GladierSecretsConfig = None,
+    ):
+        super().__init__()
+        self.storage = storage
+        self.storage_namespace = "gladier_storage"
+        self.client_id = client_id
+        self.app_name = app_name
+        self.globus_auth_parameters = (
+            globus_auth_parameters or globus_sdk.gare.GlobusAuthorizationParameters()
+        )
+        self.token_storage = self.get_token_storage()
+        self.user_app = globus_sdk.UserApp(
+            self.app_name,
+            client_id=self.client_id,
+            config=globus_sdk.GlobusAppConfig(
+                request_refresh_tokens=self.request_refresh_tokens,
+                token_storage=self.token_storage,
+                token_validation_error_handler=self.get_token_validation_error_handler(),
+            ),
+        )
+
+    def get_filepath(self):
+        storage_filename = pathlib.Path(self.storage.filename)
+        return (
+            (storage_filename.parent / storage_filename.stem)
+            .with_suffix(".db")
+            .absolute()
+        )
+
+    def get_token_storage(self) -> globus_sdk.tokenstorage.TokenStorage:
+        """
+        Uses Gladier Secrets Config to derive the filenames and sections for the Globus App Token Storage configuraiton.
+        """
+        filepath = self.get_filepath()
+        ts = globus_sdk.tokenstorage.SQLiteTokenStorage(
+            filepath, namespace=self.storage_namespace
+        )
+        log.info(
+            f"Using Globus Token Storage: {filepath}, namespace: {self.storage_namespace}"
+        )
+        return ts
+
+    def get_token_validation_error_handler(self):
+        def token_validation_error_handler(app, error):
+            log.warning("Globus App login event!")
+            app.login(auth_params=self.globus_auth_parameters)
+
+        return token_validation_error_handler
+
+    def get_authorizers(
+        self,
+    ) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
+        """
+        Get Authorizers for Gladier, using the mechanisms within a Globus User App.
+        """
+        # This is a bit unfortunate. The Globus User App doesn't allow us to check what scopes
+        # we have saved to disk. We must ask token storage directly for those.
+        tokens_by_rs = self.token_storage.get_token_data_by_resource_server()
+        # Determine all scopes saved to disk
+        scopes = globus_sdk.scopes.scopes_to_scope_list(
+            t.scope for t in tokens_by_rs.values()
+        )
+        tokens_by_scope = {}
+        for scope in scopes:
+            for tdata in tokens_by_rs.values():
+                if str(scope) in tdata.scope.split():
+                    tokens_by_scope[str(scope)] = tdata
+
+        # Use the User App to load authorizers for all of the scopes we have. We let the user
+        # app do this to handle building the authorizer
+        auth_by_scope = {
+            str(scope): self.user_app.get_authorizer(tdata.resource_server)
+            for scope, tdata in tokens_by_scope.items()
+        }
+        return auth_by_scope
+
+    def login(self, scopes):
+        """
+        Integrates the Globus App login flow.
+        """
+        log.debug(f"User App Login with scopes: {scopes}")
+        # This is a bit unfortunate. add_scope_requirements() requires passing scopes
+        # by resource server, which we don't readily have available. That means we need
+        # to figure out which resource servers correspond to which scopes.
+        self.user_app.add_scope_requirements(self.scopes_by_resource_server(scopes))
+        self.user_app.login(auth_params=self.globus_auth_parameters)
+
+    def logout(self):
+        """
+        Initiate a Globus User App logout. Revokes and clears credentials on this user system.
+        """
+        self.user_app.logout()
+
+    def get_resource_server(self, scope):
+        """
+        Get the resource server for a given Globus Scope. Used internally to fetch resource
+        servers for Service Clients required by Gladier. Only supports fetching resource servers
+        for:
+            - Flows Client
+            - Auth Client
+            - Globus Compute Client
+            - Deployed Flows
+
+        raises: ValueError if the resource server for the scope cannot be determined.
+        """
+        services = (globus_sdk.FlowsClient, globus_sdk.AuthClient)
+        for service in services:
+            rses = [
+                getattr(service.scopes, name) for name in service.scopes.scope_names
+            ]
+            if scope in rses:
+                return service.resource_server
+
+        if scope == globus_compute_sdk.Client.FUNCX_SCOPE:
+            return "funcx_service"
+
+        rs, name = urllib.parse.urlparse(scope).path.lstrip("/scopes/").split("/")
+        if name.startswith("flow_"):
+            return rs
+
+        raise ValueError(f"Unable to find resource server for {scope}")
+
+    def scopes_by_resource_server(self, scopes: t.List[str]) -> t.Mapping[str, str]:
+        """
+        Determine the resource servers for each scope given and return a mapping of resource
+        servers to scopes. Used by the Globus App.
+        returns: A mapping of resource servers to scopes, such that:
+        {
+            "rs1": ["scope1"],
+            "rs2": ["scope2", "scope3"],
+        }
+        """
+        # Organize scopes by resource server.
+        by_rs = defaultdict(list)
+        for scope in scopes:
+            by_rs[self.get_resource_server(scope)] += [scope]
+        return by_rs
