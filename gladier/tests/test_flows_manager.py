@@ -198,7 +198,6 @@ def test_run_flow_run_kwargs_conflicting_args(
     fm.run_flow()
     assert mock_specific_flow_client.run_flow.called
     assert mock_specific_flow_client.run_flow.called_with(run_managers=bob_id)
-    assert False
 
 
 def test_run_flow_redeploy_on_404(

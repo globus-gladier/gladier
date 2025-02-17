@@ -59,6 +59,12 @@ class FlowsManager(ServiceManager):
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
     :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results
                             in 404. Behavior is disabled if an explicit flow_id is specified.
+    :param flow_kwargs: Any additional arguments passed to ``flows_client.create_flow`` or
+        ``flows_client.update_flow``. Supersedes any Gladier defaults, and will raise a warning
+        if any exist. For example, passing ``globus_group`` to this class and ``flow_administrators``
+        as a ``flow_kwargs`` will only result in the ``flows_kwargs`` arguments taking effect.
+    :param run_kwargs: Deploy a new flow if attempting to run the current flow ID results
+                            in 404. Behavior is disabled if an explicit flow_id is specified.
 
     When used with a Gladier Client, following items will be auto-configured and should not be
     set explicitly in the constructor:
