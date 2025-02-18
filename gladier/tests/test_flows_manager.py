@@ -182,7 +182,7 @@ def test_run_flow_run_kwargs(auto_login, storage, mock_specific_flow_client):
     )
     fm.run_flow()
     assert mock_specific_flow_client.run_flow.called
-    assert mock_specific_flow_client.run_flow.called_with(foo="bar")
+    mock_specific_flow_client.run_flow.assert_called_with(foo="bar")
 
 
 def test_run_flow_run_kwargs_conflicting_args(
@@ -193,11 +193,13 @@ def test_run_flow_run_kwargs_conflicting_args(
         flow_id="foo",
         login_manager=auto_login,
         globus_group="mygroup",
-        run_kwargs={"run_managers": bob_id},
+        run_kwargs={"run_managers": [bob_id]},
     )
     fm.run_flow()
     assert mock_specific_flow_client.run_flow.called
-    assert mock_specific_flow_client.run_flow.called_with(run_managers=bob_id)
+    mock_specific_flow_client.run_flow.assert_called_with(
+        run_managers=[bob_id], run_monitors=["urn:globus:groups:id:mygroup"]
+    )
 
 
 def test_run_flow_redeploy_on_404(
