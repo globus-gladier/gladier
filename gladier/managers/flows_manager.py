@@ -2,6 +2,7 @@ import hashlib
 import json
 import time
 import logging
+import copy
 import warnings
 import typing as t
 
@@ -58,6 +59,12 @@ class FlowsManager(ServiceManager):
                       flow, ``None`` takes no action and attempts to run "obselete" flows.
     :param redeploy_on_404: Deploy a new flow if attempting to run the current flow ID results
                             in 404. Behavior is disabled if an explicit flow_id is specified.
+    :param flow_kwargs: Any additional arguments passed to ``flows_client.create_flow`` or
+        ``flows_client.update_flow``. Supersedes any Gladier defaults, and will raise a warning
+        if any exist. For example, passing ``globus_group`` to this class and ``flow_administrators``
+        as a ``flow_kwargs`` will only result in the ``flows_kwargs`` arguments taking effect.
+    :param run_kwargs: Deploy a new flow if attempting to run the current flow ID results
+                            in 404. Behavior is disabled if an explicit flow_id is specified.
 
     When used with a Gladier Client, following items will be auto-configured and should not be
     set explicitly in the constructor:
@@ -90,6 +97,8 @@ class FlowsManager(ServiceManager):
         globus_group: t.Optional[str] = None,
         on_change: t.Optional[t.Callable] = ensure_flow_registered,
         redeploy_on_404: bool = True,
+        flow_kwargs: dict = None,
+        run_kwargs: dict = None,
         **kwargs,
     ):
         self.flow_id = flow_id
@@ -100,6 +109,9 @@ class FlowsManager(ServiceManager):
         self.globus_group = globus_group
         self.on_change = on_change or (lambda self, exc: None)
         self.redeploy_on_404 = redeploy_on_404
+
+        self.flow_kwargs = flow_kwargs or dict()
+        self.run_kwargs = run_kwargs or dict()
 
         if self.flow_id is not None:
             self.redeploy_on_404 = False
@@ -177,6 +189,17 @@ class FlowsManager(ServiceManager):
         )
         return self._specific_flow_client
 
+    def _combine_kw_args(self, kwargs_1: dict, kwargs_2: dict, name: str = None):
+        common_args = set(kwargs_1).intersection(set(kwargs_2))
+        if common_args:
+            ov1, ov2 = {k: kwargs_1[k] for k in common_args}, {
+                k: kwargs_2[k] for k in common_args
+            }
+            log.warning(f"{name} args {ov1} overwritten by explicit args: {ov2}")
+        rv_kwargs = copy.deepcopy(kwargs_1)
+        rv_kwargs.update(kwargs_2)
+        return rv_kwargs
+
     def refresh_specific_flow_client(self) -> globus_sdk.SpecificFlowClient:
         """
         Destroy the current flows client and return a new one with updated authorizers. This is
@@ -187,7 +210,9 @@ class FlowsManager(ServiceManager):
         return self.specific_flow_client
 
     @staticmethod
-    def get_flow_checksum(flow_definition, flow_schema):
+    def get_flow_checksum(
+        flow_definition: dict, flow_schema: dict, flow_kwargs: dict = None
+    ):
         """
         Get the SHA256 checksum of the current flow definition.
 
@@ -196,7 +221,8 @@ class FlowsManager(ServiceManager):
 
         flow_def = json.dumps(flow_definition, sort_keys=True)
         flow_schema = json.dumps(flow_schema, sort_keys=True)
-        data = (flow_def + flow_schema).encode()
+        flow_kwargs = json.dumps(flow_kwargs or dict(), sort_keys=True)
+        data = (flow_def + flow_schema + flow_kwargs).encode()
         return hashlib.sha256(data).hexdigest()
 
     @staticmethod
@@ -280,7 +306,9 @@ class FlowsManager(ServiceManager):
             log.info(message)
             raise gladier.exc.NoFlowRegistered(message)
         elif flow_checksum != self.get_flow_checksum(
-            self.flow_definition, self.flow_schema
+            self.flow_definition,
+            self.flow_schema,
+            self.flow_kwargs,
         ):
             message = f'"flow_definition" on {self} has changed and needs to be re-registered.'
             log.info(message)
@@ -331,6 +359,7 @@ class FlowsManager(ServiceManager):
         # This should change eventually, but right now cannot be supplied or it will raise errors
         # It is added only on CREATE for now.
         # flow_kwargs["subscription_id"] = self.subscription_id
+        flow_args = self._combine_kw_args(flow_kwargs, self.flow_kwargs, name="Flow")
         if flow_id:
             try:
                 log.info(f"Flow checksum failed, updating flow {flow_id}...")
@@ -342,7 +371,9 @@ class FlowsManager(ServiceManager):
                 )
                 self.storage.set_value(
                     "flow_checksum",
-                    self.get_flow_checksum(self.flow_definition, self.flow_schema),
+                    self.get_flow_checksum(
+                        self.flow_definition, self.flow_schema, self.flow_kwargs
+                    ),
                 )
             except globus_sdk.exc.GlobusAPIError as gapie:
                 if gapie.http_status == 404 and self.redeploy_on_404:
@@ -388,6 +419,7 @@ class FlowsManager(ServiceManager):
             label = kwargs["label"]
             kwargs["label"] = (label[:62] + "..") if len(label) > 64 else label
 
+        kwargs = self._combine_kw_args(kwargs, self.run_kwargs, name="Run")
         try:
             flow = self.specific_flow_client.run_flow(**kwargs).data
         except globus_sdk.exc.GlobusAPIError as gapie:

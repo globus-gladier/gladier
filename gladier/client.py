@@ -112,6 +112,8 @@ class GladierBaseClient(object):
     subscription_id: t.Optional[str] = None
     globus_group: t.Optional[str] = None
     alias_class = gladier.utils.tool_alias.StateSuffixVariablePrefix
+    flow_kwargs = None
+    run_kwargs = None
 
     def __init__(
         self,
