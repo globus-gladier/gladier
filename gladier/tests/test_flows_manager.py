@@ -164,6 +164,46 @@ def test_schema_changed(auto_login, storage):
     assert fm.flow_changed() is True
 
 
+def test_flow_kwargs_changed(auto_login, storage):
+    fm = FlowsManager(
+        flow_id="foo", login_manager=auto_login, flow_definition={"foo": "bar"}
+    )
+    fm.storage = storage
+    fm.sync_flow()
+    assert fm.flow_changed() is False
+    fm.flow_kwargs = {"flow_managers": "foo@globus.org"}
+    assert fm.flow_changed() is True
+
+
+def test_run_flow_run_kwargs(auto_login, storage, mock_specific_flow_client):
+    fm = FlowsManager(
+        flow_id="foo",
+        login_manager=auto_login,
+        flow_definition={"foo": "bar"},
+        run_kwargs={"foo": "bar"},
+    )
+    fm.run_flow()
+    assert mock_specific_flow_client.run_flow.called
+    mock_specific_flow_client.run_flow.assert_called_with(foo="bar")
+
+
+def test_run_flow_run_kwargs_conflicting_args(
+    auto_login, storage, mock_specific_flow_client
+):
+    bob_id = "urn:globus:auth:identity:bob@globus.org"
+    fm = FlowsManager(
+        flow_id="foo",
+        login_manager=auto_login,
+        globus_group="mygroup",
+        run_kwargs={"run_managers": [bob_id]},
+    )
+    fm.run_flow()
+    assert mock_specific_flow_client.run_flow.called
+    mock_specific_flow_client.run_flow.assert_called_with(
+        run_managers=[bob_id], run_monitors=["urn:globus:groups:id:mygroup"]
+    )
+
+
 def test_run_flow_redeploy_on_404(
     auto_login,
     storage,
