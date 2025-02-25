@@ -38,7 +38,7 @@ def test_bad_flow_permission():
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="py37 missing key test feature")
 def test_run_flow_with_label(logged_in, mock_specific_flow_client):
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     cli.run_flow(label="my flow")
     # Python 3.7 doesn't support checking kwargs this way. Skip it.
     assert mock_specific_flow_client.run_flow.call_args.kwargs["label"] == "my flow"
@@ -46,7 +46,7 @@ def test_run_flow_with_label(logged_in, mock_specific_flow_client):
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="py37 missing key test feature")
 def test_run_flow_with_long_label(logged_in, mock_specific_flow_client):
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     my_label = "fl" + "o" * 63
     expected_label = "fl" + "o" * 60 + ".."
     assert len(my_label) == 65
@@ -67,13 +67,15 @@ def test_exception_on_immediate_flow_failure(
         "details": {"description": "something bad happened"},
     }
     mock_specific_flow_client.run_flow.return_value = globus_response
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     with pytest.raises(ConfigException):
         cli.run_flow()
 
 
 def test_custom_scope_id(logged_out):
-    cli = MockGladierClient(flows_manager=FlowsManager(flow_id="foo"))
+    cli = MockGladierClient(
+        flows_manager=FlowsManager(flow_id="foo"), login_manager=logged_out
+    )
     scope = "https://auth.globus.org/scopes/foo/flow_foo_user"
     assert scope in cli.login_manager.missing_authorizers
 
@@ -121,7 +123,7 @@ def test_dependent_scope_change_run_flow(
 
 
 def test_dependent_scope_change_no_login(logged_in, mock_flows_client, monkeypatch):
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
     cli.login_manager.login = Mock()
     cli.login_manager.add_scope_change(["foo"])
 
@@ -134,7 +136,7 @@ def test_gladier_raises_globus_errors(
     logged_in, mock_specific_flow_client, mock_globus_api_error, monkeypatch
 ):
     mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
-    cli = MockGladierClient()
+    cli = MockGladierClient(login_manager=logged_in)
 
     with pytest.raises(mock_globus_api_error):
         cli.run_flow()
