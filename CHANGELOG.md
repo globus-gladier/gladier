@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.9.5](https://github.com/globus-gladier/gladier/compare/v0.9.4...v0.9.5) (2025-03-04)
+
+
+### Features
+
+* Allow passing extended flow and run kw args ([5de96ce](https://github.com/globus-gladier/gladier/commit/5de96ce61e8086283a2bb5a777679f4163b60958))
+* Support a Globus Apps Login manager ([9acf250](https://github.com/globus-gladier/gladier/commit/9acf250e3d98d4ffc5f44d32a93024e05e6bc4e5))
+
 ### [0.9.4](https://github.com/globus-gladier/gladier/compare/v0.9.3...v0.9.4) (2024-05-15)
 
 
