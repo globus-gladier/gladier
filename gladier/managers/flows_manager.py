@@ -359,7 +359,9 @@ class FlowsManager(ServiceManager):
         # This should change eventually, but right now cannot be supplied or it will raise errors
         # It is added only on CREATE for now.
         # flow_kwargs["subscription_id"] = self.subscription_id
-        flow_args = self._combine_kw_args(flow_kwargs, self.flow_kwargs, name="Flow")
+        combine_flow_kwargs = self._combine_kw_args(
+            flow_kwargs, self.flow_kwargs, name="Flow"
+        )
         if flow_id:
             try:
                 log.info(f"Flow checksum failed, updating flow {flow_id}...")
@@ -367,7 +369,7 @@ class FlowsManager(ServiceManager):
                     flow_id,
                     title=self.flow_title,
                     definition=self.flow_definition,
-                    **flow_kwargs,
+                    **combine_flow_kwargs,
                 )
                 self.storage.set_value(
                     "flow_checksum",
@@ -384,7 +386,7 @@ class FlowsManager(ServiceManager):
             log.info("No flow detected, deploying new flow...")
             flow_kwargs["subscription_id"] = self.subscription_id
             flow = self.flows_client.create_flow(
-                self.flow_title, self.flow_definition, **flow_kwargs
+                self.flow_title, self.flow_definition, **combine_flow_kwargs
             ).data
             log.debug(f'Flow deployed with id {flow["id"]}')
             self.storage.set_value("flow_id", flow["id"])
