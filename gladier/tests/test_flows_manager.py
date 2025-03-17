@@ -316,3 +316,42 @@ def test_get_details(
     mock_flows_client.get_run.return_value = globus_response
     response = fm.get_details("run_id", "ShellCmd")
     assert "Hello Custom Storage!" in response["details"]["result"][0][1]
+
+
+def test_flow_manager_flow_permissions(
+    auto_login, mock_flows_client, globus_response, storage
+):
+    # Test adding flow_kwargs to the FlowsManager
+    fm = FlowsManager(
+        flow_id="foo",
+        login_manager=auto_login,
+        flow_kwargs={
+            "flow_viewers": ["urn:globus:groups:id:mock-user"],
+        },
+    )
+    fm.storage = storage
+    fm.sync_flow()
+    assert mock_flows_client.update_flow.called
+    assert mock_flows_client.update_flow.call_args.kwargs["flow_viewers"] == [
+        "urn:globus:groups:id:mock-user"
+    ]
+
+
+def test_flow_manager_run_permissions(
+    auto_login, mock_flows_client, globus_response, storage, mock_specific_flow_client
+):
+    # Test adding run_kwargs to the FlowsManager
+    fm = FlowsManager(
+        flow_id="foo",
+        login_manager=auto_login,
+        run_kwargs={
+            "run_managers": ["urn:globus:auth:identity:mock-user"],
+        },
+    )
+    fm.storage = storage
+    fm.sync_flow()
+    fm.run_flow()
+    assert mock_specific_flow_client.run_flow.called
+    assert mock_specific_flow_client.run_flow.call_args.kwargs["run_managers"] == [
+        "urn:globus:auth:identity:mock-user"
+    ]
