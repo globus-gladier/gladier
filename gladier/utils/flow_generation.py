@@ -8,6 +8,7 @@ from gladier.utils.name_generation import (
     get_compute_flow_state_name,
     get_compute_function_name,
 )
+from gladier.flow_builder.registry import FlowBuilderRegistry
 from gladier.utils.tool_chain import ToolChain
 
 
@@ -45,10 +46,19 @@ def _fix_old_tools(tool):
         setattr(tool, "compute_functions", funcx_functions)
 
 
-def generate_tool_flow(tool: GladierBaseTool, modifiers):
+def generate_tool_flow(tool: GladierBaseTool, modifiers) -> dict:
     """Generate a flow definition for a Gladier Tool based on the defined ``compute_functions``.
-    Accepts modifiers for compute functions"""
+    Accepts modifiers for compute functions.
+
+    Returns a complete flow definition for a given tool."""
     _fix_old_tools(tool)
+
+    if not tool.compute_functions:
+        raise FlowGenException(
+            "Tool has no compute functions. Add a list of python functions "
+            f'as "{tool}.compute_functions = [myfunction]" or set a custom flow '
+            f"definition instead using `{tool}.flow_definition = mydef`"
+        )
 
     duplicate_functions = _get_duplicate_functions(tool.compute_functions)
     if duplicate_functions:
@@ -56,39 +66,8 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers):
             f"Tool {tool} contains duplicate function names: " f"{duplicate_functions}"
         )
 
-    flow_moder = FlowModifiers([tool], modifiers, cls=tool)
-
-    tools = ToolChain()
-    for fx_func in tool.compute_functions:
-        tools.chain_state(*generate_compute_flow_state(fx_func))
-
-    flow = tools.flow_definition
-    if not flow["States"]:
-        raise FlowGenException(
-            f"Tool {tool} has no flow states. Add a list of python functions "
-            f'as "{tool}.compute_functions = [myfunction]" or set a custom flow '
-            f"definition instead using `{tool}.flow_definition = mydef`"
-        )
-    return flow_moder.apply_modifiers(flow)
-
-
-def generate_compute_flow_state(compute_function):
-    state_name = get_compute_flow_state_name(compute_function)
-
-    return state_name, {
-        "Comment": compute_function.__doc__,
-        "Type": "Action",
-        "ActionUrl": "https://compute.actions.globus.org",
-        "ExceptionOnActionFailure": False,
-        "Parameters": {
-            "tasks": [
-                {
-                    "endpoint.$": "$.input.compute_endpoint",
-                    "function.$": f"$.input.{get_compute_function_name(compute_function)}",
-                    "payload.$": "$.input",
-                }
-            ]
-        },
-        "ResultPath": f"$.{state_name}",
-        "WaitTime": 300,
-    }
+    registry = FlowBuilderRegistry()
+    state_cls = registry.get_state_cls_by_tool(
+        tool, action_url=modifiers.get("ActionUrl")
+    )
+    return state_cls(tool, modifiers).get_flow_definition()
