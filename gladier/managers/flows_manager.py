@@ -63,8 +63,8 @@ class FlowsManager(ServiceManager):
         ``flows_client.update_flow``. Supersedes any Gladier defaults, and will raise a warning
         if any exist. For example, passing ``globus_group`` to this class and ``flow_administrators``
         as a ``flow_kwargs`` will only result in the ``flows_kwargs`` arguments taking effect.
-    :param run_kwargs: Deploy a new flow if attempting to run the current flow ID results
-                            in 404. Behavior is disabled if an explicit flow_id is specified.
+    :param run_kwargs: Additional kwargs to pass in when starting the flow. Only arguments supported
+        by the ``sfc.run_flow()`` method are allowed. See the globus_sdk docs for more info.
 
     When used with a Gladier Client, following items will be auto-configured and should not be
     set explicitly in the constructor:
