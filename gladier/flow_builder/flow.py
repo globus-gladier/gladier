@@ -34,9 +34,8 @@ class FlowBuilder:
         "End",
     }
 
-    def __init__(self, tool, modifiers=None):
+    def __init__(self, tool):
         self.tool = tool
-        self.modifiers = modifiers or dict()
 
     def get_state_definition(self) -> dict:
         return {
@@ -59,6 +58,15 @@ class FlowBuilder:
         }
         return flow
 
+    def apply_modifiers(self, modifiers, flow, strict: bool = True):
+        self.check_modifiers(modifiers)
+        for name, mods in modifiers.items():
+            state_name = self.get_flow_state_name(name)
+            flow["States"][state_name] = self.apply_modifier(
+                flow["States"][state_name], mods, flow
+            )
+        return flow
+
     def get_flow_state_name(self, state=None):
         return state or self.tool.__class__.__name__
 
@@ -66,38 +74,48 @@ class FlowBuilder:
         state = state or self.get_flow_state_name()
         return f"$.{state}.details.results"
 
-    def check_modifiers(self):
-        log.debug(f"Checking modifiers: {self.modifiers}")
-        if not isinstance(self.modifiers, dict):
+    def get_function(self, name):
+        for f in self.tool.compute_functions:
+            if callable(name):
+                fname = name.__name__
+            else:
+                fname = name
+            if fname == f.__name__:
+                return f
+
+    def get_valid_modifier_names(self):
+        return self.VALID_STATE_MODIFIERS
+
+    def check_modifiers(self, modifiers):
+        log.debug(f"Checking modifiers: {modifiers}")
+        if not isinstance(modifiers, dict):
             raise FlowModifierException(f"{self.cls}: Flow Modifiers must be a dict")
 
-        legacy_funcs = [
-            func for tool in self.tools for func in getattr(tool, "funcx_functions", [])
-        ]
+        legacy_funcs = getattr(self.tool, "funcx_functions", [])
         legacy_func_names = [f.__name__ for f in legacy_funcs]
 
         # Check if modifiers were set correctly
-        for name, mods in self.modifiers.items():
+        for name, mods in modifiers.items():
             if name in legacy_func_names:
                 raise FlowModifierException(
-                    f"Class {self.cls} is a Legacy Gladier tool pre-v0.9.0. Please use a modern "
+                    f"Class {self.tool} is a Legacy Gladier tool pre-v0.9.0. Please use a modern "
                     "version or follow the migration guide here to make it compatible: \n\n"
                     "\thttps://gladier.readthedocs.io/en/latest/migration.html\n"
                 )
 
             if not self.get_function(name):
                 raise FlowModifierException(
-                    f"Class {self.cls} included modifier which does not "
+                    f"Class {self.tool} included modifier which does not "
                     f"exist: {name}. Allowed modifiers include "
-                    f'{", ".join(self.function_names)}'
+                    f'{", ".join([f.__name__ for f in self.tool.compute_functions])}'
                 )
 
             for mod_name, mod_value in mods.items():
-                if mod_name not in self.VALID_STATE_MODIFIERS:
+                if mod_name not in self.get_valid_modifier_names():
                     raise FlowModifierException(
-                        f"Class {self.cls}: Unsupported modifier "
+                        f"Class {self.tool}: Unsupported modifier "
                         f'"{mod_name}". The only supported modifiers are: '
-                        f"{self.VALID_STATE_MODIFIERS}"
+                        f"{self.get_valid_modifier_names()}"
                     )
 
     def generic_set_modifier(

@@ -3,7 +3,6 @@ import typing
 from gladier.base import GladierBaseTool
 from gladier.client import GladierBaseClient
 from gladier.exc import FlowGenException
-from gladier.utils.flow_modifiers import FlowModifiers
 from gladier.utils.name_generation import (
     get_compute_flow_state_name,
     get_compute_function_name,
@@ -22,9 +21,19 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
 
     Modifiers can be applied to any of the states within the flow.
     """
-    flow_moder = FlowModifiers(client.tools, modifiers, cls=client)
-    chain = ToolChain(flow_comment=client.__doc__).chain(client.tools)
-    return flow_moder.apply_modifiers(chain.flow_definition)
+    tool_chain = ToolChain(flow_comment=client.__doc__).chain(client.tools)
+    flow_definition = tool_chain.flow_definition
+
+    registry = FlowBuilderRegistry()
+    for tool in client.tools:
+        flow_builder_cls = registry.get_flow_builder_cls_by_tool(
+            tool, action_url=modifiers.get("ActionUrl")
+        )
+        flow_builder = flow_builder_cls(tool)
+        flow_definition = flow_builder.apply_modifiers(
+            modifiers, flow_definition, strict=True
+        )
+    return flow_definition
 
 
 def _get_duplicate_functions(compute_functions: typing.List[callable]):
@@ -67,7 +76,10 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers) -> dict:
         )
 
     registry = FlowBuilderRegistry()
-    state_cls = registry.get_state_cls_by_tool(
+    flow_builder_cls = registry.get_flow_builder_cls_by_tool(
         tool, action_url=modifiers.get("ActionUrl")
     )
-    return state_cls(tool, modifiers).get_flow_definition()
+    flow_builder = flow_builder_cls(tool)
+    flow_definition = flow_builder.get_flow_definition()
+    flow_builder.apply_modifiers(modifiers, flow_definition, strict=True)
+    return flow_definition

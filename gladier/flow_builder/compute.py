@@ -14,6 +14,10 @@ class ComputeFlowBuilderv2(FlowBuilder):
 
     VALID_COMPUTE_MODIFIERS = {"endpoint", "payload", "tasks"}
 
+    def get_valid_modifier_names(self):
+        mods = super().get_valid_modifier_names()
+        return mods.union(self.VALID_COMPUTE_MODIFIERS)
+
     def generic_set_modifier(
         self, item, mod_name, mod_value, flow_definition_reference: dict
     ):
@@ -73,7 +77,6 @@ class ComputeFlowBuilderv2(FlowBuilder):
             "States": states,
             "Comment": f"Flow with states: {', '.join(states.keys())}",
         }
-        flow = self.apply_modifiers(flow)
         return flow
 
     def get_flow_state_name(self, state):
@@ -83,16 +86,6 @@ class ComputeFlowBuilderv2(FlowBuilder):
             name = state
 
         return get_upper_camel_case(name)
-
-    def apply_modifiers(self, flow):
-        for name, mods in self.modifiers.items():
-            log.debug(name)
-            state_name = self.get_flow_state_name(name)
-            log.debug(state_name)
-            flow["States"][state_name] = self.apply_modifier(
-                flow["States"][state_name], mods, flow
-            )
-        return flow
 
     def apply_modifier(
         self, flow_state: str, state_modifiers: dict, flow_definition_reference: dict

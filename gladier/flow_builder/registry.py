@@ -1,5 +1,5 @@
 from .flow import FlowBuilder
-from .compute import ComputeFlowBuilderv2, ComputeFlowBuilderv3
+from gladier.flow_builder.compute import ComputeFlowBuilderv2, ComputeFlowBuilderv3
 from gladier.base import GladierBaseTool
 
 
@@ -20,11 +20,13 @@ class FlowBuilderRegistry:
         ComputeFlowBuilderv3,
     ]
 
-    def get_state_cls_by_tool(
+    def get_flow_builder_cls_by_tool(
         self, tool: GladierBaseTool = None, action_url: str = None
-    ):
+    ) -> FlowBuilder:
         if tool:
-            if tool.compute_functions:
+            if getattr(tool, "compute_functions", None) or getattr(
+                tool, "funcx_functions", None
+            ):
                 return ComputeFlowBuilderv2
             else:
                 return FlowBuilder
