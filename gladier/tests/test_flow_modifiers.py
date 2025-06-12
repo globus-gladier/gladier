@@ -1,6 +1,6 @@
 import pytest
 from gladier.base import GladierBaseTool
-from gladier.utils.flow_modifiers import FlowModifiers
+from gladier.flow_builder.compute import ComputeFlowBuilderv2
 from gladier.exc import FlowGenException
 
 
@@ -22,15 +22,19 @@ def test_basic_modifiers():
             "payload": mock_func,
         }
     }
-    fm = FlowModifiers([MyTool()], mods)
-    assert len(fm.functions) == 2
-    assert len(fm.function_names) == 2
-    assert len(fm.state_names) == 2
+    builder = ComputeFlowBuilderv2(MyTool())
+    fd = builder.apply_modifiers(mods, builder.get_flow_definition())
+    assert len(fd["States"]) == 2
+    assert (
+        fd["States"]["MockFunc2"]["Parameters"]["tasks"][0]["payload.$"]
+        == "$.MockFunc.details.results"
+    )
 
 
 def test_invalid_modifiers():
+    builder = ComputeFlowBuilderv2(MyTool())
     with pytest.raises(FlowGenException):
-        FlowModifiers([MyTool()], [])
+        builder.apply_modifiers([], builder.get_flow_definition())
 
 
 def test_missing_modifiers():
@@ -39,8 +43,9 @@ def test_missing_modifiers():
             "payload": mock_func,
         }
     }
+    builder = ComputeFlowBuilderv2(MyTool())
     with pytest.raises(FlowGenException):
-        FlowModifiers([MyTool()], mods)
+        builder.apply_modifiers(mods, builder.get_flow_definition())
 
 
 def test_unsupported_modifiers():
@@ -49,19 +54,24 @@ def test_unsupported_modifiers():
             "plumbus": mock_func,
         }
     }
+    builder = ComputeFlowBuilderv2(MyTool())
     with pytest.raises(FlowGenException):
-        FlowModifiers([MyTool()], mods)
+        builder.apply_modifiers(mods, builder.get_flow_definition())
 
 
 def test_duplicated_tools():
-    fm = FlowModifiers([MyTool(), MyTool()], {"mock_func2": {"payload": "mock_func"}})
-    new_flow = fm.apply_modifiers(
-        {
-            "States": {
-                "MockFunc": {"Parameters": {"tasks": [{"payload": "foo"}]}},
-                "MockFunc2": {"Parameters": {"tasks": [{"payload": "bar"}]}},
-            }
+    builder = ComputeFlowBuilderv2(MyTool())
+
+    mods = {"mock_func2": {"payload": "mock_func"}}
+    flow_definition = {
+        "States": {
+            "MockFunc": {"Parameters": {"tasks": [{"payload": "foo"}]}},
+            "MockFunc2": {"Parameters": {"tasks": [{"payload": "bar"}]}},
         }
-    )
-    mock2_pl = new_flow["States"]["MockFunc2"]["Parameters"]["tasks"][0]["payload.$"]
+    }
+
+    builder.apply_modifiers(mods, flow_definition)
+    mock2_pl = flow_definition["States"]["MockFunc2"]["Parameters"]["tasks"][0][
+        "payload.$"
+    ]
     assert mock2_pl == "$.MockFunc.details.results"

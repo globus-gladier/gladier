@@ -89,7 +89,7 @@ class FlowBuilder:
     def check_modifiers(self, modifiers):
         log.debug(f"Checking modifiers: {modifiers}")
         if not isinstance(modifiers, dict):
-            raise FlowModifierException(f"{self.cls}: Flow Modifiers must be a dict")
+            raise FlowModifierException(f"{self.tool}: Flow Modifiers must be a dict")
 
         legacy_funcs = getattr(self.tool, "funcx_functions", [])
         legacy_func_names = [f.__name__ for f in legacy_funcs]
