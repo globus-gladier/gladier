@@ -115,8 +115,43 @@ class ComputeFlowBuilderv2(FlowBuilder):
         return flow_state
 
 
-class ComputeFlowBuilderv3(FlowBuilder):
-    def generate_compute_flow_state(compute_function):
+class ComputeFlowBuilderv3(ComputeFlowBuilderv2):
+    """
+
+    https://globus-compute.readthedocs.io/en/latest/actionprovider.html
+    """
+
+    VALID_COMPUTE_MODIFIERS = {
+        "endpoint_id",
+        "tasks",
+        "task_group_id",
+        "user_endpoint_config",
+        "resource_specification",
+        "create_queue",
+    }
+
+    def apply_modifier(
+        self, flow_state: str, state_modifiers: dict, flow_definition_reference: dict
+    ):
+        for modifier_name, value in state_modifiers.items():
+            log.debug(
+                f'Applying modifier "{modifier_name}" on v3 compute state, value "{value}"'
+            )
+            # If this is for a compute task
+            if modifier_name in self.VALID_COMPUTE_MODIFIERS:
+                flow_state["Parameters"] = self.generic_set_modifier(
+                    flow_state["Parameters"],
+                    modifier_name,
+                    value,
+                    flow_definition_reference,
+                )
+            elif modifier_name in self.VALID_STATE_MODIFIERS:
+                self.generic_set_modifier(
+                    flow_state, modifier_name, value, flow_definition_reference
+                )
+        return flow_state
+
+    def generate_compute_flow_state(self, compute_function):
         state_name = get_compute_flow_state_name(compute_function)
 
         return state_name, {

@@ -27,6 +27,12 @@ class FlowBuilderRegistry:
             if getattr(tool, "compute_functions", None) or getattr(
                 tool, "funcx_functions", None
             ):
-                return ComputeFlowBuilderv2
-            else:
-                return FlowBuilder
+                if (
+                    getattr(tool, "action_url", None)
+                    == "https://compute.actions.globus.org/v3"
+                ):
+                    return ComputeFlowBuilderv3
+                else:
+                    return ComputeFlowBuilderv2
+
+        return FlowBuilder

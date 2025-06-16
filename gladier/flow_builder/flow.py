@@ -49,14 +49,9 @@ class FlowBuilder:
         }
 
     def get_flow_definition(self) -> dict:
-        name = self.get_flow_state_name()
-        flow = {
-            "StartAt": name,
-            "States": {
-                name: self.get_state_definition(),
-            },
-        }
-        return flow
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must be overridden to build flow definitions"
+        )
 
     def apply_modifiers(self, modifiers, flow, strict: bool = True):
         self.check_modifiers(modifiers)
