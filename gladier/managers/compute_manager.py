@@ -2,10 +2,13 @@ import hashlib
 import logging
 from packaging.version import parse as parse_version
 
-import gladier.managers.compute_login_manager
+import globus_sdk
+import gladier
 from gladier.base import GladierBaseTool
 from gladier.managers.service_manager import ServiceManager
 from globus_compute_sdk import Client, serialize, version as compute_sdk_version
+from globus_compute_sdk.sdk.login_manager import AuthorizerLoginManager
+from globus_compute_sdk.sdk.login_manager.manager import ComputeScopeBuilder
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +20,10 @@ class ComputeManager(ServiceManager):
         self.group = group
 
     def get_scopes(self):
-        return gladier.managers.compute_login_manager.ComputeLoginManager.SCOPES
+        return [
+            globus_sdk.scopes.ComputeScopes.all,
+            globus_sdk.AuthClient.scopes.openid,
+        ]
 
     @property
     def compute_client(self):
@@ -27,11 +33,24 @@ class ComputeManager(ServiceManager):
         if getattr(self, "__compute_client", None) is not None:
             return self.__compute_client
 
-        compute_login_manager = (
-            gladier.managers.compute_login_manager.ComputeLoginManager(
-                authorizers=self.login_manager.get_manager_authorizers()
-            )
+        authorizers = self.login_manager.get_manager_authorizers()
+        compute_login_manager = AuthorizerLoginManager(
+            authorizers={
+                globus_sdk.scopes.ComputeScopes.resource_server: authorizers.get(
+                    globus_sdk.ComputeScopes.all
+                ),
+                globus_sdk.AuthScopes.resource_server: authorizers.get(
+                    globus_sdk.AuthClient.scopes.openid
+                ),
+            }
         )
+        try:
+            compute_login_manager.ensure_logged_in()
+        except Exception as e:
+            log.critical(
+                "Gladier failed to properly configure the compute scopes! This is definitely a bug. It would help a lot if you could file a bug report for us <3"
+            )
+            raise
 
         self.__compute_client = Client(
             code_serialization_strategy=self.get_serialization_strategy(),
