@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.0b1](https://github.com/globus-gladier/gladier/compare/v0.9.6...v0.10.0b1) (2025-08-21)
+
+
+### Features
+
+* Add compute AP v3 support to Globus Tools ([3cc9419](https://github.com/globus-gladier/gladier/commit/3cc94196d0b61842b0a51dd54b511b9fffa5806f))
+
 ### [0.9.6](https://github.com/globus-gladier/gladier/compare/v0.9.5...v0.9.6) (2025-03-14)
 
 
