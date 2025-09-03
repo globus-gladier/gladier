@@ -102,10 +102,13 @@ def test_unexpected_400_run_flow_without_json(
 def test_dependent_scope_change_run_flow(
     auto_login,
     mock_specific_flow_client,
-    mock_dependent_token_change_error,
+    mock_globus_api_error,
     monkeypatch,
 ):
-    mock_specific_flow_client.run_flow.side_effect = mock_dependent_token_change_error
+    mock_globus_api_error.http_status = 403
+    mock_globus_api_error.code = "MISSING_SCOPE"
+
+    mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
     fm = FlowsManager(flow_id="foo", login_manager=auto_login)
     # Ensure scopes are set, then disable auto_login behavior
     auto_login.get_manager_authorizers()

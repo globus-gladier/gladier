@@ -192,22 +192,6 @@ def mock_globus_api_error(monkeypatch):
 
 
 @pytest.fixture
-def mock_dependent_token_change_error(mock_globus_api_error):
-    # Dependent token change error happens when APs are added to a flow.
-    automate_message = json.dumps(
-        {
-            "error": {
-                "code": "FLOW_INPUT_ERROR",
-                "detail": "For RunAs value User, unable to get tokens for scopes "
-                "{'https://auth.globus.org/scopes/actions.globus.org/transfer/transfer'}",
-            }
-        }
-    )
-    mock_globus_api_error.text = automate_message
-    return mock_globus_api_error
-
-
-@pytest.fixture
 def mock_flow_status_active():
     return {
         "action_id": "c1171657-704c-4537-896f-fcd5bad9062e",

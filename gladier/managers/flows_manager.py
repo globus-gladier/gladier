@@ -439,24 +439,14 @@ class FlowsManager(ServiceManager):
                 self.refresh_specific_flow_client()
                 # Run the flow
                 flow = self.specific_flow_client.run_flow(**kwargs).data
-            elif gapie.http_status == 400:
-                # Typically, 400s with strange text error messages are due to dependent scopes
-                # changing on the flow between runs, eg add a new Transfer AP and now it needs
-                # a tranfer scope, which the previous access token didn't have. Attempt to pick
-                # the dependent scope problem out of any generic 400, or re-raise if not.
-                try:
-                    log.debug("Encountered error when running flow", exc_info=True)
-                    automate_error_message = json.loads(gapie.text)
-                    detail_message = automate_error_message["error"]["detail"]
-                    if "unable to get tokens for scopes" in detail_message:
-                        self.login_manager.add_scope_change([self.flow_scope])
-                        self.refresh_specific_flow_client()
-                        log.info("Initiating new login for dependent scope change")
-                        flow = self.specific_flow_client.run_flow(**kwargs).data
-                    else:
-                        raise
-                except (TypeError, ValueError):
-                    raise gapie from None
+            elif gapie.http_status == 403 and gapie.code == "MISSING_SCOPE":
+                # This can happen if dependent scopes have changed in between running a flow,
+                # in which case the old token doesn't contain the required dependent scopes.
+                # This requires a re-auth for the flow to run properly.
+                self.login_manager.add_scope_change([self.flow_scope])
+                self.refresh_specific_flow_client()
+                log.info("Initiating new login for dependent scope change")
+                flow = self.specific_flow_client.run_flow(**kwargs).data
             else:
                 raise
         log.info(f'Started flow {kwargs.get("label")} with run "{flow["run_id"]}"')
