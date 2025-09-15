@@ -54,7 +54,8 @@ class FlowBuilder:
         )
 
     def apply_modifiers(self, modifiers, flow, strict: bool = True):
-        self.check_modifiers(modifiers)
+        if strict is True:
+            self.check_modifiers(modifiers)
         for name, mods in modifiers.items():
             state_name = self.get_flow_state_name(name)
             flow["States"][state_name] = self.apply_modifier(
