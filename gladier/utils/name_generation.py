@@ -3,7 +3,12 @@ import re
 
 def get_upper_camel_case(snake_case_name):
     """Make a snake_case_name into UpperCamelCase"""
-    return "".join([nb.capitalize() for nb in snake_case_name.split("_")])
+    name = snake_case_name
+    if "_" in snake_case_name:
+        name = "".join([nb.capitalize() for nb in snake_case_name.split("_")])
+    # Ensure first letter is capitalized
+    name = name[0].capitalize() + name[1:]
+    return name
 
 
 def get_snake_case(upper_camel_case):
