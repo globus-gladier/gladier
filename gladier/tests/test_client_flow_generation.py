@@ -229,6 +229,39 @@ def test_choice_state_tool_chaining(logged_in):
     assert flow_def["States"]["1b"]["Next"] == "MockFunc"
 
 
+def test_multiple_tool_and_client_modifiers(logged_in):
+    def foo():
+        return "foo"
+
+    def bar():
+        return "bar"
+
+    @generate_flow_definition(modifiers={"foo": {"WaitTime": 1000}})
+    class FooTool(GladierBaseTool):
+        action_provider = "https://compute.actions.globus.org/v3"
+        compute_functions = [foo]
+
+    @generate_flow_definition(modifiers={"bar": {"WaitTime": 1000}})
+    class BarTool(GladierBaseTool):
+        action_provider = "https://compute.actions.globus.org/v3"
+        compute_functions = [bar]
+
+    @generate_flow_definition(
+        modifiers={
+            "bar": {
+                "payload": "$.Foo.details.results",
+            }
+        }
+    )
+    class MockClient(GladierBaseClient):
+        gladier_tools = [FooTool, BarTool]
+
+    cli = MockClient()
+    fd = cli.flow_definition
+    fx_task = fd["States"]["Bar"]["Parameters"]["tasks"][0]
+    assert fx_task["payload.$"] == "$.Foo.details.results"
+
+
 def test_chaining_cycle_flow_raises_error(logged_in):
     class MyTool(GladierBaseTool):
         flow_definition = {
