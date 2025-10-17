@@ -73,6 +73,7 @@ def test_tool_endpoint_mods():
 
     tool = MockTool()
     fd = tool.flow_definition
+    assert "MockFunc" in fd["States"]
     fx_ep = fd["States"]["MockFunc"]["Parameters"]["tasks"][0]["endpoint.$"]
     assert fx_ep == "$.input.my_weirdly_named_compute_endpoint"
 

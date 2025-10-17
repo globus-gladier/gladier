@@ -29,9 +29,10 @@ def combine_tool_flows(client: GladierBaseClient, modifiers):
         flow_builder_cls = registry.get_flow_builder_cls_by_tool(
             tool, action_url=modifiers.get("ActionUrl")
         )
+        log.info(f"Building tool flow ({tool}) with modifiers {modifiers.keys()}")
         flow_builder = flow_builder_cls(tool)
         flow_definition = flow_builder.apply_modifiers(
-            modifiers, flow_definition, strict=True
+            modifiers, flow_definition, matching_only=True
         )
     return flow_definition
 
@@ -81,5 +82,5 @@ def generate_tool_flow(tool: GladierBaseTool, modifiers) -> dict:
     )
     flow_builder = flow_builder_cls(tool)
     flow_definition = flow_builder.get_flow_definition()
-    flow_builder.apply_modifiers(modifiers, flow_definition, strict=True)
+    flow_builder.apply_modifiers(modifiers, flow_definition, matching_only=True)
     return flow_definition

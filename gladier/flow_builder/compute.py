@@ -5,7 +5,7 @@ from gladier.utils.name_generation import (
     get_compute_function_name,
     get_upper_camel_case,
 )
-from gladier.exc import FlowGenException
+from gladier.exc import FlowGenException, FlowModifierException
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +18,19 @@ class ComputeFlowBuilderv2(FlowBuilder):
         mods = super().get_valid_modifier_names()
         return mods.union(self.VALID_COMPUTE_MODIFIERS)
 
+    def check_modifier(self, modifier_name: str, modifier_data: dict):
+        super().check_modifier(modifier_name, modifier_data)
+
+        legacy_funcs = getattr(self.tool, "funcx_functions", [])
+        legacy_func_names = [f.__name__ for f in legacy_funcs]
+
+        if modifier_name in legacy_func_names:
+            raise FlowModifierException(
+                f"Class {self.tool} is a Legacy Gladier tool pre-v0.9.0. Please use a modern "
+                "version or follow the migration guide here to make it compatible: \n\n"
+                "\thttps://gladier.readthedocs.io/en/latest/migration.html\n"
+            )
+
     def generic_set_modifier(
         self, item, mod_name, mod_value, flow_definition_reference: dict
     ):
@@ -25,11 +38,11 @@ class ComputeFlowBuilderv2(FlowBuilder):
 
         if not isinstance(mod_value, str):
             if mod_value in self.tool.compute_functions:
-                sn = self.get_flow_state_name(mod_value)
+                sn = self.get_state_name_from_modifier_name(mod_value)
                 mod_value = self.get_state_result_path(sn)
         elif isinstance(mod_value, str) and not mod_value.startswith("$."):
             if mod_value in functions:
-                sn = self.get_flow_state_name(mod_value)
+                sn = self.get_state_name_from_modifier_name(mod_value)
                 mod_value = self.get_state_result_path(sn)
 
         return super().generic_set_modifier(
@@ -79,13 +92,24 @@ class ComputeFlowBuilderv2(FlowBuilder):
         }
         return flow
 
-    def get_flow_state_name(self, state):
-        if not isinstance(state, str):
-            name = state.__name__
+    def get_state_name_from_modifier_name(self, modifier_name) -> str:
+        if not isinstance(modifier_name, str):
+            name = modifier_name.__name__
         else:
-            name = state
+            name = modifier_name
 
-        return get_upper_camel_case(name)
+        name = get_upper_camel_case(name)
+        # assert name in self.get_flow_state_names(), f"Modifier name {name} not in {self.get_flow_state_names()}"
+        return name
+
+    def get_function(self, name):
+        for f in self.tool.compute_functions:
+            if callable(name):
+                fname = name.__name__
+            else:
+                fname = name
+            if fname == f.__name__:
+                return f
 
     def apply_modifier(
         self, flow_state: str, state_modifiers: dict, flow_definition_reference: dict
