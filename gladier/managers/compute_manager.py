@@ -21,7 +21,7 @@ class ComputeManager(ServiceManager):
 
     def get_scopes(self):
         return [
-            globus_sdk.scopes.ComputeScopes.all,
+            globus_sdk.ComputeClient.scopes.all,
             globus_sdk.AuthClient.scopes.openid,
         ]
 
@@ -36,10 +36,10 @@ class ComputeManager(ServiceManager):
         authorizers = self.login_manager.get_manager_authorizers()
         compute_login_manager = AuthorizerLoginManager(
             authorizers={
-                globus_sdk.scopes.ComputeScopes.resource_server: authorizers.get(
-                    globus_sdk.ComputeScopes.all
+                globus_sdk.ComputeClient.scopes.resource_server: authorizers.get(
+                    globus_sdk.ComputeClient.scopes.all
                 ),
-                globus_sdk.AuthScopes.resource_server: authorizers.get(
+                globus_sdk.AuthClient.scopes.resource_server: authorizers.get(
                     globus_sdk.AuthClient.scopes.openid
                 ),
             }
