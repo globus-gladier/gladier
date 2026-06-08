@@ -44,8 +44,9 @@ docs = [
 coverage = ["coverage[toml]"]
 test = [
     {include-group = "coverage"},
-    "pytest", "pytest-xdist"
+    "pytest", "pytest-xdist", "flake8"
 ]
+build = ["build", "twine"]
 
 [tool.setuptools.packages.find]
 where = ["gladier"]
