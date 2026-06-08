@@ -1,3 +1,11 @@
+# Gladier
+gladier-secrets*
+
+
+# UV
+uv.lock
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -139,4 +147,3 @@ cython_debug/
 
 # For emacs users
 .dir-locals.el
-
