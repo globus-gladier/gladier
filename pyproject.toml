@@ -1,6 +1,6 @@
 [project]
 name = "gladier"
-version = "0.10.0b3"
+version = "0.10.0b4"
 authors = [
     { name = "Globus Professional Services Team", email = "support@globus.org" },
 ]
@@ -49,7 +49,7 @@ test = [
 build = ["build", "twine"]
 
 [tool.setuptools.packages.find]
-where = ["gladier"]
+where = ["."]
 namespaces = false
 
 
@@ -61,7 +61,7 @@ testpaths = ["gladier/tests/"]
 
 [tool.coverage.run]
 parallel = true
-source = ["gladier"]
+source = ["."]
 # omit must be specified in a way which matches the
 # tox environment installations, so lead with `**`
 omit = []
