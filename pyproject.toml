@@ -1,0 +1,126 @@
+[project]
+name = "gladier"
+version = "0.10.0b3"
+authors = [
+    { name = "Globus Professional Services Team", email = "support@globus.org" },
+]
+description = "An SDK for rapid development of Globus Flows with Globus Compute"
+keywords = ["gladier", "globus", "flows", "compute", "automation"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "globus-sdk>=3.46.0,<4",
+    "globus-compute-sdk>=2.0.1,<3.0.0",
+    "packaging>=21.3",
+    "fair-research-login>=0.2.6",
+    "pydantic>=1.0",
+]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.urls]
+Homepage = "https://github.com/globus-gladier/gladier"
+
+[dependency-groups]
+docs = [
+    "sphinx", "sphinx-copybutton", "sphinx-issues", "furo", "sphinx-design",
+    # required for testing modules to load
+    "responses",
+]
+coverage = ["coverage[toml]"]
+test = [
+    {include-group = "coverage"},
+    "pytest", "pytest-xdist"
+]
+
+[tool.setuptools.packages.find]
+where = ["gladier"]
+namespaces = false
+
+
+[tool.pytest.ini_options]
+testpaths = ["gladier/tests/"]
+#filterwarnings = [
+#    "error",
+#]
+
+[tool.coverage.run]
+parallel = true
+source = ["gladier"]
+# omit must be specified in a way which matches the
+# tox environment installations, so lead with `**`
+omit = []
+
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 93
+
+exclude_lines =[
+    # the pragma to disable coverage
+    "pragma: no cover",
+    # don't complain if tests don't hit unimplemented methods/modes
+    "raise NotImplementedError",
+    # don't check on executable components of importable modules
+    "if __name__ == .__main__.:",
+    # don't check coverage on type checking conditionals
+    "if t.TYPE_CHECKING:",
+    # skip overloads
+    "@t.overload",
+]
+
+
+[tool.isort]
+profile = "black"
+known_first_party = ["tests", "gladier"]
+
+[tool.pylint]
+load-plugins = ["pylint.extensions.docparams"]
+accept-no-param-doc = "false"
+
+[tool.pylint."messages control"]
+disable = [
+    # formatting and cosmetic rules (handled by 'black', etc)
+    "format", "C",
+    # refactoring rules (e.g. duplicate or similar code) are very prone to
+    # false positives
+    "R",
+    # emitted when pylint fails to import a module; these warnings
+    # are usually false-positives for optional dependencies
+    "import-error",
+    # "disallowed" usage of our own classes and objects gets underfoot
+    "protected-access",
+    # incorrect mis-reporting of lazily loaded attributes makes this lint
+    # unusable
+    "no-name-in-module",
+    # objections to log messages doing eager (vs lazy) string formatting
+    # the perf benefit of deferred logging doesn't always outweigh the readability cost
+    "logging-fstring-interpolation", "logging-format-interpolation",
+    # fixme comments are often useful; re-enable this to quickly find FIXME and
+    # TODO comments
+    "fixme",
+    # most SDK methods currently do not document the exceptions which they raise
+    # this is an area for potential improvement
+    "missing-raises-doc",
+]
+
+[tool.pylint.variables]
+ignored-argument-names = "args|kwargs"
