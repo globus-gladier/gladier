@@ -1,6 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+### [0.10.0](https://github.com/globus-gladier/gladier/compare/v0.9.6...v0.10.0) (2026-06-09)
+
+### Features
+
+Add compute AP v3 support to Gladier
+
 
 ### [0.10.0b1](https://github.com/globus-gladier/gladier/compare/v0.9.6...v0.10.0b1) (2025-08-21)
 
