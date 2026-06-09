@@ -1,6 +1,6 @@
 [project]
 name = "gladier"
-version = "0.10.0b4"
+version = "0.10.0"
 authors = [
     { name = "Globus Professional Services Team", email = "support@globus.org" },
 ]
