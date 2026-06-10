@@ -1,5 +1,15 @@
 # Changelog
 
+### [0.11.0b1](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b1) (2026-06-09)
+
+### Features
+
+* Add support for Globus SDK version 4
+* Add support for Globus Compute SDK version 4
+* Drop support for Globus SDK version 3 and previous
+* Drop support for Globus Compute SDK version 3 and previous
+* Remove package dependency and support for Fair Research Login
+
 ### [0.10.0](https://github.com/globus-gladier/gladier/compare/v0.9.6...v0.10.0) (2026-06-09)
 
 ### Features
