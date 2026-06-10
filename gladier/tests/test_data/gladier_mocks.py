@@ -1,6 +1,8 @@
 from gladier import GladierBaseTool, GladierBaseClient
 from gladier.decorators import generate_flow_definition
 
+
+mock_flow_id = "mock_tool_flow_scope"
 # Roughly simulates the look of a Globus Automate flow scope
 mock_automate_flow_scope = (
     "https://auth.globus.org/scopes/mock_tool_flow_scope/"

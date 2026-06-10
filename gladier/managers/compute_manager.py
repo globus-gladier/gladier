@@ -7,8 +7,6 @@ import gladier
 from gladier.base import GladierBaseTool
 from gladier.managers.service_manager import ServiceManager
 from globus_compute_sdk import Client, serialize, version as compute_sdk_version
-from globus_compute_sdk.sdk.login_manager import AuthorizerLoginManager
-from globus_compute_sdk.sdk.login_manager.manager import ComputeScopeBuilder
 
 log = logging.getLogger(__name__)
 
@@ -21,8 +19,7 @@ class ComputeManager(ServiceManager):
 
     def get_scopes(self):
         return [
-            globus_sdk.ComputeClient.scopes.all,
-            globus_sdk.AuthClient.scopes.openid,
+            globus_sdk.ComputeClientV3.scopes.all,
         ]
 
     @property
@@ -33,28 +30,17 @@ class ComputeManager(ServiceManager):
         if getattr(self, "__compute_client", None) is not None:
             return self.__compute_client
 
-        authorizers = self.login_manager.get_manager_authorizers()
-        compute_login_manager = AuthorizerLoginManager(
-            authorizers={
-                globus_sdk.ComputeClient.scopes.resource_server: authorizers.get(
-                    globus_sdk.ComputeClient.scopes.all
-                ),
-                globus_sdk.AuthClient.scopes.resource_server: authorizers.get(
-                    globus_sdk.AuthClient.scopes.openid
-                ),
-            }
-        )
-        try:
-            compute_login_manager.ensure_logged_in()
-        except Exception as e:
-            log.critical(
-                "Gladier failed to properly configure the compute scopes! This is definitely a bug. It would help a lot if you could file a bug report for us <3"
-            )
-            raise
+        auth_params = {}
+
+        if self.login_manager.globus_app:
+            auth_params["login_manager"] = self.login_manager.globus_app
+        else:
+            auth_params[
+                "authorizer"
+            ] = self.login_manager.get_manager_authorizers().get(Client.scopes.all)
 
         self.__compute_client = Client(
-            code_serialization_strategy=self.get_serialization_strategy(),
-            login_manager=compute_login_manager,
+            code_serialization_strategy=self.get_serialization_strategy(), **auth_params
         )
         return self.__compute_client
 

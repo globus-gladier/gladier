@@ -8,7 +8,6 @@ from typing_extensions import TypeAlias
 import abc
 import urllib
 
-import fair_research_login
 import globus_sdk
 from globus_sdk import (
     AccessTokenAuthorizer,
@@ -31,10 +30,26 @@ class BaseLoginManager(abc.ABC):
     def __init__(self, *args, **kwargs):
         self.required_scopes = set()
         self.scope_changes = set()
+        self.globus_app = None
 
     @property
     def missing_authorizers(self) -> Set[str]:
         return self.get_missing_authorizers(self.get_authorizers())
+
+    def normalize_scope_strs_to_globus_scopes(self, scopes: Iterable[str]) -> Set[str]:
+        """
+        Normalize scopes to a standard format for comparison. This is necessary because scopes can be represented in multiple ways (e.g. as strings or as Scope objects) and we want to ensure that we can accurately determine if the required scopes are present.
+
+        :param scopes: An iterable of scopes to normalize.
+        :return: A set of normalized scope strings.
+        """
+        normalized = set()
+        for scope in scopes:
+            if isinstance(scope, globus_sdk.scopes.Scope):
+                normalized.add(scope)
+            else:
+                normalized.add(globus_sdk.scopes.Scope(scope))
+        return normalized
 
     def get_missing_authorizers(
         self,
@@ -42,7 +57,10 @@ class BaseLoginManager(abc.ABC):
     ) -> Set[str]:
         # Disregard any scopes not in the 'required' list. This allows implementers to return
         # unrelated scopes.
-        absent = self.required_scopes.difference(authorizers)
+        normalized_authorizers = self.normalize_scope_strs_to_globus_scopes(
+            authorizers.keys()
+        )
+        absent = self.required_scopes.difference(normalized_authorizers)
         log.info(
             f"Scopes Absent: {absent or None}, Need Update: {self.scope_changes or None}"
         )
@@ -110,6 +128,7 @@ class BaseLoginManager(abc.ABC):
 
     def add_requirements(self, scopes: Iterable[str]):
         log.debug(f"Added required scopes {scopes}")
+        scopes = self.normalize_scope_strs_to_globus_scopes(scopes)
         self.required_scopes = self.required_scopes | set(scopes)
 
     def add_scope_change(self, scopes: Iterable[str]):
@@ -127,53 +146,6 @@ class BaseLoginManager(abc.ABC):
         after successful login and should not be invoked externally.
         """
         self.scope_changes = set()
-
-
-class AutoLoginManager(BaseLoginManager):
-    """
-    Default Login Manager class in Gladier. Automatically initiates a login if any scope
-    is missing or needs to be updated.
-    """
-
-    refresh_tokens = True
-
-    def __init__(self, client_id: str, storage: Any, app_name: str, auto_login=True):
-        super().__init__()
-        self.storage = storage
-        self.client_id = client_id
-        self.app_name = app_name
-        self.auto_login = auto_login
-
-    @property
-    def native_client(self):
-        if getattr(self, "client_id", None) is None:
-            raise AuthException(
-                "Gladier client must be instantiated with a "
-                '"client_id" to use "login()!'
-            )
-        return fair_research_login.NativeClient(
-            client_id=self.client_id, app_name=self.app_name, token_storage=self.storage
-        )
-
-    def get_authorizers(
-        self,
-    ) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
-        try:
-            return self.native_client.get_authorizers_by_scope()
-        except fair_research_login.LoadError:
-            return dict()
-
-    def login(self, scopes):
-        if self.auto_login is False:
-            raise AuthException(
-                f"Automatic login is disabled. Missing scopes: {scopes}"
-            )
-        self.native_client.login(
-            requested_scopes=scopes, refresh_toknes=self.refresh_tokens, force=True
-        )
-
-    def logout(self):
-        self.native_client.logout()
 
 
 class CallbackLoginManager(BaseLoginManager):
@@ -223,11 +195,13 @@ class ConfidentialClientLoginManager(BaseLoginManager):
         super().__init__()
         self.storage: GladierSecretsConfig = storage
         self.client_id = client_id
-        self.app = ConfidentialAppAuthClient(client_id, client_secret)
+        self.globus_app = ConfidentialAppAuthClient(client_id, client_secret)
 
     def login(self, scopes: List[str]) -> None:
         log.info("Initiating client credentials grant using client_id and secret")
-        response = self.app.oauth2_client_credentials_tokens(requested_scopes=scopes)
+        response = self.globus_app.oauth2_client_credentials_tokens(
+            requested_scopes=scopes
+        )
         self.storage.write_tokens(response.by_resource_server)
 
     def by_scopes(self, tokens):
@@ -259,7 +233,7 @@ class ConfidentialClientLoginManager(BaseLoginManager):
         return {
             scope: RefreshTokenAuthorizer(
                 refresh_token=tdata["refresh_token"],
-                auth_client=self.app,
+                auth_client=self.globus_app,
                 access_token=tdata["access_token"],
                 expires_at=tdata["expires_at_seconds"],
             )
@@ -292,7 +266,7 @@ class UserAppLoginManager(BaseLoginManager):
             globus_auth_parameters or globus_sdk.gare.GlobusAuthorizationParameters()
         )
         self.token_storage = self.get_token_storage()
-        self.user_app = globus_sdk.UserApp(
+        self.globus_app = globus_sdk.UserApp(
             self.app_name,
             client_id=self.client_id,
             config=globus_sdk.GlobusAppConfig(
@@ -310,12 +284,12 @@ class UserAppLoginManager(BaseLoginManager):
             .absolute()
         )
 
-    def get_token_storage(self) -> globus_sdk.tokenstorage.TokenStorage:
+    def get_token_storage(self) -> globus_sdk.token_storage.TokenStorage:
         """
         Uses Gladier Secrets Config to derive the filenames and sections for the Globus App Token Storage configuraiton.
         """
         filepath = self.get_filepath()
-        ts = globus_sdk.tokenstorage.SQLiteTokenStorage(
+        ts = globus_sdk.token_storage.SQLiteTokenStorage(
             filepath, namespace=self.storage_namespace
         )
         log.info(
@@ -340,8 +314,10 @@ class UserAppLoginManager(BaseLoginManager):
         # we have saved to disk. We must ask token storage directly for those.
         tokens_by_rs = self.token_storage.get_token_data_by_resource_server()
         # Determine all scopes saved to disk
-        scopes = globus_sdk.scopes.scopes_to_scope_list(
-            t.scope for t in tokens_by_rs.values()
+        scopes = list(
+            globus_sdk.scopes.ScopeParser.parse(
+                " ".join(t.scope for t in tokens_by_rs.values())
+            )
         )
         tokens_by_scope = {}
         for scope in scopes:
@@ -352,7 +328,7 @@ class UserAppLoginManager(BaseLoginManager):
         # Use the User App to load authorizers for all of the scopes we have. We let the user
         # app do this to handle building the authorizer
         auth_by_scope = {
-            str(scope): self.user_app.get_authorizer(tdata.resource_server)
+            str(scope): self.globus_app.get_authorizer(tdata.resource_server)
             for scope, tdata in tokens_by_scope.items()
         }
         return auth_by_scope
@@ -365,14 +341,14 @@ class UserAppLoginManager(BaseLoginManager):
         # This is a bit unfortunate. add_scope_requirements() requires passing scopes
         # by resource server, which we don't readily have available. That means we need
         # to figure out which resource servers correspond to which scopes.
-        self.user_app.add_scope_requirements(self.scopes_by_resource_server(scopes))
-        self.user_app.login(auth_params=self.globus_auth_parameters)
+        self.globus_app.add_scope_requirements(self.scopes_by_resource_server(scopes))
+        self.globus_app.login(auth_params=self.globus_auth_parameters)
 
     def logout(self):
         """
         Initiate a Globus User App logout. Revokes and clears credentials on this user system.
         """
-        self.user_app.logout()
+        self.globus_app.logout()
 
     def get_resource_server(self, scope):
         """

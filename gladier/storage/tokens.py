@@ -1,7 +1,7 @@
 import os
 import stat
 import logging
-from fair_research_login.token_storage import flat_pack, flat_unpack
+from gladier.storage.serialization import flat_pack, flat_unpack
 from gladier.storage.config import GladierConfig
 
 

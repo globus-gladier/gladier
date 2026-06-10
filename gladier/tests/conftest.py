@@ -4,7 +4,6 @@ import json
 import configparser
 from unittest.mock import Mock, PropertyMock
 import pytest
-import fair_research_login
 from gladier.storage import config, tokens
 import globus_sdk
 
@@ -22,15 +21,6 @@ ALL_FLOW_SCOPES = [
     globus_sdk.FlowsClient.scopes.run_status,
     globus_sdk.FlowsClient.scopes.run_manage,
 ]
-
-
-@pytest.fixture(autouse=True)
-def mock_login(monkeypatch):
-    """Unit tests should never need to call login() or logout(), as doing so
-    would use real developer credentials"""
-    monkeypatch.setattr(fair_research_login.NativeClient, "login", Mock())
-    monkeypatch.setattr(fair_research_login.NativeClient, "logout", Mock())
-    return fair_research_login.NativeClient
 
 
 @pytest.fixture
@@ -157,7 +147,10 @@ def auto_login(logged_in_tokens):
     clm = CallbackLoginManager(
         logged_in_tokens,
         lambda scopes: {
-            scope: globus_sdk.AccessTokenAuthorizer(scope) for scope in scopes
+            scope: globus_sdk.AccessTokenAuthorizer(
+                logged_in_tokens[scope]["access_token"]
+            )
+            for scope in logged_in_tokens
         },
     )
     return clm
