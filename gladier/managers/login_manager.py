@@ -19,11 +19,6 @@ from gladier.exc import AuthException
 from gladier.storage.tokens import GladierSecretsConfig
 import globus_compute_sdk
 
-try:
-    import fair_research_login
-except:
-    fair_research_login = None
-
 log = logging.getLogger(__name__)
 
 AUTHORIZER_MAP: TypeAlias = Mapping[
@@ -151,58 +146,6 @@ class BaseLoginManager(abc.ABC):
         after successful login and should not be invoked externally.
         """
         self.scope_changes = set()
-
-
-class AutoLoginManager(BaseLoginManager):
-    """
-    Default Login Manager class in Gladier. Automatically initiates a login if any scope
-    is missing or needs to be updated.
-    """
-
-    refresh_tokens = True
-
-    def __init__(self, client_id: str, storage: Any, app_name: str, auto_login=True):
-        super().__init__()
-        self.storage = storage
-        self.client_id = client_id
-        self.app_name = app_name
-        self.auto_login = auto_login
-
-        if fair_research_login is None:
-            raise ModuleNotFoundError(
-                "Fair Research Login is not installed. You can install it with `pip install fair-research-login`. We recommend using gladier.UserAppLoginManager instead."
-            )
-
-    @property
-    def native_client(self):
-        if getattr(self, "client_id", None) is None:
-            raise AuthException(
-                "Gladier client must be instantiated with a "
-                '"client_id" to use "login()!'
-            )
-        return fair_research_login.NativeClient(
-            client_id=self.client_id, app_name=self.app_name, token_storage=self.storage
-        )
-
-    def get_authorizers(
-        self,
-    ) -> Mapping[str, Union[AccessTokenAuthorizer, RefreshTokenAuthorizer]]:
-        try:
-            return self.native_client.get_authorizers_by_scope()
-        except fair_research_login.LoadError:
-            return dict()
-
-    def login(self, scopes):
-        if self.auto_login is False:
-            raise AuthException(
-                f"Automatic login is disabled. Missing scopes: {scopes}"
-            )
-        self.native_client.login(
-            requested_scopes=scopes, refresh_toknes=self.refresh_tokens, force=True
-        )
-
-    def logout(self):
-        self.native_client.logout()
 
 
 class CallbackLoginManager(BaseLoginManager):
