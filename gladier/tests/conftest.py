@@ -157,7 +157,10 @@ def auto_login(logged_in_tokens):
     clm = CallbackLoginManager(
         logged_in_tokens,
         lambda scopes: {
-            scope: globus_sdk.AccessTokenAuthorizer(scope) for scope in scopes
+            scope: globus_sdk.AccessTokenAuthorizer(
+                logged_in_tokens[scope]["access_token"]
+            )
+            for scope in logged_in_tokens
         },
     )
     return clm

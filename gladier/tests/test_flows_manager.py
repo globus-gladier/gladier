@@ -7,8 +7,7 @@ from unittest.mock import Mock
 from gladier.exc import ConfigException
 from gladier.managers.flows_manager import FlowsManager
 
-# from gladier.tests.conftest import login_manager
-from gladier.tests.test_data.gladier_mocks import MockGladierClient
+from gladier.tests.test_data.gladier_mocks import MockGladierClient, mock_flow_id
 import gladier
 
 
@@ -76,7 +75,7 @@ def test_custom_scope_id(logged_out):
     cli = MockGladierClient(
         flows_manager=FlowsManager(flow_id="foo"), login_manager=logged_out
     )
-    scope = "https://auth.globus.org/scopes/foo/flow_foo_user"
+    scope = globus_sdk.scopes.Scope("https://auth.globus.org/scopes/foo/flow_foo_user")
     assert scope in cli.login_manager.missing_authorizers
 
 
@@ -94,7 +93,7 @@ def test_unexpected_400_run_flow_without_json(
 ):
     mock_globus_api_error.text = "something that is not JSON!"
     mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
-    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    fm = FlowsManager(flow_id=mock_flow_id, login_manager=auto_login)
     with pytest.raises(globus_sdk.exc.GlobusAPIError):
         fm.run_flow()
 
@@ -109,7 +108,7 @@ def test_dependent_scope_change_run_flow(
     mock_globus_api_error.code = "MISSING_SCOPE"
 
     mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
-    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    fm = FlowsManager(flow_id=mock_flow_id, login_manager=auto_login)
     # Ensure scopes are set, then disable auto_login behavior
     auto_login.get_manager_authorizers()
     auto_login.login = Mock()
@@ -147,7 +146,7 @@ def test_gladier_raises_globus_errors(
 
 def test_flow_definition_changed(auto_login, storage):
     fm = FlowsManager(
-        flow_id="foo", login_manager=auto_login, flow_definition={"foo": "bar"}
+        flow_id=mock_flow_id, login_manager=auto_login, flow_definition={"foo": "bar"}
     )
     fm.storage = storage
     fm.sync_flow()
@@ -158,7 +157,7 @@ def test_flow_definition_changed(auto_login, storage):
 
 def test_schema_changed(auto_login, storage):
     fm = FlowsManager(
-        flow_id="foo", login_manager=auto_login, flow_definition={"foo": "bar"}
+        flow_id=mock_flow_id, login_manager=auto_login, flow_definition={"foo": "bar"}
     )
     fm.storage = storage
     fm.sync_flow()
@@ -169,7 +168,7 @@ def test_schema_changed(auto_login, storage):
 
 def test_flow_kwargs_changed(auto_login, storage):
     fm = FlowsManager(
-        flow_id="foo", login_manager=auto_login, flow_definition={"foo": "bar"}
+        flow_id=mock_flow_id, login_manager=auto_login, flow_definition={"foo": "bar"}
     )
     fm.storage = storage
     fm.sync_flow()
@@ -180,7 +179,7 @@ def test_flow_kwargs_changed(auto_login, storage):
 
 def test_run_flow_run_kwargs(auto_login, storage, mock_specific_flow_client):
     fm = FlowsManager(
-        flow_id="foo",
+        flow_id=mock_flow_id,
         login_manager=auto_login,
         flow_definition={"foo": "bar"},
         run_kwargs={"foo": "bar"},
@@ -195,7 +194,7 @@ def test_run_flow_run_kwargs_conflicting_args(
 ):
     bob_id = "urn:globus:auth:identity:bob@globus.org"
     fm = FlowsManager(
-        flow_id="foo",
+        flow_id=mock_flow_id,
         login_manager=auto_login,
         globus_group="mygroup",
         run_kwargs={"run_managers": [bob_id]},
@@ -235,7 +234,7 @@ def test_run_flow_404_on_explicit_flow_id(
     mock_globus_api_error,
 ):
     fm = FlowsManager(
-        flow_id="foo", flow_definition={"foo": "bar"}, login_manager=auto_login
+        flow_id=mock_flow_id, flow_definition={"foo": "bar"}, login_manager=auto_login
     )
     mock_globus_api_error.http_status = 404
     mock_specific_flow_client.run_flow.side_effect = mock_globus_api_error
@@ -264,7 +263,7 @@ def test_register_flow_404_on_explicit_flow_id(
     auto_login, storage, mock_flows_client, mock_globus_api_error
 ):
     fm = FlowsManager(
-        flow_id="myflow", flow_definition={"foo": "bar"}, login_manager=auto_login
+        flow_id=mock_flow_id, flow_definition={"foo": "bar"}, login_manager=auto_login
     )
     mock_globus_api_error.http_status = 404
     mock_flows_client.update_flow.side_effect = mock_globus_api_error
@@ -277,7 +276,7 @@ def test_register_flow_404_on_explicit_flow_id(
 def test_get_status(
     auto_login, mock_flow_status_active, mock_flows_client, globus_response
 ):
-    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    fm = FlowsManager(flow_id=mock_flow_id, login_manager=auto_login)
     globus_response.data = mock_flow_status_active
     mock_flows_client.get_run.return_value = globus_response
     fm.get_status("run_id")
@@ -291,7 +290,7 @@ def test_progress(
     monkeypatch,
 ):
     monkeypatch.setattr(time, "sleep", Mock())
-    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    fm = FlowsManager(flow_id=mock_flow_id, login_manager=auto_login)
 
     class GlobusResponse(object):
         _data = [
@@ -314,7 +313,7 @@ def test_progress(
 def test_get_details(
     auto_login, mock_flow_status_succeeded, mock_flows_client, globus_response
 ):
-    fm = FlowsManager(flow_id="foo", login_manager=auto_login)
+    fm = FlowsManager(flow_id=mock_flow_id, login_manager=auto_login)
     globus_response.data = mock_flow_status_succeeded
     mock_flows_client.get_run.return_value = globus_response
     response = fm.get_details("run_id", "ShellCmd")
@@ -326,7 +325,7 @@ def test_flow_manager_flow_permissions(
 ):
     # Test adding flow_kwargs to the FlowsManager
     fm = FlowsManager(
-        flow_id="foo",
+        flow_id=mock_flow_id,
         login_manager=auto_login,
         flow_kwargs={
             "flow_viewers": ["urn:globus:groups:id:mock-user"],
@@ -345,7 +344,7 @@ def test_flow_manager_run_permissions(
 ):
     # Test adding run_kwargs to the FlowsManager
     fm = FlowsManager(
-        flow_id="foo",
+        flow_id=mock_flow_id,
         login_manager=auto_login,
         run_kwargs={
             "run_managers": ["urn:globus:auth:identity:mock-user"],
