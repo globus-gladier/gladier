@@ -79,6 +79,28 @@ def test_custom_scope_id(logged_out):
     assert scope in cli.login_manager.missing_authorizers
 
 
+def test_get_authorizer_for_scope_accepts_scope_or_string_keys():
+    scope_str = "https://auth.globus.org/scopes/foo/flow_foo_user"
+    scope_cls = getattr(globus_sdk, "Scope", None)
+    if scope_cls is None:
+        scope_cls = globus_sdk.scopes.Scope
+    scope_obj = scope_cls(scope_str)
+
+    string_authorizer = object()
+    scope_authorizer = object()
+
+    assert (
+        FlowsManager._get_authorizer_for_scope(
+            {scope_str: string_authorizer}, scope_obj
+        )
+        is string_authorizer
+    )
+    assert (
+        FlowsManager._get_authorizer_for_scope({scope_obj: scope_authorizer}, scope_str)
+        is scope_authorizer
+    )
+
+
 def test_explicit_flow_id():
     fm = FlowsManager(flow_id="foo")
     cli = MockGladierClient(flows_manager=fm)

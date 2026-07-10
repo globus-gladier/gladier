@@ -136,10 +136,8 @@ class FlowsManager(ServiceManager):
             # an error here. Simply ignore it for the time being.
             flow_id = None
         if flow_id:
-            # In the future, this should be gettable via
-            # globus_sdk.SpecificFlowClient(flow_id).scopes.url_scope_string('flow_id'))
-            scope_name = f'flow_{flow_id.replace("-", "_")}_user'
-            return f"https://auth.globus.org/scopes/{flow_id}/{scope_name}"
+            scope = globus_sdk.SpecificFlowClient(flow_id).scopes.user
+            return scope
 
     @property
     def flow_definition(self) -> dict:
@@ -157,6 +155,27 @@ class FlowsManager(ServiceManager):
     def flow_schema(self, value: dict):
         self._flow_schema = value
 
+    @staticmethod
+    def _scope_object(scope):
+        scope_cls = getattr(globus_sdk, "Scope", None)
+        if scope_cls is not None:
+            return scope_cls(str(scope))
+        return globus_sdk.scopes.Scope(str(scope))
+
+    @classmethod
+    def _get_authorizer_for_scope(cls, authorizers: dict, scope):
+        if scope is None:
+            return None
+        if scope in authorizers:
+            return authorizers[scope]
+
+        scope_str = str(scope)
+        if scope_str in authorizers:
+            return authorizers[scope_str]
+
+        scope_obj = cls._scope_object(scope)
+        return authorizers.get(scope_obj)
+
     @property
     def flows_client(self) -> globus_sdk.FlowsClient:
         """
@@ -167,7 +186,9 @@ class FlowsManager(ServiceManager):
         if getattr(self, "_flows_client", None) is not None:
             return self._flows_client
         authorizers = self.login_manager.get_manager_authorizers()
-        flow_authorizer = authorizers[globus_sdk.FlowsClient.scopes.manage_flows]
+        flow_authorizer = self._get_authorizer_for_scope(
+            authorizers, globus_sdk.FlowsClient.scopes.manage_flows
+        )
         self._flows_client = globus_sdk.FlowsClient(authorizer=flow_authorizer)
         return self._flows_client
 
@@ -181,7 +202,7 @@ class FlowsManager(ServiceManager):
         if getattr(self, "_specific_flow_client", None) is not None:
             return self._specific_flow_client
         authorizers = self.login_manager.get_manager_authorizers()
-        flow_authorizer = authorizers.get(self.flow_scope)
+        flow_authorizer = self._get_authorizer_for_scope(authorizers, self.flow_scope)
 
         self._specific_flow_client = globus_sdk.SpecificFlowClient(
             self.get_flow_id(), authorizer=flow_authorizer
