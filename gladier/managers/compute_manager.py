@@ -30,17 +30,13 @@ class ComputeManager(ServiceManager):
         if getattr(self, "__compute_client", None) is not None:
             return self.__compute_client
 
-        auth_params = {}
-
-        if self.login_manager.globus_app:
-            auth_params["login_manager"] = self.login_manager.globus_app
-        else:
-            auth_params[
-                "authorizer"
-            ] = self.login_manager.get_manager_authorizers().get(Client.scopes.all)
-
+        # Prefer explicit authorizers to avoid SDK-specific login manager behavior.
+        authorizer = self.login_manager.get_manager_authorizers().get(
+            Client.FUNCX_SCOPE
+        )
         self.__compute_client = Client(
-            code_serialization_strategy=self.get_serialization_strategy(), **auth_params
+            code_serialization_strategy=self.get_serialization_strategy(),
+            authorizer=authorizer,
         )
         return self.__compute_client
 
