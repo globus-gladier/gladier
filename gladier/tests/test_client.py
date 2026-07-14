@@ -57,14 +57,18 @@ def test_run_flow(logged_in):
     cli.run_flow()
 
 
-def test_propagated_group_uuid(monkeypatch, logged_in):
+def test_propagated_group_uuid(monkeypatch, logged_in, storage, mock_secrets_config):
     class MockGladierClientShared(MockGladierClient):
         globus_group = "my-globus-group"
 
         gladier_tools = ["gladier.tests.test_data.gladier_mocks.GeneratedTool"]
 
     cli = MockGladierClientShared(login_manager=logged_in)
-    monkeypatch.setattr(cli.compute_manager.compute_client, "register_function", Mock())
+    monkeypatch.setattr(
+        cli.compute_manager.compute_client,
+        "register_function",
+        Mock(return_value="mock_function_id"),
+    )
     cli.run_flow()
     cli.compute_manager.compute_client.register_function.assert_called_with(
         mock_func, group="my-globus-group"
