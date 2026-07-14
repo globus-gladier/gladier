@@ -127,8 +127,7 @@ class ComputeManager(ServiceManager):
                 self.storage.set_value(checksum_name, checksum)
             else:
                 raise
-        finally:
-            return fid_name, fid
+        return fid_name, fid
 
     def register_function(self, tool: GladierBaseTool, function):
         """Register the functions with Globus Compute."""
