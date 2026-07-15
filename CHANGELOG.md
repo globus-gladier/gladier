@@ -1,12 +1,24 @@
 # Changelog
 
-### [0.11.0b2](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b2) (2026-06-09)
+### [0.11.0](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0) (2026-07-15)
+
+### Features
+
+* Add support for Globus SDK version 4
+* Add support for Globus Compute SDK version 4
+* Drop support for Globus SDK version 3 and previous
+* Drop support for Globus Compute SDK version 3 and previous
+* Remove package dependency and support for Fair Research Login
+
+
+### [0.11.0b2](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b2) (2026-07-15)
+
 
 ### Bug Fixes
 
-fix: Auth for compute client in compute sdk v4
-fix: function registration for newer compute versions
-fix: Renewing scope fail for confidential client
+* fix: Auth for compute client in compute sdk v4
+* fix: function registration for newer compute versions
+* fix: Renewing scope fail for confidential client
 
 ### [0.11.0b1](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b1) (2026-06-09)
 
@@ -22,7 +34,7 @@ fix: Renewing scope fail for confidential client
 
 ### Features
 
-Add compute AP v3 support to Gladier
+* Add compute AP v3 support to Gladier
 
 
 ### [0.10.0b1](https://github.com/globus-gladier/gladier/compare/v0.9.6...v0.10.0b1) (2025-08-21)
