@@ -1,5 +1,13 @@
 # Changelog
 
+### [0.11.0b2](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b2) (2026-06-09)
+
+### Bug Fixes
+
+fix: Auth for compute client in compute sdk v4
+fix: function registration for newer compute versions
+fix: Renewing scope fail for confidential client
+
 ### [0.11.0b1](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0b1) (2026-06-09)
 
 ### Features
