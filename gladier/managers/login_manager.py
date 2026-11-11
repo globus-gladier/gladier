@@ -348,6 +348,15 @@ class UserAppLoginManager(BaseLoginManager):
         """
         Initiate a Globus User App logout. Revokes and clears credentials on this user system.
         """
+        # UserApp doesn't actually check which scopes it has logged in with previously, so
+        # anything that's been cached and saved previously is not accounted for when a logout
+        # happens. So, to do a proper logout, we need to load the scopes based on what's been
+        # saved previously in order to set those on the app for it to properly clear out any
+        # scopes it has used previously.
+        tokens_by_rs = self.token_storage.get_token_data_by_resource_server()
+        self.globus_app.add_scope_requirements(
+            {rs: tdata.scope.split() for rs, tdata in tokens_by_rs.items()}
+        )
         self.globus_app.logout()
 
     def get_resource_server(self, scope):
@@ -362,16 +371,19 @@ class UserAppLoginManager(BaseLoginManager):
 
         raises: ValueError if the resource server for the scope cannot be determined.
         """
+        # Scopes may be plain strings or globus_sdk Scope objects
+        scope = str(scope)
         services = (globus_sdk.FlowsClient, globus_sdk.AuthClient)
         for service in services:
-            rses = [str(s) for s in service.scopes]
-            if str(scope) in rses:
+            if scope in [str(s) for s in service.scopes]:
                 return service.resource_server
 
         if scope == globus_compute_sdk.Client.FUNCX_SCOPE:
             return "funcx_service"
 
-        rs, name = urllib.parse.urlparse(scope).path.lstrip("/scopes/").split("/")
+        # For scopes formatted like this: https://auth.globus.org/scopes/eec9b274-0c81/flow_eec9b274_user,
+        # parse the URL and derive the resource server and scope name.
+        rs, name = urllib.parse.urlparse(scope).path.removeprefix("/scopes/").split("/")
         if name.startswith("flow_"):
             return rs
 
