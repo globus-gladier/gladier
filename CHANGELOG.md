@@ -1,5 +1,15 @@
 # Changelog
 
+### [0.11.1](https://github.com/globus-gladier/gladier/compare/v0.11.0...v0.11.1) (2026-11-11)
+
+### Bug Fixes
+
+* Fixed a possible AttributeError exception when a new flow is registered requiring a custom scope via UserAuth.
+
+### Features
+
+* Added support for python v3.15
+
 ### [0.11.0](https://github.com/globus-gladier/gladier/compare/v0.10.0...v0.11.0) (2026-07-15)
 
 ### Features
