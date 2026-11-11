@@ -1,9 +1,12 @@
+import time
+import types
 import globus_sdk
 import globus_compute_sdk
 import pytest
 from gladier.managers import CallbackLoginManager
 from gladier.managers.login_manager import UserAppLoginManager
 from gladier.exc import AuthException
+from globus_sdk.token_storage import TokenStorageData
 
 
 def test_callback_manager_login():
@@ -45,3 +48,40 @@ def test_get_resource_server_unknown_scope():
         login_manager.get_resource_server(
             "https://auth.globus.org/scopes/abc-123/other"
         )
+
+
+def test_user_app_logout_without_login(monkeypatch, tmp_path):
+    """Tokens loaded from storage, with no login this session, must still be revoked and cleared"""
+    revoked = []
+    monkeypatch.setattr(
+        globus_sdk.NativeAppAuthClient,
+        "oauth2_revoke_token",
+        lambda self, token, **kwargs: revoked.append(token),
+    )
+    storage = types.SimpleNamespace(filename=str(tmp_path / "gladier-secrets.cfg"))
+    login_manager = UserAppLoginManager("foo", storage=storage)
+    scopes = {
+        "flows.globus.org": str(globus_sdk.FlowsClient.scopes.run),
+        "funcx_service": globus_compute_sdk.Client.FUNCX_SCOPE,
+    }
+    login_manager.token_storage.store_token_data_by_resource_server(
+        {
+            rs: TokenStorageData(
+                resource_server=rs,
+                identity_id="user-id",
+                scope=scope,
+                access_token=f"access-{rs}",
+                refresh_token=f"refresh-{rs}",
+                expires_at_seconds=int(time.time()) + 3600,
+                token_type="Bearer",
+            )
+            for rs, scope in scopes.items()
+        }
+    )
+
+    login_manager.logout()
+
+    assert sorted(revoked) == sorted(
+        [f"{kind}-{rs}" for rs in scopes for kind in ("access", "refresh")]
+    )
+    assert login_manager.token_storage.get_token_data_by_resource_server() == {}

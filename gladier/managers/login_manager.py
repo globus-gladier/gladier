@@ -348,6 +348,15 @@ class UserAppLoginManager(BaseLoginManager):
         """
         Initiate a Globus User App logout. Revokes and clears credentials on this user system.
         """
+        # UserApp doesn't actually check which scopes it has logged in with previously, so
+        # anything that's been cached and saved previously is not accounted for when a logout
+        # happens. So, to do a proper logout, we need to load the scopes based on what's been
+        # saved previously in order to set those on the app for it to properly clear out any
+        # scopes it has used previously.
+        tokens_by_rs = self.token_storage.get_token_data_by_resource_server()
+        self.globus_app.add_scope_requirements(
+            {rs: tdata.scope.split() for rs, tdata in tokens_by_rs.items()}
+        )
         self.globus_app.logout()
 
     def get_resource_server(self, scope):
