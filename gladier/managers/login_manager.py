@@ -364,10 +364,8 @@ class UserAppLoginManager(BaseLoginManager):
         """
         services = (globus_sdk.FlowsClient, globus_sdk.AuthClient)
         for service in services:
-            rses = [
-                getattr(service.scopes, name) for name in service.scopes.scope_names
-            ]
-            if scope in rses:
+            rses = [str(s) for s in service.scopes]
+            if str(scope) in rses:
                 return service.resource_server
 
         if scope == globus_compute_sdk.Client.FUNCX_SCOPE:
