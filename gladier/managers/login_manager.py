@@ -371,16 +371,19 @@ class UserAppLoginManager(BaseLoginManager):
 
         raises: ValueError if the resource server for the scope cannot be determined.
         """
+        # Scopes may be plain strings or globus_sdk Scope objects
+        scope = str(scope)
         services = (globus_sdk.FlowsClient, globus_sdk.AuthClient)
         for service in services:
-            rses = [str(s) for s in service.scopes]
-            if str(scope) in rses:
+            if scope in [str(s) for s in service.scopes]:
                 return service.resource_server
 
         if scope == globus_compute_sdk.Client.FUNCX_SCOPE:
             return "funcx_service"
 
-        rs, name = urllib.parse.urlparse(scope).path.lstrip("/scopes/").split("/")
+        # For scopes formatted like this: https://auth.globus.org/scopes/eec9b274-0c81/flow_eec9b274_user,
+        # parse the URL and derive the resource server and scope name.
+        rs, name = urllib.parse.urlparse(scope).path.removeprefix("/scopes/").split("/")
         if name.startswith("flow_"):
             return rs
 

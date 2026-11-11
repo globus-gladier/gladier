@@ -33,6 +33,12 @@ def _bare_user_app_manager():
         (globus_sdk.AuthClient.scopes.openid, "auth.globus.org"),
         (globus_compute_sdk.Client.FUNCX_SCOPE, "funcx_service"),
         ("https://auth.globus.org/scopes/abc-123/flow_abc_123_user", "abc-123"),
+        # Resource servers starting with characters found in "/scopes/" must not be mangled
+        (
+            "https://auth.globus.org/scopes/eec9b274-0c81/flow_eec9b274_user",
+            "eec9b274-0c81",
+        ),
+        ("https://auth.globus.org/scopes/ce5a-0c81/flow_ce5a_user", "ce5a-0c81"),
     ],
 )
 def test_get_resource_server(scope, resource_server):
@@ -40,6 +46,8 @@ def test_get_resource_server(scope, resource_server):
     assert login_manager.get_resource_server(str(scope)) == resource_server
     # Scope objects from the SDK are accepted as well as plain strings
     assert login_manager.get_resource_server(scope) == resource_server
+    sdk_scope = globus_sdk.scopes.Scope(str(scope))
+    assert login_manager.get_resource_server(sdk_scope) == resource_server
 
 
 def test_get_resource_server_unknown_scope():
