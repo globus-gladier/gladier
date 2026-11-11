@@ -55,6 +55,11 @@ build = ["build", "twine"]
 
 [tool.setuptools_scm]
 # The version is derived from the latest git tag (e.g. "v0.11.0" -> "0.11.0").
+# Only consider release tags; ignore ad-hoc tags such as "v0.6.3-TEST" which are not valid versions.
+git_describe_command = [
+    "git", "describe", "--dirty", "--tags", "--long",
+    "--match", "v[0-9]*", "--exclude", "*-*",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
